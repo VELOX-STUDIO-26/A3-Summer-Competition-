@@ -1,0 +1,27 @@
+IDC,互联网数据中心,
+VPC,虚拟私有云,
+IaaS,基础设施即服务,
+PaaS,平台即服务,
+SaaS,软件运营服务,
+FaaS,功能即服务,
+BaaS,区块链即服务,
+CaaS,通信即服务,
+MaaS,出行即服务,
+NaaS,网络即服务,
+SOA,面向服务架构,
+NFV,网络功能虚拟化,
+SDN,软件定义网络,
+SAN,软件定义网络,
+Docker,应用容器引擎,
+Kubernets,K8s,
+GPGPU,通用图形处理器,
+Google云,谷歌云,
+隧道技术,隧道,
+容器技术,容器,
+Azure,Windows Azure,
+微软,Microsoft,microsoft
+API,应用程序接口
+Libvirt,libvirt
+OneDrive,skydrive
+EC2,ec2,亚马逊EC2,亚马逊ec2,亚马逊弹性计算云
+Web服务,web服务,网页服务

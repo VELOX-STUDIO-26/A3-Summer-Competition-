@@ -1,0 +1,102 @@
+Windows Azure是微软基于云计算的操作系统，现在更名为“Microsoft Azure”，和Azure Services Platform一样，是微软“软件和服务”技术的名称。
+Windows Azure的主要目标是为开发者提供一个平台，帮助开发可运行在   、   数据中心、Web和PC上的应用程序。
+云计算的开发者能使用微软全球数据中心的储存、计算能力和网络基础服务。
+Azure服务平台包括了以下主要组件：Windows Azure；Microsoft   服务，Microsoft .Net服务；用于分享、储存和同步文件的Live服务；针对商业的Microsoft SharePoint和Microsoft Dynamics CRM服务    。
+Microsoft Azure 的发展最早源于2006，由Amitabh Srivastava与Dave Culter所主导，当时云计算在市场上还没有受到关注，微软当时所需解决的问题是需要集成与提升在线服务的管理与运用能力，而提出的代号为 Red Dog 的项目，该项目要解决的是：开发一个计算资源的管理工具，称为 Hypervisor，后来演变为 Hyper-V 平台以及 Azure 的虚拟机基础建设。
+具有自主管理能力的分布式管理系统，以管理大量的计算资源，称为 Fabric Controller，目前为 Azure 基础建设服务的重要组件之一。
+高度可用性与备援能力的分布式存储系统，此为 Azure Storage 的源头。
+支持上述平台的开发工具。
+经过数年的开发，Azure平台于2010年2月正式推出公开服务版 ，当时的名称为 Azure Service Platform，包含 Azure Cloud Service、Azure Storage、SQL Azure 与 AppFabric 四种服务，且仅提供平台服务  一种。
+2010年下半年更新管理接口为Microsoft Silverlight开发的管理接口，并新增 VM Role ，以及 Azure Connect 。
+2012 年是 Azure 发展的里程碑之一，共做了下列改变：更新管理接口，采用 HTML5 技术。
+首次发行基础建设服务 ，包含虚拟机与虚拟网络。
+发行 Website 服务，并首次支持 .NET 以外的平台。
+发行 Media Service 服务。
+2014 年下半年发行 Mobile Service，提供移动应用必须的后台服务，包含数据、识别、通知以及 API 等。
+2013~2014年加入 Hadoop 服务 、Streaming Analytics 、数据工厂服务、事件中枢与机器学习等与大数据相关的服务，同时更新 SQL Azure 大幅提升性能。
+2014 年微软将 Windows Azure 更名为 Microsoft Azure，以修正其市场方向，也为了要让外界不再认为 Azure 只能跑 Windows 操作系统。
+2015 年将 Website 与 Mobile Service 合并，并新增 API App 与 Logic App 合称为 Azure App Services，并推出 Azure Redis Cache 取代原有的 Azure Shared Cache；推出 Azure Application Insights 以支持应用程序层级的监测数据能力；新增 Azure DNS 以支持 DNS 托管、Azure Search 支持搜索能力等。
+2016 年微软推出 Azure Functions  以支持无服务器  的应用，成为继 AWS Lambda 与 Google CloudFunction 之后的第三个具备无服务器应用程序开发能力的主流云供应商，同时也推出了 Service Fabric 以支持微服务  的开发。
+目前 Azure 上的服务与功能仍然在增加中。
+2017年9月26日，在美国弗罗里达州奥兰多市举办的Ignite会议上，微软公司宣布旗下Azure云平台会推出一系列新功能和更新，用户可以访问全新人工智能服务和成本管理功能等。
+[2]2019年8月，微软刚刚宣布成立了Azure安全实验室，并且欢迎世界各地的安全专家通过测试Azure安全漏洞来换取奖金报酬。
+[3]2022年3月1日起，微软智能云在中国市场的第五个 Azure 数据中心区域正式启用，客户可以不受限制地对其进行访问。
+[4]Microsoft Azure是专为在微软建设的数据中心管理所有服务器，网络以及存储资源所开发的一种特殊版本Windows Server操作系统，它具有针对数据中心架构的自我管理机能，可以自动监控划分在数据中心数个不同的分区的所有服务器与存储资源，自动更新补丁，自动运行虚拟机部署与镜像备份等能力，Microsoft Azure被安装在数据中心的所有服务器中，并且定时和中控软件Microsoft Azure Fabric Controller进行沟通，接收指令以及回传运行状态数据等等，系统管理人员只要通过Microsoft Azure Fabric Controller就能够掌握所有服务器的运行状态，Fabric Controller本身是融合了很多微软系统管理技术的总成，包含对虚拟机的管理，对作业环境的管理，以及对软件部署的管理等，在Fabric Controller中被发挥得淋漓尽致，如此才能够达成通过Fabric Controller来管理在数据中心中所有服务器的能力。
+Microsoft Azure环境除了各式不同的虚拟机外，它也为应用程序打造了分布式的巨量存储环境，也就是Azure Storage，应用程序可以根据不同的存储需求来选择要使用哪一种或哪几种存储的方式，以保存应用程序的数据，而微软也尽可能的提供应用程序的兼容性工具或接口，以降低应用程序移转到Microsoft Azure上的负担。
+Microsoft Azure不但是开发给外部的云应用程序使用的，它也作为微软许多云服务的基础平台。
+Fabric ControllerFabric Controller 是管理微软数据中心的 Azure 计算资源的中控管理系统，扮演心脏的角色，它负责自动化的管理数据中心内所有的实体服务器，包含由用户要求的 Azure Guest OS 的部署工作，定时的Hotfix修补，机器状态回报，以及管理不同版本的VM部署视频的复制等重要核心工作，Fabric Controller 本身也具有高可用性，并且有一个管理 Fabric Controller 的子系统来管理与监控 Fabric Controller 的运作。
+Fabric Controller也处理虚拟机的健康管理工作，当Windows Azure Guest OS发生死机时，会由Fabric Controller自动选择不同的实体机器重新部署与引导。
+当应用程序提交即地更新时，Fabric Controller也负责即地更新的协调工作，以保持应用程序在更新时仍可保持SLA所承诺的服务水准。
+RDFERDFE  是 Azure 的前端接口，负责接取来自任何访问 Azure 的应用程序的命令，它是一组可控制与管理 Azure 服务的 REST APIs，对外接受应用程序的要求并回应，对内则是扮演大脑的角色，Azure 资源的配置策略与方式均是由 RDFE 所进行，包含虚拟机的 Fault Domain  与 Upgrade Domain  的配置与计算都是由 RDFE 处理。
+网络基础建设Microsoft Azure 数据中心内部的架构自 2010 年正式上市开始就不断的与日俱进，早期 Azure 使用的是 DLA 网络架构，采用多层次分层的设计方式，由数据中心的路由器  开始，接续第二层的访问路由器 ，再接至第三层的聚合负载平衡器 ，最后到服务器所在的服务器机架顶的交换器 ，虽然匹配早期云所需要的网络建设作法，但问题在于它并没有网络备援能力，当问题发生在主要节点如第二层或第三层的设备时，服务器将无法与外界连系，使服务中断，且使用 DLA 网络架构下的资源配置极限为 10000 台实体服务器，带宽为 120GB ，无法供给充足的网络带宽与性能给数据中心内的资源使用。
+2012 年起，微软开始建构新的第二代数据中心网络建设，采用平滑化网络拓朴  设计，代号为 Quantum10，其理论来源是 1952 年的 Clos 网络拓朴，在每个网络设备间都采用了网状的连接，亦即每个设备彼此之间都有备援能力，而且配置适当的网络节点设备，可以提供更大量的带宽与资源配置，Quantum10 的第一代可供应 30000 台服务器 30000GB 的流量 。
+2013年更提升至 Quantum10 v2，可支持在不同服务群集  之间的网络通信，基于 Leaf-Spine 网络拓朴的特性，不论是走哪一条通信路径，其成本都是等价 ，用来减少因网络扩展生成树  产生的网络负担，其资源供应可跨越不同群集，带宽也提升到 50000GB。
+随着 Azure 服务愈来愈多元，其服务共用网络基础建设已经变成常态，为了要让各服务可顺畅访问网络功能 ，微软开始发展适用于数据中心的网络相关技术，并设计相关辅助资源。
+2015年微软在ACM SIGCOMM 提出了数个重要设计成果：Azure 智能网卡 ，它采用了 FPGA 芯片辅助 CPU 进行网络流量的处理，可支持加密与远程内存直接访问  的功能，降低 RDMA 花费在 CPU 上的计算时间。
+虚拟过滤平台 ，使用于 Azure Hyper-V 内的 VMSwitch 组件，它可以在网络流量进入网络物理层前先进行处理，包括访问控制表、网络安全、虚拟网络与软件负载平衡等作业，并且支持 40GbE 以上的高速网络。
+交换器抽象接口 ，定义了交换器操作系统的功能规格，目前已被开放计算项目协会接受。
+Azure Cloud Switch，一种具备网络交换器能力的网络操作系统，基于交换器抽象接口所设计，使用微软自制的Linux操作系统。
+网络管理微服务化，以及软件定义网络的基础建设。
+Microsoft Azure 目前于全球有34个数据中心 ，以及44个 CDN 跳跃点，以提供全球用户所需的资源。
+但因为当地法规与行政的要求，因此并不是所有的用户都能使用所有的区域，目前 Azure 服务区域有分为三种：Azure Cloud: 意指全球的数据中心，共有 30 个据点：位于澳洲的数据中心，共有2座，分别位于新南威尔士与维多利亚，必须是于澳洲与新西兰当地设立的公司才可使用该数据中心。
+位于印度的数据中心，共有3座，分别位于孟买、清迈与浦那，必须是于由印度微软认可的大量授权客户与合作伙伴才能使用，在线申请预计于2016开放。
+位于德国的数据中心，共有2座，分别位于马德堡与法兰克福，于数据信任者模式  下提供服务。
+Azure China: 意思位于中国的数据中心，共有2座，分别位于北京与上海，且并非由微软直接经营，而是由中国代理商世纪互联公司  所经营，因此可用服务会比全球的服务要少，更新也较慢。
+Azure Government Cloud : 负责管理政府云服务的数据中心，共有6座，目前仅美国境内设置，且具有政府档次的信息安全规范。
+洲别地区地区区域别地理位置说明北美洲美国中部Central USAzure Cloud 爱荷华州北美洲美国东部East USAzure Cloud 维吉尼亚州北美洲美国东部2East US 2Azure Cloud 维吉尼亚州北美洲美国政府机构爱荷华州Central US GOVAzure Government Cloud爱荷华州北美洲美国政府机构维吉尼亚州East US GOVAzure Government Cloud维吉尼亚州北美洲美国政府机构亚利桑那州Arizona US GOVAzure Government Cloud亚利桑那州北美洲美国政府机构德克萨斯州Texas US GOVAzure Government Cloud德克萨斯州北美洲美国国防部东部US DoD EastAzure Government Cloud北美洲美国国防部中部US DoD CentralAzure Government Cloud北美洲美国中部Central USAzure Cloud 爱荷华州北美洲美国中北部North Central USAzure Cloud 伊利诺伊州北美洲美国中南部South Central USAzure Cloud 德克萨斯州北美洲美国中西部West Central USAzure Cloud 北美洲美国西部West USAzure Cloud 加利福尼亚州北美洲美国西部2West US 2Azure Cloud 北美洲加拿大中部Central CanadaAzure Cloud 多伦多北美洲加拿大东部East CanadaAzure Cloud 魁北克欧洲北欧North EuropeAzure Cloud 爱尔兰欧洲西欧West EuropeAzure Cloud 荷兰欧洲德国中部West EuropeAzure Cloud 法兰克福欧洲德国东北部West EuropeAzure Cloud 马德堡欧洲英国南部United Kingdom SouthAzure Cloud 伦敦欧洲英国西部United Kingdom WestAzure Cloud 卡地夫欧洲法国中部France CentralAzure Cloud 欧洲法国南部France SouthAzure Cloud 亚洲东亚East AsiaAzure Cloud 香港亚洲东南亚Southeast AsiaAzure Cloud 新加坡亚洲日本东部Japan EastAzure Cloud 东京，埼玉亚洲日本西部Japan WestAzure Cloud 大阪亚洲印度中部Central IndiaAzure Cloud 浦那亚洲印度西部South IndiaAzure Cloud 孟买亚洲印度南部West IndiaAzure Cloud 清奈亚洲中国东部China EastAzure China上海由世纪互联  代理营运亚洲中国北部China NorthAzure China北京由世纪互联  代理营运亚洲韩国中部Central KoreaAzure Cloud 首尔亚洲韩国南部South KoreaAzure Cloud 釜山大洋洲澳洲东部Australia EastAzure Cloud 新南威尔士仅设籍于澳洲与新西兰的公司可申请使用大洋洲澳洲东南部Australia SoutheastAzure Cloud 维多利亚仅设籍于澳洲与新西兰的公司可申请使用南美洲巴西南部Brazil SouthAzure Cloud 圣保罗州Microsoft Azure 早期开发时，使用的是以服务为主体的管理方式，称为服务管理模式 ，其管理观点是依服务来区分，这个模式在目前的 Azure Portal  以及 Azure PowerShell、Azure CLI 等都支持，也是 RDFE 一开始就支持的 API，服务管理的好处是以服务为主体，其管理方式环绕着服务，在小型应用  相当方便，但当服务愈来愈多种，应用也愈来愈大  时，这样的方法反而会导致管理上的不便。
+为了改良服务管理模式的缺点，微软在 2014 年提出了资源管理  的新模式，其管理观点是依资源来区分，应用程序的资源可组织在同一个或不同的组群，管理人员可以利用资源组群  来组织资源以及使用资源的服务 。
+资源管理模式适当中大型的应用，但小型应用也同样适合。
+资源管理模式由 Azure Ibiza Portal 、Azure PowerShell v1.0 起、Azure CLI v1.0 起适用。
+资源管理模式同时也引入了资源范本  的概念，允许管理人员一次部署多种或大量服务与资源，微软也提供了 Azure Quickstart Template 供入门的系统管理人员使用。
+Microsoft Azure 现已包含 30 余种服务，以及数百项功能，针对云以及物联网与大数据等所需要的各类型服务提供。
+主条目：虚拟机，云服务，RemoteApp，Service Fabric和容器服务计算服务是以 Azure 内的服务器群经过虚拟化后形成的大量虚拟机  所组成的服务群，其主要功能是提供 CPU、内存等具有计算能力的资源。
+在 Azure 中的计算资源分成 IaaS 与 PaaS 两种：IaaSVirtual Machine : 提供标准与客制化后的虚拟机映像 ，供用户于云产生虚拟机使用，也可以利用上传映像的方式，使用客制化映像来生成虚拟机。
+Azure 可支持 Windows 与特定的 Linux 操作系统。
+RemoteApp: 提供桌面虚拟化  的基础建设，企业可依需求产生默认范本  或是上传自定义的范本生成，其应用近似于在地端建设的 Remote Desktop Service VDI。
+PaaSCloud Service: 提供标准的操作系统映像，开发人员可使用 Azure SDK 开发程序，发行到 Cloud Service 内，适合具高度客制化的大型应用程序。
+Service Fabric: 提供标准的操作系统映像，开发人员可使用 Azure Service Fabric SDK 开发微服务  应用程序，可视为下一代的 Azure Cloud Service。
+Container Service: 提供类似于 Docker 的容器能力，并内置 Apache Mesos 服务，用以支持类似 Docker 的容器部署与管理功能。
+主条目：应用服务，API管理服务，服务总线，Mobile Engagement，IoT应用集和函数服务Microsoft Azure 为了要有效降低将应用程序移植到云所需的负担，微软在 2012 年度的 Spring Release 中首次发布了 Azure Website 服务，支持 .NET 以及像 PHP、Java、Python、Ruby、node.js 等非微软平台，成功吸引开发网站的 Web 开发人员以及企业将其网站移转到 Azure，Azure Website 为 Virtual Machine 以外最受欢迎的 PaaS 服务。
+同年底，微软也发布了为移动应用程序  提供后台支持的 Mobile Service，以简单的管理机制与充份的 SDK 支持吸引移动应用开发人员使用，这两个服务在 2015 年时合并为 Azure App Service，并加入了发展 RESTful API 应用的 API App 以及以可视化设置运行流程控制的 Logic App。
+为了要支持大型应用程序的发展，微软在 Azure 发布初期就提供了 AppFabric 服务，包含 Access Control Service 以及 Service Bus 功能，Access Control Service 负责统一账户管理机制，后期也引入了 Social Identity 的功能，可与 Facebook, Google 等社区链接并共用其账户；Service Bus 则是提供了消息转送 、队列  与主题订阅  的功能，随后也加入了 Notification Hub 以支持对移动设备平台的消息发送功能。
+2016年微软于 Build 2016 研讨会中宣布新的 Azure Functions 服务，以事件触发为主的程序开发能力，大幅简化发展事件驱动式应用的门槛。
+主条目：关系数据库，DocumentDB，存储体，搜索服务和Redis缓存服务存储数据是一个平台服务最基本的要求，Azure 在开发初期就提供了基本的存储  与关系数据库 ，存储服务提供了 Blob、Table 和 Queue 分别管理非结构化数据、结构化数据与消息通信，2014年新增 File 服务，以支持在云虚拟机间的快速数据共享。
+数据库服务 SQL Azure 为 SQL Server as a Service，提供大部分在地端的 SQL Server 数据库的能力，2013 年微软将 SQL Azure 正名为 Azure SQL Database，以提升品牌识别度，2014 年新增依交易量计费的 DTU 模式，以及新一代数据库引擎 V12，强化数据库的功能与效率，2015 年更提出了许多数据库的企业级应用，如 Elastic Pooling、SQL Data Warehouse 与和 SQL Server 2016 配合的 SQL Database Strerch Database 功能，使 SQL Database 更适合企业的应用。
+Azure Search 是微软为提升云数据检索的功能而于 2014 年提供，搭配 Azure DocumentDB 实现出的数据检索服务。
+Azure Redis Cache 为微软基于 Redis 开源项目所发展的分布式缓存服务，用以取代 2011 年的 Azure Shared Cache 以及 2012 年提出的 Azure Role-based Cache 服务，由于 Redis Cache 适用于许多平台与框架，使得 Azure Redis Cache 更容易被大众接受以作为分布式缓存基础建设。
+主条目：HDInsights，数据流分析，数据工厂，事件汇集器，数据湖和机器学习分析服务是 Microsoft Azure 一系列支持大数据与机器学习等与数据分析相关的服务集合，由数据的获取，分析到存储都有完整的解决方案。
+数据获取：Azure Event Hub，由物联网设备获取信号或消息数据；Azure Data Factory 处理数据的转换；Azure Stream Analytics 处理在数据流动过程中的特征分析。
+数据分析：Azure HDInsights 支持以 Apache Hadoop 为主的技术集合所支持的数据分析，包含 MapReduce、HDFS、HBase、Pig 等技术；Azure Machine Learning 支持以模型为主的数据分析与推断能力。
+数据存储：Azure Data Lake 支持各种类型的数据，无上限的数据存储能力。
+主条目：虚拟网络，高速路由专线，流量管理员和名称托管服务网络服务是 Microsoft Azure 对外通信与内部各类服务之间的数据通信基础建设，也是 Azure IaaS 的重要成员之一。
+Azure 虚拟网络可允许组织或企业在云建置自已的网络基础建设，包含子网、IP配置、负载平衡器与网络安全原则等，同时可以建置 VPN 以串连内部网与其他区域的虚拟网络，也可以利用 P2S VPN 串接个人客户端与虚拟网络。
+为了要加速网络速度、隔离用户与 Internet 网络环境，Azure 提供 ExpressRoute 给用户以支持专属性  的 Azure 数据中心间通信。
+对于具全球性的大型服务，Azure Traffic Manager 可协助发展大规模的负载平衡解决方案，将用户导向到全球各地离其最近的数据中心，并且也可支持跨区域性的备援重导向。
+主条目：Azure 目录服务Azure AD  是 Microsoft Azure 上主要的身份识别与访问服务，早期系基于 HTTP 协议为主，无法用于传统使用 LDAP/Kerberos 验证协议的 Windows Server Active Directory，因此微软另外发展 DirSync 工具  以处理 HTTP <-> LDAP 的账户同步功能。
+Azure AD 也提供了多重要素验证  能力以支持需要多重方法验证的应用，Azure AD 的应用程序链接功能则提供了软件服务  集成所需的身份验证能力。
+Azure AD 未来将提供取代 Access Control Service 的 Azure AD B2C 服务，以及可允许企业减少部署 AD 网域控制站成本的 Azure AD 网域服务。
+主条目：应用程序洞察，Visual Studio 团队服务和HockyApp为支持 Web App 与行动 App 的记录、用户行为追踪与网络监控等需求，Azure 提供 Application Insights 可供开发人员实现所需的记录功能，Application Insights 也可作为协助监控网站存活的辅助服务。
+Visual Studio Team Services 提供云的版本控制、自动化建造、自动化测试与部署等软件工程流程服务。
+Azure HockyApp 可协助处理行动 App 内的用户回报，包含死机回报与用户意见回馈等。
+主条目：调度器，自动化，营运洞察，密钥收纳库，信息安全中心，备份服务和站台撤消服务管理服务是 Microsoft Azure 提供给 IT 与网络管理能力的服务。
+Scheduler 可允许 IT 人员上传指令脚本，以排定的时程运行。
+Automation 可允许 IT 人员上传指令脚本，以排定的流程运行，通常会搭配 Azure Scheduler。
+Operational Insights 会收集 Azure 内的作业审核记录并提供洞察消息。
+KeyVault 可允许 IT 人员自行产生访问 Azure 服务时所使用的加密密钥。
+Security Center 可提供 Azure 使用时的相关信息安全消息。
+Backup 能备份 Windows Server、Windows Client 与 Azure VM 以及其他支持服务的数据。
+Site Recovery 具备跨地端、云到地端、云之间的虚拟机备援服务。
+Microsoft Azure 目前已经通过包含政府机构与产业标准数十项法规与规范的认证，以允许政府机关使用 Microsoft Azure，或是认可 Microsoft Azure 在信息安全上的努力。
+阿根廷个人数据保护法 25326 号 美国刑事司法信息服务处  信息安全政策 v5.4美国国防信息系统局  影响档次 2 临时授权 美国国防部信息安全认证与认可流程 美国联邦风险与授权管理项目 欧洲网络与信息安全局信息安全框架 欧洲示范条款 美国家庭教育与隐私权法案 美国联邦信息处理标准  140-2美国联邦信息安全管理法案 新加坡多层次云安全标准 美国内部收益服务公报  1075澳洲云服务认证清单 新西兰政府首席信息官认证 英国政府云 日本我的编号法案 日本云安全标章 美国食品与药物管理局  联邦准则  21-11 中国 GB 18030中国多层次保护方案 中国可信云服务认证 云安全联盟云控制矩阵认证 内容传递与安全协会 财务产业信息系统中心 健康保险流通与责任法案  HITECHISO 27001ISO 27018支付卡产业数据安全标准  档次 1 v3.0共享评估项目服务组织控制  类型 1, 2, 3Microsoft Azure 在早期只能使用 Web-based 管理工具访问，在 2012 年开始提供 PowerShell 指令接口，并进一步于 2013 年起开始提供指令接口，以支持非 Windows 操作系统的用户 ，而微软也开放了服务管理接口  供开发人员使用，因此能管理与访问 Microsoft Azure 的工具相当多。
+Microsoft Visual Studio，配合 Azure SDK for .NET，可直接部署、管理与新增相关项目。
+Azure PowerShell，提供 IT 人员管理 Azure 所需的 PowerShell 指令接口。
+Azure CLI，旧称 Xplat-CLI，提供跨平台的指令管理接口。
+Azure 服务管理 APIs，为 REST API，由开发人员编写程序访问。
+System Center App Controller，可在企业内管理与部署 Azure 资源。
+Azure Storage Explorer，由社区开发，支持 Azure Storage 的访问 。
+Microsoft Storage Explorer，由官方开发，跨平台的 Azure Storage 管理工具。
+2021年5月7日，微软宣布，更新 Azure 的“A”图标。
+新图标基于流畅设计系统设计，代表了 Azure 在更大的微软产品图标家族中的统一性。
+[5]2019年5月3日凌晨3点43分开始，微软的Azure在全球范围内出现了大面积宕机，整个过程持续了将近2个小时，直到5点30分才完全恢复。
+受Azure宕机影响，包括Microsoft 365，Dynamics和DevOps在内的微软主要服务均出现使用问题。
+[6]。

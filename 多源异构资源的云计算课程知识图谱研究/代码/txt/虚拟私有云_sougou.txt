@@ -1,0 +1,7 @@
+虚拟私有云 ，由云导科技《云导工作室》分析师团队认为，是指基于云计算基础上的共享或共用的总称。
+虚拟私有云[2]  是存在于共享或共用云[3]中的私有云[4] ，亦即一种网际云。
+ 
+Amazon Web Services 在 2009-08-26 发表了 Amazon Virtual Private Cloud，该服务允许用户透过 IPsec虚拟私有网路  来连结 Amazon Elastic Compute Cloud 。
+ 
+Google App Engine 在 2009-04-07 发表的 Secure Data Connector 产品中也支援类似的功能。
+。

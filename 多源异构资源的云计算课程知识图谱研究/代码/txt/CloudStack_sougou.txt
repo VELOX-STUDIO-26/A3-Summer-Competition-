@@ -1,0 +1,23 @@
+CloudStack是一个开源的具有高可用性及扩展性的。
+支持管理大部分主流的hypervisors，如KVM，，VMware，Oracle VM，Xen等。
+同时CloudStack是一个开源云计算解决方案。
+可以加速高伸缩性的公共和私有云的部署、管理、配置。
+使用CloudStack作为基础，数据中心操作者可以快速方便的通过现存基础架构创建。
+CloudStack[2]形成的基础设施云和数据中心运营商可以快速，轻松地建立在其现有的基础设施提供云服务的需求，弹性云计算服务。
+ CloudStack用户可以充分利用云计算提供更高的效率，无限的规模和更快地部署新服务和系统的最终用户。
+ 
+CloudStack 是一个开源的云操作系统，它可以帮助用户利用自己的硬件提供类似于Amazon EC2那样的公共云服务。
+CloudStack可以通过组织和协调用户的虚拟化资源，构建一个和谐的环境。
+CloudStack具有许多强大的功能，可以让用户构建一个安全的多租户云计算环境。
+CloudStack 兼容Amazon API 接口。
+ 
+CloudStack可以让用户快速和方便地在现有的架构上建立自己的云服务。
+CloudStack可以帮助用户更好地协调服务器、存储、网络资源，从而构建一个IaaS平台。
+ 
+CloudStack的前身是Cloud com，后被思杰收购。
+英特尔、阿尔卡特-朗迅、瞻博网络、博科等都已宣布支持CloudStack。
+2011年7月，Citrix收购Cloud com，并将CloudStack 100%开源。
+2012年4月5日，Citrix又宣布将其拥有的CloudStack开源软件交给Apache软件基金会管理。
+CloudStack已经有了许多商用客户，包括GoDaddy、英国电信、日本电报电话公司、塔塔集团、韩国电信等。
+目前CloudStack已成为Apache基金会[4]最大的顶级项目之一，版本有4.0.1，分别有ubuntu下deb包和rhel下rpm包；最新发布的版本为5.0。
+。

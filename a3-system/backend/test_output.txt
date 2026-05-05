@@ -1,0 +1,2 @@
+200
+{"session_id":"ecbaa02f-1b68-4403-ad80-a7a4572c90f2","student_id":"file-test","first_question":"Hi! I'm A3, and I'm here to help you build a learning path that's tailored just for you. What subject or skill are you most excited to dive into right now?","status":"active","progress":{"current_question":0,"total_questions":7,"percentage":0.0,"dimensions_found":[],"confidence_scores":{},"is_complete":false}}

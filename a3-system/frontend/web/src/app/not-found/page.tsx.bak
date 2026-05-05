@@ -1,0 +1,68 @@
+"use client";
+
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Home, ArrowLeft, Search, HelpCircle } from "lucide-react";
+
+export default function NotFoundPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950 p-4">
+      <Card className="max-w-lg w-full border-0 shadow-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+        <CardContent className="p-8 text-center">
+          {/* 404 Illustration */}
+          <div className="relative mb-6">
+            <div className="text-8xl font-bold bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              404
+            </div>
+            <div className="absolute -top-2 -right-2 w-16 h-16 bg-amber-400 rounded-full opacity-20 animate-pulse" />
+            <div className="absolute -bottom-2 -left-2 w-12 h-12 bg-indigo-400 rounded-full opacity-20 animate-pulse delay-150" />
+          </div>
+
+          <h1 className="text-2xl font-bold mb-2">Page Not Found</h1>
+          <p className="text-zinc-500 mb-6">
+            Oops! The page you're looking for seems to have wandered off into
+            the cloud. Let's get you back on track.
+          </p>
+
+          {/* Quick Links */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <Link href="/dashboard" className="col-span-2">
+              <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600">
+                <Home className="w-4 h-4 mr-2" />
+                Go to Dashboard
+              </Button>
+            </Link>
+
+            <Button variant="outline" onClick={() => window.history.back()}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Go Back
+            </Button>
+
+            <Link href="/help">
+              <Button variant="outline" className="w-full">
+                <HelpCircle className="w-4 h-4 mr-2" />
+                Get Help
+              </Button>
+            </Link>
+          </div>
+
+          {/* Search Suggestion */}
+          <div className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+            <p className="text-sm text-zinc-500 mb-2">Looking for something specific?</p>
+            <div className="flex gap-2">
+              <Input placeholder="Search..." className="flex-1" />
+              <Button size="icon" variant="secondary">
+                <Search className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

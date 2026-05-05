@@ -1,0 +1,2450 @@
+{
+  "course_id": "cloud-computing",
+  "course_name": "Cloud Computing Fundamentals",
+  "description": "Comprehensive cloud computing course covering virtualization, containers, orchestration, and cloud services",
+  "total_nodes": 80,
+  "total_edges": 159,
+  "nodes": [
+    {
+      "node_id": "N01",
+      "title": "云服务",
+      "difficulty": 0.61,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N04",
+        "N11",
+        "N27"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "云服务 是基于互联网的相关服务的增加、使用和交付模式，通常涉及通过互联网来提供动态易扩展且经常是虚拟化的资源。云是网络、互联网的一种比喻说法。过去在图中往往用云来表示电信网，后来也用来表示互联网和底层基础设施的抽象。云服务指通过网络以按需、易扩展的方式获得所需服务。这种服务可以是IT和软件、互联网相关，也可是其他服务。它意味着计算能力也可作为一种商品通过互联网进行流通。",
+      "pagerank_score": 6.3734,
+      "is_active": true
+    },
+    {
+      "node_id": "N02",
+      "title": "云计算",
+      "difficulty": 0.0,
+      "est_minutes": 20,
+      "hard_prerequisites": [
+        "N03",
+        "N04",
+        "N65"
+      ],
+      "soft_prerequisites": [
+        "N07"
+      ],
+      "topic_tags": [
+        "N01",
+        "N03",
+        "N11",
+        "N12",
+        "N21"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "云计算 （cloud computing）是基于互联网的相关服务的增加、使用和交付模式，通常涉及通过互联网来提供动态易扩展且经常是虚拟化的资源。云是网络、互联网的一种比喻说法。过去在图中往往用云来表示电信网，后来也用来表示互联网和底层基础设施的抽象。因此，云计算甚至可以让你体验每秒10万亿次的运算能力，拥有这么强大的计算能力可以模拟核爆炸、预测气候变化和市场发展趋势。用户通过电脑、笔记本、手机等方式接入数据中心，按自己的需求进行运算。 |||对云计算的定义有多种说法。对于到底什么是云计算，至少可以找到100种解释。 现阶段广为接受的是美国国家标准与技术研究院（NIST）定义：云计算是一种按使用量付费的模式，这种模式提供可用的、便捷的、按需的网络访问， 进入可配置的计算资源共享池（资源包括网络，服务器，存储，应用软件，服务），这些资源能够被快速提供，只需投入很少的管理工作，或与服务供应商进行很少的交互。",
+      "pagerank_score": 16.1996,
+      "is_active": true
+    },
+    {
+      "node_id": "N03",
+      "title": "网格计算",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N04",
+        "N27"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02",
+        "N04",
+        "N27"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "网格计算即分布式计算，是一门计算机科学。它研究如何把一个需要非常巨大的计算能力才能解决的问题分成许多小的部分，然后把这些部分分配给许多计算机进行处理，最后把这些计算结果综合起来得到最终结果。 最近的分布式计算项目已经被用于使用世界各地成千上万志愿者的计算机的闲置计算能力，通过因特网，您可以分析来自外太空的电讯号，寻找隐蔽的黑洞，并探索可能存在的外星智慧生命；您可以寻找超过1000万位数字的梅森质数；您也可以寻找并发现对抗艾滋病毒更为有效的药物。用以完成需要惊人的计算量的庞大项目。",
+      "pagerank_score": 0.4346,
+      "is_active": true
+    },
+    {
+      "node_id": "N04",
+      "title": "分布式计算",
+      "difficulty": 0.83,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：分布式计算",
+      "pagerank_score": 2.8205,
+      "is_active": true
+    },
+    {
+      "node_id": "N05",
+      "title": "并行计算",
+      "difficulty": 0.97,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "并行计算或称平行计算是相对于串行计算来说的。它是一种一次可执行多个指令的算法，目的是提高计算速度，及通过扩大问题求解规模，解决大型而复杂的计算问题。所谓并行计算可分为时间上的并行和空间上的并行。 时间上的并行就是指流水线技术，而空间上的并行则是指用多个处理器并发的执行计算。",
+      "pagerank_score": 0.6046,
+      "is_active": true
+    },
+    {
+      "node_id": "N06",
+      "title": "并发计算",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：并发计算",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N07",
+      "title": "雾计算",
+      "difficulty": 0.95,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02",
+        "N04"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "雾计算（Fog Computing）是云计算（Cloud Computing）的延伸概念，由思科（Cisco）首创。这个因“云”而“雾”的命名源自“雾是更贴近地面的云”这一名句。|||雾计算和云计算一样，十分形象。云在天空飘浮，高高在上，遥不可及，刻意抽象；而雾却现实可及，贴近地面，就在你我身边。雾计算并非由性能强大的服务器组成，而是由性能较弱、更为分散的各类功能计算机组成，渗入工厂、汽车、电器、街灯及人们物质生活中的各类用品。",
+      "pagerank_score": 0.893,
+      "is_active": true
+    },
+    {
+      "node_id": "N08",
+      "title": "霾计算",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：霾计算",
+      "pagerank_score": 0.4598,
+      "is_active": true
+    },
+    {
+      "node_id": "N09",
+      "title": "边缘计算",
+      "difficulty": 0.95,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [
+        "N11"
+      ],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：边缘计算",
+      "pagerank_score": 1.044,
+      "is_active": true
+    },
+    {
+      "node_id": "N10",
+      "title": "粒计算",
+      "difficulty": 0.92,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "人类在处理大量复杂信息时．由于人类认知能力有限，往往会把大量复杂信息按其各自特征和性能将其划分为若干较为简单的块．每个被分出来的块就被看成是一个粒。实际上，粒就是指一些个体通过不分明关系、相似关系、邻近关系或功能关系等所形成的块。这种处理信息的过程．称信息粒化。如商场的货物多种多样，如果不按某种方式摆放就很难进行有效管理．于是人们按货架所摆放货物的种类、体积、等级等将商场划分为若干块并以此安排货架，其每一块将摆放同一种类或体积相似或同一等级的货物。这里所说的块就是粒的概念，划分粒的过程称为信息粒",
+      "pagerank_score": 1.4747,
+      "is_active": true
+    },
+    {
+      "node_id": "N11",
+      "title": "弹性计算",
+      "difficulty": 0.95,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：弹性计算",
+      "pagerank_score": 0.9988,
+      "is_active": true
+    },
+    {
+      "node_id": "N12",
+      "title": "效用计算",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "效用计算(Utility computing)是一种提供服务的模型，在这个模型里服务提供商产生客户需要的计算资源和基础设施管理，并根据某个应用，而不是仅仅按照速率进行收费。",
+      "pagerank_score": 0.5311,
+      "is_active": true
+    },
+    {
+      "node_id": "N13",
+      "title": "IDC",
+      "difficulty": 0.9,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N01",
+        "N02",
+        "N14",
+        "N21",
+        "N51"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：IDC",
+      "pagerank_score": 1.728,
+      "is_active": true
+    },
+    {
+      "node_id": "N14",
+      "title": "公有云",
+      "difficulty": 0.86,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "公有云通常指第三方提供商为用户提供的能够使用的云，公有云一般可通过 Internet 使用，可能是免费或成本低廉的，公有云的核心属性是共享资源服务。这种云有许多实例，可在当今整个开放的公有网络中提供服务。",
+      "pagerank_score": 2.3634,
+      "is_active": true
+    },
+    {
+      "node_id": "N15",
+      "title": "私有云",
+      "difficulty": 0.81,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N14",
+        "N31"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "私有云(Private Clouds)是为一个客户单独使用而构建的，因而提供对数据、安全性和服务质量的最有效控制。该公司拥有基础设施，并可以控制在此基础设施上部署应用程序的方式。私有云可部署在企业数据中心的防火墙内，也可以将它们部署在一个安全的主机托管场所，私有云的核心属性是专有资源。",
+      "pagerank_score": 3.2061,
+      "is_active": true
+    },
+    {
+      "node_id": "N16",
+      "title": "混合云",
+      "difficulty": 0.85,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N15"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N14",
+        "N50"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "混合云融合了公有云和私有云，是近年来云计算的主要模式和发展方向。我们已经知道私企业主要是面向企业用户，出于安全考虑，企业更愿意将数据存放在私有云中，但是同时又希望可以获得公有云的计算资源，在这种情况下混合云被越来越多的采用，它将公有云和私有云进行混合和匹配，以获得最佳的效果，这种个性化的解决方案，达到了既省钱又安全的目的。",
+      "pagerank_score": 2.5653,
+      "is_active": true
+    },
+    {
+      "node_id": "N17",
+      "title": "多云战略",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：多云战略",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N18",
+      "title": "VPC",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N27"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N66"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：VPC",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N19",
+      "title": "IaaS",
+      "difficulty": 0.89,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [
+        "N47"
+      ],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "IaaS（Infrastructure as a Service），即基础设施即服务。|||消费者通过Internet 可以从完善的计算机基础设施获得服务。这类服务称为基础设施即服务。基于 Internet 的服务（如存储和数据库）是 IaaS的一部分。Internet上其他类型的服务包括平台即服务（Platform as a Service，PaaS）和软件即服务（Software as a Service，SaaS）。PaaS提供了用户可以访问的完整或部分的应用程序开发，SaaS则提供了完整的可直接使用的应用程序，比如通过 Internet管理企业资源。",
+      "pagerank_score": 1.8672,
+      "is_active": true
+    },
+    {
+      "node_id": "N20",
+      "title": "PaaS",
+      "difficulty": 0.89,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N21",
+        "N62"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02",
+        "N14",
+        "N21"
+      ],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：PaaS",
+      "pagerank_score": 1.9404,
+      "is_active": true
+    },
+    {
+      "node_id": "N21",
+      "title": "SaaS",
+      "difficulty": 0.78,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02",
+        "N19"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：SaaS",
+      "pagerank_score": 3.7031,
+      "is_active": true
+    },
+    {
+      "node_id": "N22",
+      "title": "FaaS",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：FaaS",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N23",
+      "title": "BaaS",
+      "difficulty": 0.96,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N73"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "BaaS（后端即服务：Backend as a Service）公司为移动应用开发者提供整合云后端的边界服务。",
+      "pagerank_score": 0.7579,
+      "is_active": true
+    },
+    {
+      "node_id": "N24",
+      "title": "CaaS",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N47"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：CaaS",
+      "pagerank_score": 0.3874,
+      "is_active": true
+    },
+    {
+      "node_id": "N25",
+      "title": "MaaS",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：MaaS",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N26",
+      "title": "NaaS",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：NaaS",
+      "pagerank_score": 0.4804,
+      "is_active": true
+    },
+    {
+      "node_id": "N27",
+      "title": "虚拟化",
+      "difficulty": 0.41,
+      "est_minutes": 30,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N15",
+        "N41",
+        "N75"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "虚拟化，是指通过虚拟化技术将一台计算机虚拟为多台逻辑计算机。在一台计算机上同时运行多个逻辑计算机，每个逻辑计算机可运行不同的操作系统，并且应用程序都可以在相互独立的空间内运行而互不影响，从而显著提高计算机的工作效率。|||虚拟化使用软件的方法重新定义划分IT资源，可以实现IT资源的动态分配、灵活调度、跨域共享，提高IT资源利用率，使IT资源能够真正成为社会基础设施，服务于各行各业中灵活多变的应用需求。",
+      "pagerank_score": 9.6379,
+      "is_active": true
+    },
+    {
+      "node_id": "N28",
+      "title": "无服务器计算",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：无服务器计算",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N29",
+      "title": "负载均衡",
+      "difficulty": 0.9,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "负载均衡  建立在现有网络结构之上，它提供了一种廉价有效透明的方法扩展网络设备和服务器的带宽、增加吞吐量、加强网络数据处理能力、提高网络的灵活性和可用性。|||负载均衡，英文名称为Load Balance，其意思就是分摊到多个操作单元上进行执行，例如Web服务器、FTP服务器、企业关键应用服务器和其它关键任务服务器等，从而共同完成工作任务。",
+      "pagerank_score": 1.7391,
+      "is_active": true
+    },
+    {
+      "node_id": "N30",
+      "title": "SOA",
+      "difficulty": 0.93,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：SOA",
+      "pagerank_score": 1.2922,
+      "is_active": true
+    },
+    {
+      "node_id": "N31",
+      "title": "微服务",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "微服务涵盖了微信管家、微信应用解决方案、微信客服客户端、人工微信客服几部分。|||微服务是对于微信公众平台帐号提供的辅助管理平台，强化了微信公众号的互动营销推广与客户关系维护功能。微服务平台开发了为商家定制的“个性化管理、营销推广、客户关系管理、会员卡管理”等几个重要的运营管理模块。",
+      "pagerank_score": 0.3556,
+      "is_active": true
+    },
+    {
+      "node_id": "N32",
+      "title": "NFV",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N27",
+        "N33"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：NFV",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N33",
+      "title": "SDN",
+      "difficulty": 0.81,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "软件定义网络（Software Defined Network, SDN ），是Emulex网络一种新型网络创新架构，是网络虚拟化的一种实现方式，其核心技术OpenFlow通过将网络设备控制面与数据面分离开来，从而实现了网络流量的灵活控制，使网络作为管道变得更加智能。",
+      "pagerank_score": 3.239,
+      "is_active": true
+    },
+    {
+      "node_id": "N34",
+      "title": "SAN",
+      "difficulty": 0.92,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：SAN",
+      "pagerank_score": 1.4004,
+      "is_active": true
+    },
+    {
+      "node_id": "N35",
+      "title": "容器技术",
+      "difficulty": 0.93,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N66"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N37",
+        "N41"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：容器技术",
+      "pagerank_score": 1.213,
+      "is_active": true
+    },
+    {
+      "node_id": "N36",
+      "title": "隧道技术",
+      "difficulty": 0.97,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "隧道技术（Tunneling）是一种通过使用互联网络的基础设施在网络之间传递数据的方式。使用隧道传递的数据（或负载）可以是不同协议的数据帧或包。隧道协议将其它协议的数据帧或包重新封装然后通过隧道发送。新的帧头提供路由信息，以便通过互联网传递被封装的负载数据。",
+      "pagerank_score": 0.6127,
+      "is_active": true
+    },
+    {
+      "node_id": "N37",
+      "title": "Docker",
+      "difficulty": 0.75,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N01",
+        "N20",
+        "N35",
+        "N47",
+        "N65"
+      ],
+      "soft_prerequisites": [
+        "N11",
+        "N51",
+        "N66"
+      ],
+      "topic_tags": [],
+      "content_types": [
+        "code",
+        "diagram",
+        "text"
+      ],
+      "description": "Docker 是一个开源的应用容器引擎，让开发者可以打包他们的应用以及依赖包到一个可移植的容器中，然后发布到任何流行的 Linux 机器上，也可以实现虚拟化。容器是完全使用沙箱机制，相互之间不会有任何接口（类似 iPhone 的 app）。几乎没有性能开销,可以很容易地在机器和数据中心中运行。最重要的是,他们不依赖于任何语言、框架或包括系统。",
+      "pagerank_score": 4.2504,
+      "is_active": true
+    },
+    {
+      "node_id": "N38",
+      "title": "Kubernets",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：Kubernets",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N39",
+      "title": "多租户技术",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N71"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "多租户技术（英语：multi-tenancy technology）或称多重租赁技术，是一种软件架构技术，它是在探讨与实现如何于多用户的环境下共用相同的系统或程序组件，并且仍可确保各用户间数据的隔离性。|||由于云计算议题的发烧，在共用的数据中心内如何以单一系统架构与服务提供多数客户端相同甚至可定制化的服务，并且仍然可以保障客户的数据隔离，让多租户技术成为云计算技术下的显学。",
+      "pagerank_score": 0.3082,
+      "is_active": true
+    },
+    {
+      "node_id": "N40",
+      "title": "云原生",
+      "difficulty": 0.97,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02",
+        "N35"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：云原生",
+      "pagerank_score": 0.6,
+      "is_active": true
+    },
+    {
+      "node_id": "N41",
+      "title": "VMware",
+      "difficulty": 0.69,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N27",
+        "N66"
+      ],
+      "soft_prerequisites": [
+        "N27"
+      ],
+      "topic_tags": [
+        "N01",
+        "N02",
+        "N13",
+        "N16",
+        "N27"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "VMware（中文名威睿”，纽约证券交易所“代码：VMW） 虚拟机软件，是全球桌面到数据中心虚拟化解决方案的领导厂商。全球不同规模的客户依靠VMware来降低成本和运营费用、确保业务持续性、加强安全性并走向绿色。2008年，VMware年收入达到19亿美元，拥有逾150,000的用户和接近22,000多家合作伙伴，是增长最快的上市软件公司之一。VMware总部设在加利福尼亚州的帕罗奥多市（Palo Alto）。||| VMware（纽约证交所代码：VMW）在虚拟化和云计算基础架构领域处于全球领先地位，所提供的经客户验证的解决方案可通过降低复杂性以及更灵活、敏捷地交付服务来提高IT效率。VMware使企业可以采用能够解决其独有业务难题的云计算模式。VMware提供的方法可在保留现有投资并提高安全性和控制力的同时，加快向云计算的过度。 VMware拥有 400,000多家客户和55,000多家合作伙伴，它的解决方案可帮助各种规模的组织降低成本、提高业务灵活性并确保选择自由。",
+      "pagerank_score": 5.0815,
+      "is_active": true
+    },
+    {
+      "node_id": "N42",
+      "title": "云数据库",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N51"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：云数据库",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N43",
+      "title": "云存储数据中心",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：云存储数据中心",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N44",
+      "title": "硬件虚拟化",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "硬件虚拟化是一种对计算机或操作系统的虚拟。虚拟化对用户隐藏了真实的计算机硬件，表现出另一个抽象计算平台。",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N45",
+      "title": "结构化存储",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：结构化存储",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N46",
+      "title": "虚拟设备",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N78"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "通过虚拟技术将一台独占设备虚拟成多台逻辑设备，供多个用户进程同时使用， 通常把这种经过虚拟的设备称为虚拟设备。虚拟存储的发展借鉴了计算机领域里很多成功的设计思想，从虚存、磁盘技术、RAID到IBM的大型机等的设计思想中都汲取了许多成功的经验。",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N47",
+      "title": "API",
+      "difficulty": 0.85,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [
+        "N62"
+      ],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：API",
+      "pagerank_score": 2.6103,
+      "is_active": true
+    },
+    {
+      "node_id": "N48",
+      "title": "虚拟私有云",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：虚拟私有云",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N49",
+      "title": "云硬盘",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：云硬盘",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N50",
+      "title": "云存储",
+      "difficulty": 0.75,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "云存储是在云计算(cloud computing)概念上延伸和发展出来的一个新的概念，是一种新兴的网络存储技术，是指通过集群应用、网络技术或分布式文件系统等功能，将网络中大量各种不同类型的存储设备通过应用软件集合起来协同工作，共同对外提供数据存储和业务访问功能的一个系统。当云计算系统运算和处理的核心是大量数据的存储和管理时，云计算系统中就需要配置大量的存储设备，那么云计算系统就转变成为一个云存储系统，所以云存储是一个以数据存储和管理为核心的云计算系统。简单来说，云存储就是将储存资源放到云上供人存取的一种新兴方案。使用者可以在任何时间、任何地方，透过任何可连网的装置连接到云上方便地存取数据。",
+      "pagerank_score": 4.1975,
+      "is_active": true
+    },
+    {
+      "node_id": "N51",
+      "title": "阿里云",
+      "difficulty": 0.75,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N01",
+        "N02",
+        "N37"
+      ],
+      "soft_prerequisites": [
+        "N01",
+        "N02"
+      ],
+      "topic_tags": [
+        "N01",
+        "N02",
+        "N16",
+        "N41",
+        "N72"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "2009年9月，阿里巴巴集团在十周年庆典上宣布成立子公司“阿里云”，该公司将专注于云计算领域的研究和研发。“阿里云”也成为继阿里巴巴、淘宝、支付宝、阿里软件、中国雅虎之后的阿里巴巴集团第八家子公司。由阿里巴巴集团投资创办，在杭州、北京和硅谷等地设有研发中心和运营机构。阿里云的目标是要打造互联网数据分享的第一平台，成为以数据为中心的先进的云计算服务公司。2013年底阿里云正筹划进军海外云服务市场。根据计划，阿里云将在海外设立云数据中心，向部署海外业务的中国企业以及海外本土企业输出云计算服务能力。 |||2014年2月，阿里云击败IBM、甲骨文等国外厂商，与国内最大IT服务商东软集团结盟。|||2015年1月，12306网站75%的余票查询系统已经迁移至阿里云计算平台上。",
+      "pagerank_score": 4.2365,
+      "is_active": true
+    },
+    {
+      "node_id": "N52",
+      "title": "腾讯云",
+      "difficulty": 0.76,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [
+        "N01",
+        "N02",
+        "N29"
+      ],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "腾讯云有着深厚的基础架构，并且有着多年对海量互联网服务的经验，不管是社交、游戏还是其他领域，都有多年的成熟产品来提供产品服务。腾讯在云端完成重要部署，为开发者及企业提供云服务、云数据、云运营等整体一站式服务方案。具体包括云服务器、云存储、云数据库和弹性web引擎等基础云服务；腾讯云分析（MTA）、腾讯云推送（信鸽）等腾讯整体大数据能力；以及 QQ互联、QQ空间、微云、微社区等云端链接社交体系。这些正是腾讯云可以提供给这个行业的差异化优势，造就了可支持各种互联网使用场景的高品质的腾讯云技术平台。",
+      "pagerank_score": 3.943,
+      "is_active": true
+    },
+    {
+      "node_id": "N53",
+      "title": "百度云",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N01"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "百度云（Baidu Cloud）是百度推出的一项云存储服务，首次注册即有机会获得2T的空间，已覆盖主流PC和手机操作系统，包含Web版、Windows版、Mac版、Android版、iphone版和Windows Phone版，用户将可以轻松将自己的文件上传到网盘上，并可跨终端随时随地查看和分享。|||2013年8月22日，百度云推出“百度云用户破亿，基础服务震撼升级”活动，宣布提供2T永久免费容量和无限制离线下载服务。",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N54",
+      "title": "新浪云",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：新浪云",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N55",
+      "title": "网易云",
+      "difficulty": 0.91,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：网易云",
+      "pagerank_score": 1.5381,
+      "is_active": true
+    },
+    {
+      "node_id": "N56",
+      "title": "金山云",
+      "difficulty": 0.97,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N01",
+        "N02",
+        "N14",
+        "N19",
+        "N23"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：金山云",
+      "pagerank_score": 0.7218,
+      "is_active": true
+    },
+    {
+      "node_id": "N57",
+      "title": "华为云",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [
+        "N11"
+      ],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：华为云",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N58",
+      "title": "甲骨文云",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：甲骨文云",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N59",
+      "title": "Google云",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：Google云",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N60",
+      "title": "OpenStack",
+      "difficulty": 0.93,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [
+        "N02"
+      ],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "OpenStack是一个由NASA（美国国家航空航天局）和Rackspace合作研发并发起的，以Apache许可证授权的自由软件和开放源代码项目。|||OpenStack是一个开源的云计算管理平台项目，由几个主要的组件组合起来完成具体工作。OpenStack支持几乎所有类型的云环境，项目目标是提供实施简单、可大规模扩展、丰富、标准统一的云计算管理平台。OpenStack通过各种互补的服务提供了基础设施即服务（IaaS）的解决方案，每个服务提供API以进行集成。|||OpenStack是一个旨在为公共及私有云的建设与管理提供软件的开源项目。它的社区拥有超过130家企业及1350位开发者，这些机构与个人都将OpenStack作为基础设施即服务（IaaS）资源的通用前端。OpenStack项目的首要任务是简化云的部署过程并为其带来良好的可扩展性。本文希望通过提供必要的指导信息，帮助大家利用OpenStack前端来设置及管理自己的公共云或私有云。|||OpenStack云计算平台，帮助服务商和企业内部实现类似于 Amazon EC2 和 S3 的云基础架构服务(Infrastructure as a Service, IaaS)。OpenStack 包含两个主要模块：Nova 和 Swift，前者是 NASA 开发的虚拟服务器部署和业务计算模块；后者是 Rackspace开发的分布式云存储模块，两者可以一起用，也可以分开单独用。OpenStack除了有 Rackspace 和 NASA 的大力支持外，还有包括 Dell、Citrix、 Cisco、 Canonical等重量级公司的贡献和支持，发展速度非常快，有取代另一个业界领先开源云平台 Eucalyptus 的态势。",
+      "pagerank_score": 1.2598,
+      "is_active": true
+    },
+    {
+      "node_id": "N61",
+      "title": "GPGPU",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "GPGPU全称General Purpose GPU，即通用计算图形处理器。其中第一个“GP”通用目的（GeneralPurpose）而第二个“GP”则表示图形处理（GraphicProcess），这两个“GP”搭配起来即“通用图形处理”。再加上“U”(Unit)就成为了完整的通用处理器。 人们一直在寻找各种加速图像处理的方法，然而受到CPU本身在浮点计算能力上的限制，对于那些需要高密度计算的图像处理操作，过去传统的在CPU上实现的方法，并没有在处理性能与效率上有很大进步。随着可编程图形处理器单元(GPU)在性能上的飞速发展，利用GPU加速图像处理的技术逐渐成为研究热点。",
+      "pagerank_score": 0.4598,
+      "is_active": true
+    },
+    {
+      "node_id": "N62",
+      "title": "Azure",
+      "difficulty": 0.72,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N01",
+        "N02",
+        "N14",
+        "N66"
+      ],
+      "soft_prerequisites": [
+        "N01",
+        "N37"
+      ],
+      "topic_tags": [
+        "N02",
+        "N47"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Windows Azure是微软基于云计算的操作系统，和Azure Services Platform一样，是微软“软件和服务”技术的名称。Windows Azure的主要目标是为开发者提供一个平台，帮助开发可运行在云服务器、数据中心、Web和PC上的应用程序。云计算的开发者能使用微软全球数据中心的储存、计算能力和网络基础服务。Azure服务平台包括了以下主要组件：Windows Azure；MicrosoftSQL数据库服务，Microsoft .Net服务；用于分享、储存和同步文件的Live服务；针对商业的Microsoft SharePoint和Microsoft Dynamics CRM服务。",
+      "pagerank_score": 4.6522,
+      "is_active": true
+    },
+    {
+      "node_id": "N63",
+      "title": "Libvirt",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N27",
+        "N47"
+      ],
+      "soft_prerequisites": [
+        "N66"
+      ],
+      "topic_tags": [
+        "N47"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：Libvirt",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N64",
+      "title": "CloudStack",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [
+        "N01"
+      ],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：CloudStack",
+      "pagerank_score": 0.3874,
+      "is_active": true
+    },
+    {
+      "node_id": "N65",
+      "title": "DevOps",
+      "difficulty": 0.85,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "code",
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：DevOps",
+      "pagerank_score": 2.5769,
+      "is_active": true
+    },
+    {
+      "node_id": "N66",
+      "title": "虚拟机",
+      "difficulty": 0.21,
+      "est_minutes": 20,
+      "hard_prerequisites": [
+        "N27"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N11",
+        "N27"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "虚拟机（Virtual Machine）指通过软件模拟的具有完整硬件系统功能的、运行在一个完全隔离环境中的完整计算机系统。|||虚拟系统通过生成现有操作系统的全新虚拟镜像，它具有真实windows系统完全一样的功能，进入虚拟系统后，所有操作都是在这个全新的独立的虚拟系统里面进行，可以独立安装运行软件，保存数据，拥有自己的独立桌面，不会对真正的系统产生任何影响 ，而且具有能够在现有系统与虚拟镜像之间灵活切换的一类操作系统。虚拟系统和传统的虚拟机（Parallels Desktop ，Vmware，VirtualBox，Virtual pc）不同在于：虚拟系统不会降低电脑的性能，启动虚拟系统不需要像启动windows系统那样耗费时间，运行程序更加方便快捷；虚拟系统只能模拟和现有操作系统相同的环境，而虚拟机则可以模拟出其他种类的操作系统；而且虚拟机需要模拟底层的硬件指令，所以在应用程序运行速度上比虚拟系统慢得多。|||流行的虚拟机软件有VMware(VMWare ACE）、Virtual Box和Virtual PC，它们都能在Windows系统上虚拟出多个计算机。",
+      "pagerank_score": 12.8783,
+      "is_active": true
+    },
+    {
+      "node_id": "N67",
+      "title": "OneDrive",
+      "difficulty": 0.97,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N50"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "2014年1月，美国微软公司正式宣布SkyDrive更名为OneDrive。|||微软在YouTube宣布将旗下的云存储服务SkyDrive更名为OneDrive，是为了解决与英国天空广播公司的商标雷同案件。 |||2014年2月19日，微软正式宣布OneDrive云存储服务上线，支持100多种语言，面向全球替代微软SkyDrive。 2014年3月5日，OneDrive正式登陆黑莓BB10，支持Z10/Z30/Q5/Q10等机型。",
+      "pagerank_score": 0.6805,
+      "is_active": true
+    },
+    {
+      "node_id": "N68",
+      "title": "Rackspace",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [
+        "N01"
+      ],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Rackspace （NYSE：RAX）全球三大云计算中心之一，1998年成立，是一家全球领先的托管服务器及云计算提供商，公司总部位于美国，在英国，澳大利亚，瑞士，荷兰及香港设有分部。在全球拥有10个以上数据中心，管理超过10万台服务器。Rackspace的托管服务产品包括专用服务器，电子邮件，SharePoint，云服务器，云存储，云网站等。在服务架构上提供专用托管，公有云，私有云及混合云。",
+      "pagerank_score": 0.3874,
+      "is_active": true
+    },
+    {
+      "node_id": "N69",
+      "title": "IBM云",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：IBM云",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N70",
+      "title": "Bluemix",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：Bluemix",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N71",
+      "title": "虚拟化平台",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "虚拟化平台指极通EWEBS 2008是一种应用虚拟化平台软件，其主要功能是向企业提供最佳性能、灵活快捷的应用交付服务。",
+      "pagerank_score": 0.4568,
+      "is_active": true
+    },
+    {
+      "node_id": "N72",
+      "title": "大数据平台",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：大数据平台",
+      "pagerank_score": 0.1895,
+      "is_active": true
+    },
+    {
+      "node_id": "N73",
+      "title": "Web服务",
+      "difficulty": 0.96,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N47"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：Web服务",
+      "pagerank_score": 0.7878,
+      "is_active": true
+    },
+    {
+      "node_id": "N74",
+      "title": "EC2",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：EC2",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N75",
+      "title": "Xen",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Xen 是一个开放源代码虚拟机监视器，由剑桥大学开发。它打算在单个计算机上运行多达100个满特征的操作系统。操作系统必须进行显式地修改（“移植”）以在Xen上运行（但是提供对用户应用的兼容性）。这使得Xen无需特殊硬件支持，就能达到高性能的虚拟化。",
+      "pagerank_score": 0.3738,
+      "is_active": true
+    },
+    {
+      "node_id": "N76",
+      "title": "Hadoop",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N62"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：Hadoop",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N77",
+      "title": "分布式文件系统",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：分布式文件系统",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N78",
+      "title": "云部署",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：云部署",
+      "pagerank_score": 0.2596,
+      "is_active": true
+    },
+    {
+      "node_id": "N79",
+      "title": "FusionManager",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "FusionManager是华为公司提供的面向硬件设备、虚拟化资源与应用的管理软件。华为FusionManager是云管理系统，通过统一的接口，对计算、网络和存储等虚拟资源进行集中调度和管理，提升运维效率，保证系统的安全性和可靠性，帮助运营商和企业构筑安全、绿色、节能的云数据中心。",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N80",
+      "title": "云盘",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "学习云计算课程中的重要概念：云盘",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    }
+  ],
+  "edges": [
+    {
+      "source": "N62",
+      "target": "N66",
+      "relation": "包含",
+      "type": "hard"
+    },
+    {
+      "source": "N62",
+      "target": "N02",
+      "relation": "缺乏",
+      "type": "soft"
+    },
+    {
+      "source": "N62",
+      "target": "N14",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N62",
+      "target": "N01",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N62",
+      "target": "N66",
+      "relation": "部署",
+      "type": "hard"
+    },
+    {
+      "source": "N62",
+      "target": "N02",
+      "relation": "源于",
+      "type": "hard"
+    },
+    {
+      "source": "N76",
+      "target": "N62",
+      "relation": "更新",
+      "type": "soft"
+    },
+    {
+      "source": "N47",
+      "target": "N62",
+      "relation": "合称",
+      "type": "soft"
+    },
+    {
+      "source": "N20",
+      "target": "N62",
+      "relation": "使用",
+      "type": "hard"
+    },
+    {
+      "source": "N23",
+      "target": "N73",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N24",
+      "target": "N47",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N64",
+      "target": "N02",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N64",
+      "target": "N01",
+      "relation": "方便",
+      "type": "soft"
+    },
+    {
+      "source": "N64",
+      "target": "N02",
+      "relation": "利用",
+      "type": "hard"
+    },
+    {
+      "source": "N02",
+      "target": "N65",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N62",
+      "target": "N37",
+      "relation": "运行",
+      "type": "soft"
+    },
+    {
+      "source": "N37",
+      "target": "N11",
+      "relation": "旨在",
+      "type": "soft"
+    },
+    {
+      "source": "N37",
+      "target": "N66",
+      "relation": "简单",
+      "type": "soft"
+    },
+    {
+      "source": "N37",
+      "target": "N35",
+      "relation": "利用",
+      "type": "hard"
+    },
+    {
+      "source": "N35",
+      "target": "N37",
+      "relation": "没有像",
+      "type": "soft"
+    },
+    {
+      "source": "N37",
+      "target": "N65",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N37",
+      "target": "N51",
+      "relation": "选择",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N37",
+      "relation": "获得",
+      "type": "hard"
+    },
+    {
+      "source": "N37",
+      "target": "N01",
+      "relation": "支持",
+      "type": "hard"
+    },
+    {
+      "source": "N51",
+      "target": "N01",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N37",
+      "target": "N20",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N37",
+      "target": "N47",
+      "relation": "使用",
+      "type": "hard"
+    },
+    {
+      "source": "N66",
+      "target": "N11",
+      "relation": "付费",
+      "type": "soft"
+    },
+    {
+      "source": "N21",
+      "target": "N02",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N68",
+      "target": "N02",
+      "relation": "推出",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "专注",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N63",
+      "target": "N27",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N63",
+      "target": "N66",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N63",
+      "target": "N47",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N63",
+      "target": "N47",
+      "relation": "设计",
+      "type": "soft"
+    },
+    {
+      "source": "N32",
+      "target": "N27",
+      "relation": "指",
+      "type": "soft"
+    },
+    {
+      "source": "N32",
+      "target": "N33",
+      "relation": "采用",
+      "type": "soft"
+    },
+    {
+      "source": "N67",
+      "target": "N50",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N27",
+      "target": "N75",
+      "relation": "包括",
+      "type": "soft"
+    },
+    {
+      "source": "N60",
+      "target": "N02",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N60",
+      "target": "N02",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N60",
+      "target": "N02",
+      "relation": "成为",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N60",
+      "relation": "开发",
+      "type": "soft"
+    },
+    {
+      "source": "N63",
+      "target": "N27",
+      "relation": "支持",
+      "type": "hard"
+    },
+    {
+      "source": "N02",
+      "target": "N03",
+      "relation": "称为",
+      "type": "soft"
+    },
+    {
+      "source": "N20",
+      "target": "N21",
+      "relation": "推进",
+      "type": "soft"
+    },
+    {
+      "source": "N73",
+      "target": "N47",
+      "relation": "使用",
+      "type": "hard"
+    },
+    {
+      "source": "N20",
+      "target": "N02",
+      "relation": "支撑",
+      "type": "soft"
+    },
+    {
+      "source": "N21",
+      "target": "N19",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N20",
+      "target": "N21",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N19",
+      "target": "N47",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N21",
+      "relation": "分为",
+      "type": "soft"
+    },
+    {
+      "source": "N21",
+      "target": "N02",
+      "relation": "不是",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N21",
+      "relation": "等于",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N21",
+      "relation": "推动",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N27",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N41",
+      "target": "N01",
+      "relation": "具备",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N16",
+      "relation": "拓展",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "包含",
+      "type": "hard"
+    },
+    {
+      "source": "N27",
+      "target": "N41",
+      "relation": "发布",
+      "type": "soft"
+    },
+    {
+      "source": "N27",
+      "target": "N41",
+      "relation": "为",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "提高",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N13",
+      "relation": "宣布",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N01",
+      "relation": "宣布",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N27",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N27",
+      "relation": "提出",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "创建",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "帮助",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "产生",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "推出",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N16",
+      "relation": "面向",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N02",
+      "relation": "发布",
+      "type": "soft"
+    },
+    {
+      "source": "N18",
+      "target": "N66",
+      "relation": "叫",
+      "type": "soft"
+    },
+    {
+      "source": "N18",
+      "target": "N27",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N40",
+      "target": "N35",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N40",
+      "target": "N02",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N02",
+      "target": "N03",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N16",
+      "target": "N50",
+      "relation": "存储",
+      "type": "soft"
+    },
+    {
+      "source": "N62",
+      "target": "N47",
+      "relation": "允许",
+      "type": "soft"
+    },
+    {
+      "source": "N01",
+      "target": "N27",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N68",
+      "target": "N01",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N04",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N01",
+      "target": "N04",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N27",
+      "target": "N02",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N50",
+      "target": "N02",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N02",
+      "target": "N12",
+      "relation": "依赖于",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N01",
+      "relation": "发展",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N02",
+      "relation": "表示",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N02",
+      "relation": "认为",
+      "type": "soft"
+    },
+    {
+      "source": "N01",
+      "target": "N11",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N13",
+      "target": "N01",
+      "relation": "表示",
+      "type": "soft"
+    },
+    {
+      "source": "N62",
+      "target": "N01",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N03",
+      "target": "N04",
+      "relation": "就是",
+      "type": "soft"
+    },
+    {
+      "source": "N57",
+      "target": "N02",
+      "relation": "致力",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N11",
+      "relation": "在于",
+      "type": "soft"
+    },
+    {
+      "source": "N57",
+      "target": "N11",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N57",
+      "target": "N02",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N39",
+      "target": "N71",
+      "relation": "驾驭",
+      "type": "soft"
+    },
+    {
+      "source": "N35",
+      "target": "N66",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N35",
+      "target": "N41",
+      "relation": "促使",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N03",
+      "relation": "继",
+      "type": "soft"
+    },
+    {
+      "source": "N12",
+      "target": "N02",
+      "relation": "使",
+      "type": "soft"
+    },
+    {
+      "source": "N16",
+      "target": "N14",
+      "relation": "融合",
+      "type": "soft"
+    },
+    {
+      "source": "N16",
+      "target": "N15",
+      "relation": "利用",
+      "type": "hard"
+    },
+    {
+      "source": "N15",
+      "target": "N14",
+      "relation": "作为",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N14",
+      "relation": "显示",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N01",
+      "relation": "发布",
+      "type": "soft"
+    },
+    {
+      "source": "N09",
+      "target": "N11",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N53",
+      "target": "N01",
+      "relation": "成为",
+      "type": "soft"
+    },
+    {
+      "source": "N27",
+      "target": "N15",
+      "relation": "要求",
+      "type": "soft"
+    },
+    {
+      "source": "N20",
+      "target": "N14",
+      "relation": "跨",
+      "type": "soft"
+    },
+    {
+      "source": "N15",
+      "target": "N31",
+      "relation": "具备",
+      "type": "soft"
+    },
+    {
+      "source": "N55",
+      "target": "N02",
+      "relation": "推出",
+      "type": "soft"
+    },
+    {
+      "source": "N03",
+      "target": "N02",
+      "relation": "不同",
+      "type": "soft"
+    },
+    {
+      "source": "N03",
+      "target": "N04",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N32",
+      "target": "N33",
+      "relation": "腾飞",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N52",
+      "relation": "显示",
+      "type": "soft"
+    },
+    {
+      "source": "N52",
+      "target": "N29",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N52",
+      "target": "N02",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N52",
+      "target": "N01",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N52",
+      "target": "N02",
+      "relation": "发布",
+      "type": "soft"
+    },
+    {
+      "source": "N66",
+      "target": "N27",
+      "relation": "有助于",
+      "type": "soft"
+    },
+    {
+      "source": "N66",
+      "target": "N27",
+      "relation": "提升",
+      "type": "soft"
+    },
+    {
+      "source": "N03",
+      "target": "N27",
+      "relation": "利用",
+      "type": "hard"
+    },
+    {
+      "source": "N03",
+      "target": "N27",
+      "relation": "进行",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N27",
+      "relation": "引入",
+      "type": "soft"
+    },
+    {
+      "source": "N66",
+      "target": "N27",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N66",
+      "target": "N27",
+      "relation": "受益",
+      "type": "soft"
+    },
+    {
+      "source": "N46",
+      "target": "N78",
+      "relation": "减轻",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N14",
+      "relation": "跻身",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N02",
+      "relation": "存储入选",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N01",
+      "relation": "荣获",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N01",
+      "relation": "位列",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N19",
+      "relation": "排名",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N01",
+      "relation": "成为",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N23",
+      "relation": "提供包括区块链底层系统SDK浏览器运维平台等配套",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N02",
+      "relation": "获得",
+      "type": "hard"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "表示",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N51",
+      "relation": "公布",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "拓展",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N72",
+      "relation": "发布",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "成为",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "开始",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "发挥",
+      "type": "soft"
+    },
+    {
+      "source": "N42",
+      "target": "N51",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N51",
+      "target": "N01",
+      "relation": "得到",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N01",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "成立",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N01",
+      "relation": "推出",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "宣布",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N41",
+      "relation": "宣布",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N16",
+      "relation": "宣布",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "打造",
+      "type": "soft"
+    },
+    {
+      "source": "N07",
+      "target": "N04",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N07",
+      "target": "N02",
+      "relation": "是",
+      "type": "hard"
+    },
+    {
+      "source": "N02",
+      "target": "N07",
+      "relation": "提供",
+      "type": "soft"
+    },
+    {
+      "source": "N08",
+      "target": "N02",
+      "relation": "就算是",
+      "type": "soft"
+    }
+  ]
+}

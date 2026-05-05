@@ -1,0 +1,26 @@
+VPC是一个多义的英文缩写词，主要有两个意思，一是指韦和气动公司，是我国一家专门生产气动元件的公司。
+二是指一种电脑技术，即是微软技术，也就是在一台计算机上运行多个操作系统的技术。
+韦和气动专业生产气动元件、气动成套设备、及各种气动附件，并根据客户的需求提供各种自动化解决方案，公司集设计、生产、销售为一体。
+主要产品包括气缸、阀 、气源处理件，气管和接头等。
+产品广泛应用于汽车、电子、食品加工和包装、水处理、化工、橡胶、塑料、纺织、机床、造纸和印刷等行业。
+ 韦和音译"WELL"，更高、更好的品质是我们韦和人一贯的追求，公司依托现代化的企业管理和优秀高效的团队，凭借先进的设备与丰富的生产经验，为客户提供全面、优质的解决方案。
+好品质是我们不懈的追求，真诚心是我们永恒的态度。
+志存高远，锐意进取，公司将继续以良好的信誉为基础，秉承稳固与发展、求实与创新的精神，努力打造中国气动新行标。
+[1]韦和气动正在世界各地的新兴市场建立国际营销网络，用我们的高品质优势产品与技术快速响应国际市场的需求，从美国、欧洲再到中东、印度、俄罗斯、日本、韩国的亚太地区，再到非洲…我们的脚步在继续！在我们业务不断向全球市场扩展的过程中，利用我们的智力、资源、技术、产品应用以可持续发展的方式进行发展并惠及我们的投资者、客户、员工和社会。
+1、Windows Virtual PC，简称VPC，也叫微软虚拟机，是一款微软虚拟化软件。
+与VMware、VirtualBox齐名。
+使用此技术在一台计算机上同时运行多个操作系统。
+2、Microsoft Virtual PC，微软虚拟机，与Windows VPC功能基本相同，但能够支持更多系统。
+Windows Virtual PC系统要求：Windows 7 家庭普通版、Windows 7 家庭高级版、Windows 7 专业版、Windows 7 旗舰版、Windows 7 企业版。
+内存：2GB 内存。
+硬盘要求：安装 Windows Virtual PC 需要 20GB 硬盘空间。
+简介：主要搭配XP Mode使用。
+完全支持的虚拟系统：Windows 7，Vista除家庭版以外，XP专业版。
+[2]Microsoft Virtual PC1、VPC2004系统要求：Windows 2000 SP4及以上，Server 2003 32位，XP SP2及以上CPU：最低400Mhz单核。
+内存：推荐256MB以上。
+完全支持的虚拟系统：Windows XP，Server 2003，2000，ME，98，NT 4.0，95，IBM OS/2，MS-DOS 6.22及以上。
+2、VPC2007系统要求：Windows Vista除家庭版以外、Windows Server 2003、Windows Server 2008、Windows XP sp2及以上、Windows 7。
+CPU：最低400Mhz单核。
+内存：推荐256MB以上。
+完全支持的虚拟系统：Windows Vista，Server 2003，XP，2000 SP3及以上，ME，98第二版，NT 4.0 SP6及以上，IBM OS/2，MS-DOS 6.22及以上。
+客户端▪ 网页浏览器▪ 智能手机▪ 上网本▪ Nettop应用▪ SAP OnDemand Solutions▪ Google Apps▪ Microsoft Online▪ NetSuite▪ SalesForce平台▪ App Engine▪ Windows Azure▪ Engine Yard▪ Force.com▪ Heroku▪ MTurk▪ RightScale▪ Amazon S3▪ SimpleDB▪ SQS基础设施▪ EC2▪ Eucalyptus▪ FlexiScale▪ GoGrid▪ Nimbus▪ OpenStack▪ Rackspace Cloud▪ VPC类型▪ SaaS▪ PaaS▪ IaaS▪ CaaS技术▪ 网络▪ 数据中心▪ 分散式档案系统▪ 硬件虚拟化▪ Web服务▪ 虚拟设备▪ 多租户技术标准▪ Ajax▪ Atom▪ HTML5▪ REST▪ XMPP▪ BitTorrent。

@@ -1,0 +1,2450 @@
+{
+  "course_id": "cloud-computing",
+  "course_name": "Cloud Computing Fundamentals",
+  "description": "Comprehensive cloud computing course covering virtualization, containers, orchestration, and cloud services",
+  "total_nodes": 80,
+  "total_edges": 159,
+  "nodes": [
+    {
+      "node_id": "N01",
+      "title": "Cloud Services",
+      "difficulty": 0.61,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N04",
+        "N11",
+        "N27"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "Cloud services refer to infrastructure, platforms, or software hosted by third-party providers and made available to users through the internet.",
+      "pagerank_score": 6.3734,
+      "is_active": true
+    },
+    {
+      "node_id": "N02",
+      "title": "Cloud Computing",
+      "difficulty": 0.0,
+      "est_minutes": 20,
+      "hard_prerequisites": [
+        "N03",
+        "N04",
+        "N65"
+      ],
+      "soft_prerequisites": [
+        "N07"
+      ],
+      "topic_tags": [
+        "N01",
+        "N03",
+        "N11",
+        "N12",
+        "N21"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Cloud computing is the on-demand delivery of IT resources over the internet with pay-as-you-go pricing, enabling faster innovation and flexible resources.",
+      "pagerank_score": 16.1996,
+      "is_active": true
+    },
+    {
+      "node_id": "N03",
+      "title": "Grid Computing",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N04",
+        "N27"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02",
+        "N04",
+        "N27"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Grid computing is a distributed computing model that coordinates networked computers to work together as a virtual supercomputer.",
+      "pagerank_score": 0.4346,
+      "is_active": true
+    },
+    {
+      "node_id": "N04",
+      "title": "Distributed Computing",
+      "difficulty": 0.83,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Distributed computing is a model in which components of a software system are shared among multiple computers to improve efficiency and performance.",
+      "pagerank_score": 2.8205,
+      "is_active": true
+    },
+    {
+      "node_id": "N05",
+      "title": "Parallel Computing",
+      "difficulty": 0.97,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Parallel computing is a type of computation where many calculations or processes are carried out simultaneously on multiple processors.",
+      "pagerank_score": 0.6046,
+      "is_active": true
+    },
+    {
+      "node_id": "N06",
+      "title": "Concurrent Computing",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Concurrent computing is a form of computing in which several computations are executed concurrently during overlapping time periods.",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N07",
+      "title": "Fog Computing",
+      "difficulty": 0.95,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02",
+        "N04"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Fog computing extends cloud computing to the edge of the network, providing data, compute, storage, and application services to end-users.",
+      "pagerank_score": 0.893,
+      "is_active": true
+    },
+    {
+      "node_id": "N08",
+      "title": "Haze Computing",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Haze Computing in cloud computing environments.",
+      "pagerank_score": 0.4598,
+      "is_active": true
+    },
+    {
+      "node_id": "N09",
+      "title": "Edge Computing",
+      "difficulty": 0.95,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [
+        "N11"
+      ],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Edge computing is a distributed computing paradigm that brings computation and data storage closer to the sources of data.",
+      "pagerank_score": 1.044,
+      "is_active": true
+    },
+    {
+      "node_id": "N10",
+      "title": "Granular Computing",
+      "difficulty": 0.92,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Granular Computing in cloud computing environments.",
+      "pagerank_score": 1.4747,
+      "is_active": true
+    },
+    {
+      "node_id": "N11",
+      "title": "Elastic Computing",
+      "difficulty": 0.95,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Elastic computing enables dynamic provisioning and de-provisioning of resources to meet workload demands automatically.",
+      "pagerank_score": 0.9988,
+      "is_active": true
+    },
+    {
+      "node_id": "N12",
+      "title": "Utility Computing",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Utility computing is a service provisioning model where a provider makes computing resources available as needed and charges for specific usage.",
+      "pagerank_score": 0.5311,
+      "is_active": true
+    },
+    {
+      "node_id": "N13",
+      "title": "IDC",
+      "difficulty": 0.9,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N01",
+        "N02",
+        "N14",
+        "N21",
+        "N51"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about IDC in cloud computing environments.",
+      "pagerank_score": 1.728,
+      "is_active": true
+    },
+    {
+      "node_id": "N14",
+      "title": "Public Cloud",
+      "difficulty": 0.86,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Public Cloud in cloud computing environments.",
+      "pagerank_score": 2.3634,
+      "is_active": true
+    },
+    {
+      "node_id": "N15",
+      "title": "Private Cloud",
+      "difficulty": 0.81,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N14",
+        "N31"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Private Cloud in cloud computing environments.",
+      "pagerank_score": 3.2061,
+      "is_active": true
+    },
+    {
+      "node_id": "N16",
+      "title": "Hybrid Cloud",
+      "difficulty": 0.85,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N15"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N14",
+        "N50"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Hybrid Cloud in cloud computing environments.",
+      "pagerank_score": 2.5653,
+      "is_active": true
+    },
+    {
+      "node_id": "N17",
+      "title": "Multi-Cloud Strategy",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Multi-Cloud Strategy in cloud computing environments.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N18",
+      "title": "VPC",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N27"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N66"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about VPC in cloud computing environments.",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N19",
+      "title": "IaaS",
+      "difficulty": 0.89,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [
+        "N47"
+      ],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "Learn about IaaS in cloud computing environments.",
+      "pagerank_score": 1.8672,
+      "is_active": true
+    },
+    {
+      "node_id": "N20",
+      "title": "PaaS",
+      "difficulty": 0.89,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N21",
+        "N62"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02",
+        "N14",
+        "N21"
+      ],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "Learn about PaaS in cloud computing environments.",
+      "pagerank_score": 1.9404,
+      "is_active": true
+    },
+    {
+      "node_id": "N21",
+      "title": "SaaS",
+      "difficulty": 0.78,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02",
+        "N19"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "Learn about SaaS in cloud computing environments.",
+      "pagerank_score": 3.7031,
+      "is_active": true
+    },
+    {
+      "node_id": "N22",
+      "title": "FaaS",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about FaaS in cloud computing environments.",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N23",
+      "title": "BaaS",
+      "difficulty": 0.96,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N73"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about BaaS in cloud computing environments.",
+      "pagerank_score": 0.7579,
+      "is_active": true
+    },
+    {
+      "node_id": "N24",
+      "title": "CaaS",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N47"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about CaaS in cloud computing environments.",
+      "pagerank_score": 0.3874,
+      "is_active": true
+    },
+    {
+      "node_id": "N25",
+      "title": "MaaS",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about MaaS in cloud computing environments.",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N26",
+      "title": "NaaS",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about NaaS in cloud computing environments.",
+      "pagerank_score": 0.4804,
+      "is_active": true
+    },
+    {
+      "node_id": "N27",
+      "title": "Virtualization",
+      "difficulty": 0.41,
+      "est_minutes": 30,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N15",
+        "N41",
+        "N75"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Virtualization is the creation of a virtual version of something, such as server resources, storage devices, or network resources.",
+      "pagerank_score": 9.6379,
+      "is_active": true
+    },
+    {
+      "node_id": "N28",
+      "title": "Serverless Computing",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "Serverless computing is a cloud computing execution model where the cloud provider dynamically manages the allocation of machine resources.",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N29",
+      "title": "Load Balancing",
+      "difficulty": 0.9,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Load balancing is the process of distributing network traffic across multiple servers to ensure no single server bears too much demand.",
+      "pagerank_score": 1.7391,
+      "is_active": true
+    },
+    {
+      "node_id": "N30",
+      "title": "SOA",
+      "difficulty": 0.93,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about SOA in cloud computing environments.",
+      "pagerank_score": 1.2922,
+      "is_active": true
+    },
+    {
+      "node_id": "N31",
+      "title": "Microservices",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "Microservices architecture structures an application as a collection of loosely coupled, independently deployable services.",
+      "pagerank_score": 0.3556,
+      "is_active": true
+    },
+    {
+      "node_id": "N32",
+      "title": "NFV",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N27",
+        "N33"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about NFV in cloud computing environments.",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N33",
+      "title": "SDN",
+      "difficulty": 0.81,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about SDN in cloud computing environments.",
+      "pagerank_score": 3.239,
+      "is_active": true
+    },
+    {
+      "node_id": "N34",
+      "title": "SAN",
+      "difficulty": 0.92,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about SAN in cloud computing environments.",
+      "pagerank_score": 1.4004,
+      "is_active": true
+    },
+    {
+      "node_id": "N35",
+      "title": "Container Technology",
+      "difficulty": 0.93,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N66"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N37",
+        "N41"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Container technology enables applications to run reliably when moved from one computing environment to another by packaging code with its dependencies.",
+      "pagerank_score": 1.213,
+      "is_active": true
+    },
+    {
+      "node_id": "N36",
+      "title": "Tunneling Technology",
+      "difficulty": 0.97,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Tunneling Technology in cloud computing environments.",
+      "pagerank_score": 0.6127,
+      "is_active": true
+    },
+    {
+      "node_id": "N37",
+      "title": "Docker",
+      "difficulty": 0.75,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N01",
+        "N20",
+        "N35",
+        "N47",
+        "N65"
+      ],
+      "soft_prerequisites": [
+        "N11",
+        "N51",
+        "N66"
+      ],
+      "topic_tags": [],
+      "content_types": [
+        "code",
+        "diagram",
+        "text"
+      ],
+      "description": "Docker is an open platform for developing, shipping, and running applications in containers, enabling consistent environments across development and production.",
+      "pagerank_score": 4.2504,
+      "is_active": true
+    },
+    {
+      "node_id": "N38",
+      "title": "Kubernets",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Kubernetes is an open-source container orchestration platform for automating deployment, scaling, and management of containerized applications.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N39",
+      "title": "Multi-Tenancy",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N71"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Multi-Tenancy in cloud computing environments.",
+      "pagerank_score": 0.3082,
+      "is_active": true
+    },
+    {
+      "node_id": "N40",
+      "title": "Cloud Native",
+      "difficulty": 0.97,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02",
+        "N35"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Cloud native is an approach to building and running applications that exploits the advantages of the cloud computing delivery model.",
+      "pagerank_score": 0.6,
+      "is_active": true
+    },
+    {
+      "node_id": "N41",
+      "title": "VMware",
+      "difficulty": 0.69,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N27",
+        "N66"
+      ],
+      "soft_prerequisites": [
+        "N27"
+      ],
+      "topic_tags": [
+        "N01",
+        "N02",
+        "N13",
+        "N16",
+        "N27"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about VMware in cloud computing environments.",
+      "pagerank_score": 5.0815,
+      "is_active": true
+    },
+    {
+      "node_id": "N42",
+      "title": "Cloud Database",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N51"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Cloud Database in cloud computing environments.",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N43",
+      "title": "Cloud Storage Data Center",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Cloud Storage Data Center in cloud computing environments.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N44",
+      "title": "Hardware Virtualization",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Hardware Virtualization in cloud computing environments.",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N45",
+      "title": "Structured Storage",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Structured Storage in cloud computing environments.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N46",
+      "title": "Virtual Appliance",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N78"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Virtual Appliance in cloud computing environments.",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N47",
+      "title": "API",
+      "difficulty": 0.85,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [
+        "N62"
+      ],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about API in cloud computing environments.",
+      "pagerank_score": 2.6103,
+      "is_active": true
+    },
+    {
+      "node_id": "N48",
+      "title": "Virtual Private Cloud",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Virtual Private Cloud in cloud computing environments.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N49",
+      "title": "Cloud Block Storage",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Cloud Block Storage in cloud computing environments.",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N50",
+      "title": "Cloud Storage",
+      "difficulty": 0.75,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Cloud Storage in cloud computing environments.",
+      "pagerank_score": 4.1975,
+      "is_active": true
+    },
+    {
+      "node_id": "N51",
+      "title": "Alibaba Cloud",
+      "difficulty": 0.75,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N01",
+        "N02",
+        "N37"
+      ],
+      "soft_prerequisites": [
+        "N01",
+        "N02"
+      ],
+      "topic_tags": [
+        "N01",
+        "N02",
+        "N16",
+        "N41",
+        "N72"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Alibaba Cloud in cloud computing environments.",
+      "pagerank_score": 4.2365,
+      "is_active": true
+    },
+    {
+      "node_id": "N52",
+      "title": "Tencent Cloud",
+      "difficulty": 0.76,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [
+        "N01",
+        "N02",
+        "N29"
+      ],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Tencent Cloud in cloud computing environments.",
+      "pagerank_score": 3.943,
+      "is_active": true
+    },
+    {
+      "node_id": "N53",
+      "title": "Baidu Cloud",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N01"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Baidu Cloud in cloud computing environments.",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N54",
+      "title": "Sina Cloud",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Sina Cloud in cloud computing environments.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N55",
+      "title": "NetEase Cloud",
+      "difficulty": 0.91,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about NetEase Cloud in cloud computing environments.",
+      "pagerank_score": 1.5381,
+      "is_active": true
+    },
+    {
+      "node_id": "N56",
+      "title": "Kingsoft Cloud",
+      "difficulty": 0.97,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N01",
+        "N02",
+        "N14",
+        "N19",
+        "N23"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Kingsoft Cloud in cloud computing environments.",
+      "pagerank_score": 0.7218,
+      "is_active": true
+    },
+    {
+      "node_id": "N57",
+      "title": "Huawei Cloud",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [
+        "N11"
+      ],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Huawei Cloud in cloud computing environments.",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N58",
+      "title": "Oracle Cloud",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Oracle Cloud in cloud computing environments.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N59",
+      "title": "Google Cloud",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Google Cloud in cloud computing environments.",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N60",
+      "title": "OpenStack",
+      "difficulty": 0.93,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [
+        "N02"
+      ],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about OpenStack in cloud computing environments.",
+      "pagerank_score": 1.2598,
+      "is_active": true
+    },
+    {
+      "node_id": "N61",
+      "title": "GPGPU",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about GPGPU in cloud computing environments.",
+      "pagerank_score": 0.4598,
+      "is_active": true
+    },
+    {
+      "node_id": "N62",
+      "title": "Azure",
+      "difficulty": 0.72,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N01",
+        "N02",
+        "N14",
+        "N66"
+      ],
+      "soft_prerequisites": [
+        "N01",
+        "N37"
+      ],
+      "topic_tags": [
+        "N02",
+        "N47"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Azure in cloud computing environments.",
+      "pagerank_score": 4.6522,
+      "is_active": true
+    },
+    {
+      "node_id": "N63",
+      "title": "Libvirt",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N27",
+        "N47"
+      ],
+      "soft_prerequisites": [
+        "N66"
+      ],
+      "topic_tags": [
+        "N47"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Libvirt in cloud computing environments.",
+      "pagerank_score": 0.315,
+      "is_active": true
+    },
+    {
+      "node_id": "N64",
+      "title": "CloudStack",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N02"
+      ],
+      "soft_prerequisites": [
+        "N01"
+      ],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about CloudStack in cloud computing environments.",
+      "pagerank_score": 0.3874,
+      "is_active": true
+    },
+    {
+      "node_id": "N65",
+      "title": "DevOps",
+      "difficulty": 0.85,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "code",
+        "diagram",
+        "text"
+      ],
+      "description": "DevOps is a set of practices that combines software development and IT operations to shorten the systems development life cycle.",
+      "pagerank_score": 2.5769,
+      "is_active": true
+    },
+    {
+      "node_id": "N66",
+      "title": "Virtual Machine",
+      "difficulty": 0.21,
+      "est_minutes": 20,
+      "hard_prerequisites": [
+        "N27"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N11",
+        "N27"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "A virtual machine is a software emulation of a physical computer that can run programs and operating systems like a physical computer.",
+      "pagerank_score": 12.8783,
+      "is_active": true
+    },
+    {
+      "node_id": "N67",
+      "title": "OneDrive",
+      "difficulty": 0.97,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N50"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about OneDrive in cloud computing environments.",
+      "pagerank_score": 0.6805,
+      "is_active": true
+    },
+    {
+      "node_id": "N68",
+      "title": "Rackspace",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [
+        "N01"
+      ],
+      "topic_tags": [
+        "N02"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Rackspace in cloud computing environments.",
+      "pagerank_score": 0.3874,
+      "is_active": true
+    },
+    {
+      "node_id": "N69",
+      "title": "IBM Cloud",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about IBM Cloud in cloud computing environments.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N70",
+      "title": "Bluemix",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Bluemix in cloud computing environments.",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N71",
+      "title": "Virtualization Platform",
+      "difficulty": 0.98,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Virtualization Platform in cloud computing environments.",
+      "pagerank_score": 0.4568,
+      "is_active": true
+    },
+    {
+      "node_id": "N72",
+      "title": "Big Data Platform",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Big Data Platform in cloud computing environments.",
+      "pagerank_score": 0.1895,
+      "is_active": true
+    },
+    {
+      "node_id": "N73",
+      "title": "Web Services",
+      "difficulty": 0.96,
+      "est_minutes": 45,
+      "hard_prerequisites": [
+        "N47"
+      ],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "interactive",
+        "text"
+      ],
+      "description": "Learn about Web Services in cloud computing environments.",
+      "pagerank_score": 0.7878,
+      "is_active": true
+    },
+    {
+      "node_id": "N74",
+      "title": "EC2",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about EC2 in cloud computing environments.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N75",
+      "title": "Xen",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Xen in cloud computing environments.",
+      "pagerank_score": 0.3738,
+      "is_active": true
+    },
+    {
+      "node_id": "N76",
+      "title": "Hadoop",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [
+        "N62"
+      ],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Hadoop in cloud computing environments.",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    },
+    {
+      "node_id": "N77",
+      "title": "Distributed File System",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Distributed File System in cloud computing environments.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N78",
+      "title": "Cloud Deployment",
+      "difficulty": 0.99,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Cloud Deployment in cloud computing environments.",
+      "pagerank_score": 0.2596,
+      "is_active": true
+    },
+    {
+      "node_id": "N79",
+      "title": "FusionManager",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about FusionManager in cloud computing environments.",
+      "pagerank_score": 0.0,
+      "is_active": true
+    },
+    {
+      "node_id": "N80",
+      "title": "Cloud Drive",
+      "difficulty": 1.0,
+      "est_minutes": 45,
+      "hard_prerequisites": [],
+      "soft_prerequisites": [],
+      "topic_tags": [],
+      "content_types": [
+        "diagram",
+        "text"
+      ],
+      "description": "Learn about Cloud Drive in cloud computing environments.",
+      "pagerank_score": 0.1703,
+      "is_active": true
+    }
+  ],
+  "edges": [
+    {
+      "source": "N62",
+      "target": "N66",
+      "relation": "includes",
+      "type": "hard"
+    },
+    {
+      "source": "N62",
+      "target": "N02",
+      "relation": "lacks",
+      "type": "soft"
+    },
+    {
+      "source": "N62",
+      "target": "N14",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N62",
+      "target": "N01",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N62",
+      "target": "N66",
+      "relation": "deploys",
+      "type": "hard"
+    },
+    {
+      "source": "N62",
+      "target": "N02",
+      "relation": "originates_from",
+      "type": "hard"
+    },
+    {
+      "source": "N76",
+      "target": "N62",
+      "relation": "updates",
+      "type": "soft"
+    },
+    {
+      "source": "N47",
+      "target": "N62",
+      "relation": "collectively_known_as",
+      "type": "soft"
+    },
+    {
+      "source": "N20",
+      "target": "N62",
+      "relation": "uses",
+      "type": "hard"
+    },
+    {
+      "source": "N23",
+      "target": "N73",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N24",
+      "target": "N47",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N64",
+      "target": "N02",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N64",
+      "target": "N01",
+      "relation": "facilitates",
+      "type": "soft"
+    },
+    {
+      "source": "N64",
+      "target": "N02",
+      "relation": "utilizes",
+      "type": "hard"
+    },
+    {
+      "source": "N02",
+      "target": "N65",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N62",
+      "target": "N37",
+      "relation": "runs",
+      "type": "soft"
+    },
+    {
+      "source": "N37",
+      "target": "N11",
+      "relation": "aims_to",
+      "type": "soft"
+    },
+    {
+      "source": "N37",
+      "target": "N66",
+      "relation": "simple",
+      "type": "soft"
+    },
+    {
+      "source": "N37",
+      "target": "N35",
+      "relation": "utilizes",
+      "type": "hard"
+    },
+    {
+      "source": "N35",
+      "target": "N37",
+      "relation": "unlike",
+      "type": "soft"
+    },
+    {
+      "source": "N37",
+      "target": "N65",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N37",
+      "target": "N51",
+      "relation": "selects",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N37",
+      "relation": "obtains",
+      "type": "hard"
+    },
+    {
+      "source": "N37",
+      "target": "N01",
+      "relation": "supports",
+      "type": "hard"
+    },
+    {
+      "source": "N51",
+      "target": "N01",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N37",
+      "target": "N20",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N37",
+      "target": "N47",
+      "relation": "uses",
+      "type": "hard"
+    },
+    {
+      "source": "N66",
+      "target": "N11",
+      "relation": "paid",
+      "type": "soft"
+    },
+    {
+      "source": "N21",
+      "target": "N02",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N68",
+      "target": "N02",
+      "relation": "launches",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "focuses_on",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N63",
+      "target": "N27",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N63",
+      "target": "N66",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N63",
+      "target": "N47",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N63",
+      "target": "N47",
+      "relation": "designed_for",
+      "type": "soft"
+    },
+    {
+      "source": "N32",
+      "target": "N27",
+      "relation": "refers_to",
+      "type": "soft"
+    },
+    {
+      "source": "N32",
+      "target": "N33",
+      "relation": "adopts",
+      "type": "soft"
+    },
+    {
+      "source": "N67",
+      "target": "N50",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N27",
+      "target": "N75",
+      "relation": "includes",
+      "type": "soft"
+    },
+    {
+      "source": "N60",
+      "target": "N02",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N60",
+      "target": "N02",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N60",
+      "target": "N02",
+      "relation": "becomes",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N60",
+      "relation": "develops",
+      "type": "soft"
+    },
+    {
+      "source": "N63",
+      "target": "N27",
+      "relation": "supports",
+      "type": "hard"
+    },
+    {
+      "source": "N02",
+      "target": "N03",
+      "relation": "known_as",
+      "type": "soft"
+    },
+    {
+      "source": "N20",
+      "target": "N21",
+      "relation": "advances",
+      "type": "soft"
+    },
+    {
+      "source": "N73",
+      "target": "N47",
+      "relation": "uses",
+      "type": "hard"
+    },
+    {
+      "source": "N20",
+      "target": "N02",
+      "relation": "supports",
+      "type": "soft"
+    },
+    {
+      "source": "N21",
+      "target": "N19",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N20",
+      "target": "N21",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N19",
+      "target": "N47",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N21",
+      "relation": "divided_into",
+      "type": "soft"
+    },
+    {
+      "source": "N21",
+      "target": "N02",
+      "relation": "is_not",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N21",
+      "relation": "equals",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N21",
+      "relation": "drives",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N27",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N41",
+      "target": "N01",
+      "relation": "has_capability",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N16",
+      "relation": "expands",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "includes",
+      "type": "hard"
+    },
+    {
+      "source": "N27",
+      "target": "N41",
+      "relation": "released",
+      "type": "soft"
+    },
+    {
+      "source": "N27",
+      "target": "N41",
+      "relation": "serves_as",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "improves",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N13",
+      "relation": "announced",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N01",
+      "relation": "announced",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N27",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N27",
+      "relation": "proposes",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "creates",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "helps",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "generates",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N66",
+      "relation": "launches",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N16",
+      "relation": "oriented_to",
+      "type": "soft"
+    },
+    {
+      "source": "N41",
+      "target": "N02",
+      "relation": "released",
+      "type": "soft"
+    },
+    {
+      "source": "N18",
+      "target": "N66",
+      "relation": "named",
+      "type": "soft"
+    },
+    {
+      "source": "N18",
+      "target": "N27",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N40",
+      "target": "N35",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N40",
+      "target": "N02",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N02",
+      "target": "N03",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N16",
+      "target": "N50",
+      "relation": "stores",
+      "type": "soft"
+    },
+    {
+      "source": "N62",
+      "target": "N47",
+      "relation": "allows",
+      "type": "soft"
+    },
+    {
+      "source": "N01",
+      "target": "N27",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N68",
+      "target": "N01",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N04",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N01",
+      "target": "N04",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N27",
+      "target": "N02",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N50",
+      "target": "N02",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N02",
+      "target": "N12",
+      "relation": "depends_on",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N01",
+      "relation": "develops",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N02",
+      "relation": "represents",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N02",
+      "relation": "considers",
+      "type": "soft"
+    },
+    {
+      "source": "N01",
+      "target": "N11",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N13",
+      "target": "N01",
+      "relation": "represents",
+      "type": "soft"
+    },
+    {
+      "source": "N62",
+      "target": "N01",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N03",
+      "target": "N04",
+      "relation": "is",
+      "type": "soft"
+    },
+    {
+      "source": "N57",
+      "target": "N02",
+      "relation": "dedicated_to",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N11",
+      "relation": "lies_in",
+      "type": "soft"
+    },
+    {
+      "source": "N57",
+      "target": "N11",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N57",
+      "target": "N02",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N39",
+      "target": "N71",
+      "relation": "masters",
+      "type": "soft"
+    },
+    {
+      "source": "N35",
+      "target": "N66",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N35",
+      "target": "N41",
+      "relation": "promotes",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N03",
+      "relation": "following",
+      "type": "soft"
+    },
+    {
+      "source": "N12",
+      "target": "N02",
+      "relation": "enables",
+      "type": "soft"
+    },
+    {
+      "source": "N16",
+      "target": "N14",
+      "relation": "integrates",
+      "type": "soft"
+    },
+    {
+      "source": "N16",
+      "target": "N15",
+      "relation": "utilizes",
+      "type": "hard"
+    },
+    {
+      "source": "N15",
+      "target": "N14",
+      "relation": "serves_as",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N14",
+      "relation": "shows",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N01",
+      "relation": "released",
+      "type": "soft"
+    },
+    {
+      "source": "N09",
+      "target": "N11",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N53",
+      "target": "N01",
+      "relation": "becomes",
+      "type": "soft"
+    },
+    {
+      "source": "N27",
+      "target": "N15",
+      "relation": "requires",
+      "type": "soft"
+    },
+    {
+      "source": "N20",
+      "target": "N14",
+      "relation": "across",
+      "type": "soft"
+    },
+    {
+      "source": "N15",
+      "target": "N31",
+      "relation": "has_capability",
+      "type": "soft"
+    },
+    {
+      "source": "N55",
+      "target": "N02",
+      "relation": "launches",
+      "type": "soft"
+    },
+    {
+      "source": "N03",
+      "target": "N02",
+      "relation": "differs_from",
+      "type": "soft"
+    },
+    {
+      "source": "N03",
+      "target": "N04",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N32",
+      "target": "N33",
+      "relation": "soars",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N52",
+      "relation": "shows",
+      "type": "soft"
+    },
+    {
+      "source": "N52",
+      "target": "N29",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N52",
+      "target": "N02",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N52",
+      "target": "N01",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N52",
+      "target": "N02",
+      "relation": "released",
+      "type": "soft"
+    },
+    {
+      "source": "N66",
+      "target": "N27",
+      "relation": "contributes_to",
+      "type": "soft"
+    },
+    {
+      "source": "N66",
+      "target": "N27",
+      "relation": "enhances",
+      "type": "soft"
+    },
+    {
+      "source": "N03",
+      "target": "N27",
+      "relation": "utilizes",
+      "type": "hard"
+    },
+    {
+      "source": "N03",
+      "target": "N27",
+      "relation": "performs",
+      "type": "soft"
+    },
+    {
+      "source": "N02",
+      "target": "N27",
+      "relation": "introduces",
+      "type": "soft"
+    },
+    {
+      "source": "N66",
+      "target": "N27",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N66",
+      "target": "N27",
+      "relation": "benefits_from",
+      "type": "soft"
+    },
+    {
+      "source": "N46",
+      "target": "N78",
+      "relation": "reduces",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N14",
+      "relation": "ranks_among",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N02",
+      "relation": "storage_selected",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N01",
+      "relation": "awarded",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N01",
+      "relation": "ranked_as",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N19",
+      "relation": "ranked",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N01",
+      "relation": "becomes",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N23",
+      "relation": "provides_blockchain_sdk",
+      "type": "soft"
+    },
+    {
+      "source": "N56",
+      "target": "N02",
+      "relation": "obtains",
+      "type": "hard"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "represents",
+      "type": "soft"
+    },
+    {
+      "source": "N13",
+      "target": "N51",
+      "relation": "announced",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "expands",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N72",
+      "relation": "released",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "becomes",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "starts",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "leverages",
+      "type": "soft"
+    },
+    {
+      "source": "N42",
+      "target": "N51",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N51",
+      "target": "N01",
+      "relation": "obtains",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N01",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "established",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N01",
+      "relation": "launches",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "announced",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N41",
+      "relation": "announced",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N16",
+      "relation": "announced",
+      "type": "soft"
+    },
+    {
+      "source": "N51",
+      "target": "N02",
+      "relation": "builds",
+      "type": "soft"
+    },
+    {
+      "source": "N07",
+      "target": "N04",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N07",
+      "target": "N02",
+      "relation": "is",
+      "type": "hard"
+    },
+    {
+      "source": "N02",
+      "target": "N07",
+      "relation": "provides",
+      "type": "soft"
+    },
+    {
+      "source": "N08",
+      "target": "N02",
+      "relation": "even_if",
+      "type": "soft"
+    }
+  ]
+}
