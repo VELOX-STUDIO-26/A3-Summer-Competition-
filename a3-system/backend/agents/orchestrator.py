@@ -8,7 +8,7 @@ Decides which agents to run based on:
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 from agents.code_agent import CodeAgent
 from agents.content_agent import ContentAgent
@@ -131,13 +131,13 @@ class Orchestrator:
             "code": self.code_agent,
         }
 
-        kwargs = agent_kwargs or {}
+        kwargs = dict(agent_kwargs or {})
+        node_id = kwargs.pop("node_id", "")
 
         # Build coroutines with concurrency limit
         async def _run_with_limit(agent, name):
             async with self._semaphore:
                 # Pass context as node_id for RAG retrieval, agents handle empty strings gracefully
-                node_id = kwargs.get("node_id", "")
                 logger.info(f"Orchestrator: Starting {name} agent for topic '{topic}'")
                 result = await agent.run(topic, profile, node_id, **kwargs)
                 logger.info(f"Orchestrator: {name} agent completed, result keys: {list(result.keys()) if isinstance(result, dict) else 'N/A'}")
@@ -173,6 +173,118 @@ class Orchestrator:
                 "agents_run": agents_to_run,
                 "profile_match": self._calculate_profile_match(results, profile),
             }
+        }
+
+    async def generate_resources_stream(
+        self,
+        topic: str,
+        profile: Dict[str, Any],
+        context: str = "",
+        agent_selection: Optional[List[str]] = None,
+        agent_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> AsyncIterator[Dict[str, Any]]:
+        """Run agents concurrently and yield progress events as they finish.
+
+        Event schema:
+            {"event": "plan",           "topic": str, "agents": [str, ...]}
+            {"event": "agent_started",  "agent": str}
+            {"event": "agent_complete", "agent": str, "result": dict}
+            {"event": "agent_failed",   "agent": str, "error":  str}
+            {"event": "complete",       "topic": str, "resources": dict,
+                                        "metadata": {...}}
+
+        Designed to be wrapped by an SSE endpoint so the frontend can show
+        per-agent progress instead of waiting for the whole bundle.
+        """
+        agents_to_run = agent_selection or self.decide_agents(profile, topic)
+        agent_map = {
+            "content": self.content_agent,
+            "quiz": self.quiz_agent,
+            "mindmap": self.mindmap_agent,
+            "media": self.media_agent,
+            "code": self.code_agent,
+        }
+        valid = [(name, agent_map[name]) for name in agents_to_run if name in agent_map]
+        valid_names = [n for n, _ in valid]
+
+        logger.info(
+            f"Streaming resource generation for '{topic}' with agents: {valid_names}"
+        )
+
+        yield {"event": "plan", "topic": topic, "agents": valid_names}
+
+        if not valid:
+            yield {
+                "event": "complete",
+                "topic": topic,
+                "resources": {},
+                "metadata": {
+                    "agents_run": [],
+                    "profile_match": 0.0,
+                },
+            }
+            return
+
+        kwargs = dict(agent_kwargs or {})
+        node_id = kwargs.pop("node_id", "")
+        queue: asyncio.Queue = asyncio.Queue()
+        SENTINEL: Any = object()
+        results: Dict[str, Any] = {}
+
+        async def _runner(name: str, agent: Any) -> None:
+            await queue.put({"event": "agent_started", "agent": name})
+            async with self._semaphore:
+                try:
+                    result = await agent.run(topic, profile, node_id, **kwargs)
+                    results[name] = result
+                    await queue.put({
+                        "event": "agent_complete",
+                        "agent": name,
+                        "result": result,
+                    })
+                except Exception as e:  # noqa: BLE001 — must surface via stream
+                    err = str(e) or type(e).__name__
+                    logger.error(f"{name} agent failed during stream: {err}")
+                    results[name] = {"error": err, "agent": name}
+                    await queue.put({
+                        "event": "agent_failed",
+                        "agent": name,
+                        "error": err,
+                    })
+
+        async def _driver() -> None:
+            try:
+                await asyncio.gather(
+                    *(_runner(n, a) for n, a in valid),
+                    return_exceptions=False,
+                )
+            finally:
+                await queue.put(SENTINEL)
+
+        driver_task = asyncio.create_task(_driver())
+
+        try:
+            while True:
+                item = await queue.get()
+                if item is SENTINEL:
+                    break
+                yield item
+        finally:
+            # Ensure the driver always finishes before we yield "complete",
+            # even if the consumer disconnects mid-stream.
+            try:
+                await driver_task
+            except Exception as e:  # noqa: BLE001
+                logger.error(f"Stream driver task failed: {e}")
+
+        yield {
+            "event": "complete",
+            "topic": topic,
+            "resources": results,
+            "metadata": {
+                "agents_run": valid_names,
+                "profile_match": self._calculate_profile_match(results, profile),
+            },
         }
 
     def _calculate_profile_match(

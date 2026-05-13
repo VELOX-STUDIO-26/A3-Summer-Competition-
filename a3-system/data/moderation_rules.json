@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "description": "Pattern-based moderation rules for harmful content. Patterns are Python regexes, case-insensitive. Severity levels: 'high' (block), 'medium' (block in strict mode, warn otherwise), 'low' (warn only). Kept intentionally phrase-oriented rather than keyword-based so that legitimate educational discussion (e.g. a security course mentioning 'buffer overflow' or a history lesson about war) doesn't trip the filter.",
+  "categories": [
+    {
+      "name": "self_harm",
+      "severity": "high",
+      "description": "First-person suicidal ideation or requests for methods of self-harm.",
+      "patterns": [
+        "\\b(?:how\\s+(?:do|can|should)\\s+i|ways\\s+to|best\\s+way\\s+to|methods?\\s+of|help\\s+me)\\s+(?:kill\\s+myself|commit\\s+suicide|end\\s+(?:my|it\\s+all)|harm\\s+myself|hurt\\s+myself)\\b",
+        "\\bi\\s+(?:want|wanna|plan|am\\s+going)\\s+to\\s+(?:kill\\s+myself|commit\\s+suicide|end\\s+it\\s+all|end\\s+my\\s+life)\\b",
+        "\\b(?:suicide|self[\\- ]harm)\\s+methods?\\b",
+        "\\bno\\s+reason\\s+to\\s+(?:live|go\\s+on)\\b"
+      ]
+    },
+    {
+      "name": "violence_threat",
+      "severity": "high",
+      "description": "Direct threats of physical violence toward identifiable targets.",
+      "patterns": [
+        "\\bi\\s+(?:will|'ll|am\\s+going\\s+to|wanna|want\\s+to)\\s+(?:kill|murder|shoot|stab|beat\\s+up|assault)\\s+(?:you|him|her|them|that\\s+\\w+)\\b",
+        "\\b(?:kill|murder|shoot)\\s+(?:all|every)\\s+(?:of\\s+them|the\\s+\\w+)\\b"
+      ]
+    },
+    {
+      "name": "weapons_instructions",
+      "severity": "high",
+      "description": "Requests for instructions to build weapons or cause mass harm.",
+      "patterns": [
+        "\\bhow\\s+(?:do|can|to)\\s+(?:i\\s+)?(?:build|make|construct|assemble|manufacture|synthes(?:iz|is)e)\\s+(?:a\\s+)?(?:bomb|explosive|ied|pipe\\s+bomb|pressure\\s+cooker\\s+bomb|molotov|napalm|nerve\\s+agent|chemical\\s+weapon|biological\\s+weapon|dirty\\s+bomb|suicide\\s+vest)\\b",
+        "\\b(?:instructions?|guide|tutorial|recipe)\\s+(?:for|to)\\s+(?:building|making)\\s+(?:a\\s+)?(?:bomb|explosive|nerve\\s+agent|chemical\\s+weapon|biological\\s+weapon)\\b",
+        "\\bhow\\s+to\\s+(?:poison|mass\\s+murder|commit\\s+(?:a\\s+)?(?:mass\\s+shooting|terrorist\\s+attack))\\b"
+      ]
+    },
+    {
+      "name": "sexual_minors",
+      "severity": "high",
+      "description": "Any sexual content involving minors. Zero tolerance — always block.",
+      "patterns": [
+        "\\b(?:sex|sexual|erotic|nude|naked|porn)\\w*\\s+(?:with\\s+)?(?:a\\s+|the\\s+)?(?:child|children|kid|kids|minor|minors|underage|teen|teens|teenager|preteen|toddler|baby|infant)\\b",
+        "\\b(?:child|underage|minor|teen)\\s+(?:porn|pornography|erotica|nudes?)\\b",
+        "\\bcp\\b(?=.*(?:download|link|share|send))"
+      ]
+    },
+    {
+      "name": "hate_speech",
+      "severity": "high",
+      "description": "Dehumanizing or exterminationist statements about protected groups. Pattern-based (generic phrase shapes), not a slur list — keeps source tree clean.",
+      "patterns": [
+        "\\ball\\s+(?:jews|muslims|christians|blacks|whites|asians|hispanics|latinos|gays|lesbians|trans(?:gender|sexual)?|women|men|immigrants|refugees)\\s+(?:should|must|deserve\\s+to)\\s+(?:die|be\\s+killed|be\\s+exterminated|be\\s+eliminated|be\\s+gassed)\\b",
+        "\\b(?:exterminate|gas|lynch|ethnic[\\- ]?cleans)\\w*\\s+(?:the\\s+)?(?:jews|muslims|blacks|whites|asians|gays|immigrants)\\b",
+        "\\b(?:jews|muslims|blacks|whites|asians|gays|immigrants)\\s+are\\s+(?:subhuman|vermin|scum|parasites|animals)\\b"
+      ]
+    },
+    {
+      "name": "illegal_drugs",
+      "severity": "medium",
+      "description": "Requests for instructions to synthesize hard drugs. Educational discussion of pharmacology is allowed.",
+      "patterns": [
+        "\\bhow\\s+(?:do|can|to)\\s+(?:i\\s+)?(?:make|synthes(?:iz|is)e|cook|manufacture|produce)\\s+(?:meth(?:amphetamine)?|crystal\\s+meth|crack\\s+cocaine|heroin|fentanyl|lsd|mdma|ghb)\\b",
+        "\\brecipe\\s+(?:for|to)\\s+(?:making\\s+)?(?:meth|heroin|fentanyl|lsd|mdma)\\b"
+      ]
+    },
+    {
+      "name": "harassment",
+      "severity": "low",
+      "description": "Generic insults or demeaning language. Low-severity — warn only.",
+      "patterns": [
+        "\\byou(?:'re|\\s+are)\\s+(?:a\\s+)?(?:moron|idiot|retard|retarded|stupid\\s+fuck|worthless\\s+piece\\s+of\\s+shit)\\b",
+        "\\bgo\\s+(?:kill|hang)\\s+yourself\\b",
+        "\\bkys\\b"
+      ]
+    }
+  ]
+}

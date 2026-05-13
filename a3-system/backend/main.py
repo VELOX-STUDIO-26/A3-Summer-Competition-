@@ -17,6 +17,14 @@ from fastapi.responses import JSONResponse
 # Add project root to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Load .env into os.environ BEFORE importing any module that reads env vars
+# at import time (e.g. tts_client / asr_client construct their singletons
+# via os.getenv during module load). pydantic-settings already reads .env
+# into its Settings objects, but those values never reach os.environ.
+from dotenv import load_dotenv  # noqa: E402
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+load_dotenv(os.path.join(_PROJECT_ROOT, ".env"))
+
 # Import core components
 from core.config import settings
 from core.database_init import init_database
@@ -228,8 +236,13 @@ from api.routers import resources
 app.include_router(resources.router, prefix="/api/resources", tags=["Resources"])
 
 # Tutor Router
-from api.routers import tutor
+from api.routers import tutor, tutor_sessions
 app.include_router(tutor.router, prefix="/api/tutor", tags=["Tutoring"])
+app.include_router(
+    tutor_sessions.router,
+    prefix="/api/tutor",
+    tags=["Tutoring Sessions"],
+)
 
 # Analytics Router
 from api.routers import analytics
@@ -254,6 +267,14 @@ app.include_router(tts.router, tags=["Text-to-Speech"])
 # Tracking Router (Resource engagement and evaluation)
 from api.routers import tracking
 app.include_router(tracking.router, prefix="/api/tracking", tags=["Tracking"])
+
+# Adaptation Router (DynamicAdaptationEngine + Recommender)
+from api.routers import adaptation
+app.include_router(adaptation.router, prefix="/api/adapt", tags=["Adaptation"])
+
+# ASR Router (iFlytek IST speech transcription)
+from api.routers import asr
+app.include_router(asr.router, prefix="/api/asr", tags=["ASR"])
 
 
 if __name__ == "__main__":

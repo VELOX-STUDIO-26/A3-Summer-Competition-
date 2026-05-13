@@ -130,8 +130,14 @@ class KnowledgeGraph:
         return prereqs
 
     def get_dependents(self, node_id: str) -> List[str]:
-        """Get nodes that depend on this node (reverse edges)."""
-        return self.reverse_edges.get(node_id, [])
+        """Get nodes that depend on this node (i.e. forward edges).
+
+        Bug fix: previously returned ``reverse_edges`` which lists this
+        node's *prerequisites*, not its dependents. That caused the A*
+        traversal in ``plan_path`` to terminate after a single node,
+        since N01's "dependents" came back empty instead of [N02, N05].
+        """
+        return [target for target, _rel in self.edges.get(node_id, [])]
 
     def topological_sort(self) -> List[str]:
         """Return nodes in topological order (prerequisites first)."""

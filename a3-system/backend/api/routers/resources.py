@@ -6,9 +6,11 @@ Endpoints:
 - GET  /api/resources/{topic}   : Get cached resources for a topic
 """
 
+import json
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -85,6 +87,51 @@ async def generate_resources(request: ResourceRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Resource generation failed: {str(e)}"
         )
+
+
+@router.post("/generate/stream")
+async def generate_resources_stream(request: ResourceRequest):
+    """Generate resources with per-agent SSE progress updates.
+
+    Streams events as agents start and finish so the frontend can render
+    a live progress UI instead of waiting on the full bundle.
+
+    Event types (each line is a single SSE ``data:`` payload):
+    - ``plan``           — initial event listing the agents that will run
+    - ``agent_started``  — emitted when an agent begins execution
+    - ``agent_complete`` — emitted when an agent succeeds (carries result)
+    - ``agent_failed``   — emitted when an agent raises (carries error)
+    - ``complete``       — final aggregated bundle (mirrors /generate output)
+    - ``error``          — fatal stream error
+    """
+
+    async def event_generator():
+        try:
+            logger.info(
+                f"Streaming resources for topic '{request.topic}' "
+                f"student {request.student_id}"
+            )
+            async for event in orchestrator.generate_resources_stream(
+                topic=request.topic,
+                profile=request.profile,
+                context=request.context,
+                agent_selection=request.agents,
+                agent_kwargs=request.agent_kwargs,
+            ):
+                yield f"data: {json.dumps(event)}\n\n"
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"Resource stream failed: {e}")
+            yield f"data: {json.dumps({'event': 'error', 'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # disable nginx buffering for SSE
+        },
+    )
 
 
 @router.get("/remedial/{student_id}/{topic}")

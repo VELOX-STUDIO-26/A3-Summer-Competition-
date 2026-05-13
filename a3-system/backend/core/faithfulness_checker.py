@@ -87,12 +87,22 @@ class FaithfulnessChecker:
             # Build the verification prompt
             prompt = self._build_verification_prompt(generated_text, source_chunks, context)
 
-            # Call LLM for verification
-            response = await self.llm.complete(
-                prompt=prompt,
+            # Call LLM for verification.
+            # Bug fix: previously called ``self.llm.complete(prompt=...)`` which
+            # does not exist on ``LLMClient``. Every faithfulness check was
+            # silently throwing AttributeError, getting caught below, and
+            # returning the permissive 1.0 fallback — i.e., the hallucination
+            # filter has been a no-op until this fix.
+            llm_response = await self.llm.generate(
+                messages=[{"role": "user", "content": prompt}],
                 temperature=0.0,  # Deterministic for consistency
                 max_tokens=2000,
             )
+            try:
+                response = llm_response["choices"][0]["message"]["content"]
+            except (KeyError, IndexError, TypeError) as exc:
+                logger.warning(f"Unexpected LLM response shape: {exc}")
+                response = ""
 
             # Parse the verification result
             result = self._parse_verification_response(response)

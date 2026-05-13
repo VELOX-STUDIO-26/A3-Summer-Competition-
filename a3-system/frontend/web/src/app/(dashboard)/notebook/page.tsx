@@ -12,6 +12,12 @@ import CodeExercise from "@/components/code/CodeExercise";
 import LecturePlayer from "@/components/video/LecturePlayer";
 import { GateStatusPanel } from "@/components/milestone/GateStatus";
 import { useGateStatus } from "@/hooks/useTracking";
+import { useVoiceStream } from "@/hooks/useVoiceStream";
+import { useTutorSessions } from "@/hooks/useTutorSessions";
+import TutorSessionSidebar from "@/components/tutor/TutorSessionSidebar";
+import MermaidRenderer from "@/components/MermaidRenderer";
+import ImageUpload, { ImageMessage } from "@/components/tutor/ImageUpload";
+import { analyzeImage } from "@/lib/api";
 import { ResourceType } from "@/lib/tracking";
 import { FaithfulnessBadge } from "@/components/FaithfulnessBadge";
 import {
@@ -21,6 +27,8 @@ import {
   Clapperboard,
   Laptop,
   Send,
+  Mic,
+  MicOff,
   Sparkles,
   ChevronRight,
   ChevronDown,
@@ -34,12 +42,15 @@ import {
   Lock,
   Target,
   AlertCircle,
+  MessageSquare,
+  Square,
 } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   isStreaming?: boolean;
+  imageUrl?: string;
   faithfulness?: {
     score: number;
     verified: boolean;
@@ -329,8 +340,26 @@ export default function NotebookPage() {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
+
+  // Tutor session management
+  const {
+    sessions,
+    activeSessionId,
+    messages: sessionMessages,
+    isLoading: isLoadingSessions,
+    isSending,
+    newChat,
+    loadSession,
+    sendMessage: sendSessionMessage,
+    stopStream,
+    archiveSession,
+    renameSession,
+  } = useTutorSessions(studentId);
+
+  const [hasInitializedSession, setHasInitializedSession] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const resourcesLoaded = useRef(false);
+  const initialLoadDone = useRef(false);
   const [isGenerating, setIsGenerating] = useState(false);
   // Dynamic mastery: % of completed nodes + half-credit for current node
   const masteryProgress = learningPath.length > 0
@@ -342,6 +371,13 @@ export default function NotebookPage() {
       )
     : 0;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isStreamingRef = useRef(false);
+
+  // Image upload state
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+
   const [selectedResource, setSelectedResource] = useState<string | null>(null);
   const [rightPanelWidth, setRightPanelWidth] = useState(320);
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
@@ -359,6 +395,8 @@ export default function NotebookPage() {
   const [showQuizConfig, setShowQuizConfig] = useState(false);
   const [quizDifficulty, setQuizDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [quizCount, setQuizCount] = useState(5);
+  // ASR language: en_us or zh_cn
+  const [asrLanguage, setAsrLanguage] = useState<'en_us' | 'zh_cn'>('en_us');
   const isResizingRef = useRef(false);
   const startXRef = useRef(0);
   const startWidthRef = useRef(320);
@@ -421,9 +459,9 @@ export default function NotebookPage() {
     } catch { /* storage full — ignore */ }
   }, [generatedResources, STORAGE_KEY]);
 
-  // Set initial message when topic is loaded
+  // Set initial welcome message when no active session
   useEffect(() => {
-    if (!isLoadingPath && messages.length === 0) {
+    if (!isLoadingPath && !activeSessionId && messages.length === 0) {
       const completedCount = learningPath.filter(n => n.status === "completed").length;
       const totalCount = learningPath.length;
       const progressText = completedCount > 0
@@ -435,113 +473,216 @@ export default function NotebookPage() {
         content: `Hey${userName ? ` ${userName}` : ""}! ${progressText}\n\nI see you're diving into **${currentTopic}** right now — that's a fantastic topic! 🚀\n\nI'm here to make learning cloud computing fun and approachable. Whether you want me to:\n• 🧠 **Explain concepts** in a way that clicks for you\n• 🎯 **Walk through examples** step by step\n• 💡 **Connect ideas** to what you've already learned\n• ❓ **Answer specific questions** — no question is too small!\n\nWhat would you like to explore first?`,
       }]);
     }
-  }, [isLoadingPath, currentTopic, userName, messages.length, learningPath]);
+  }, [isLoadingPath, currentTopic, userName, messages.length, learningPath, activeSessionId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessageToTutor = async (userMessage: string, topicOverride?: string) => {
-    if (isLoading) return;
+  // Sync session messages from backend into local UI state
+  useEffect(() => {
+    if (activeSessionId) {
+      if (sessionMessages.length > 0) {
+        // Only sync if we don't have a streaming message currently
+        if (!isStreamingRef.current) {
+          setMessages(
+            sessionMessages.map((m) => ({
+              role: m.role as "user" | "assistant",
+              content: m.content,
+            }))
+          );
+        }
+      } else if (!isLoadingSessions && !isStreamingRef.current) {
+        // Clear messages if session has no messages and we're done loading
+        setMessages([]);
+      }
+    } else if (initialLoadDone.current) {
+      // Only clear messages if we've already done initial load
+      // (prevents clearing on page refresh before activeSessionId is restored)
+      setMessages([]);
+    }
+    initialLoadDone.current = true;
+  }, [activeSessionId, sessionMessages, isLoadingSessions]);
 
+  // Auto-create first session on load
+  useEffect(() => {
+    if (
+      !hasInitializedSession &&
+      !isLoadingPath &&
+      studentId &&
+      sessions.length === 0
+    ) {
+      setHasInitializedSession(true);
+      newChat(currentTopic);
+    }
+  }, [hasInitializedSession, isLoadingPath, studentId, sessions.length, newChat, currentTopic]);
+
+  const sendMessageToTutor = async (userMessage: string, topicOverride?: string) => {
+    if (isLoading || isSending) return;
+
+    // Ensure we have an active session
+    let sessionId = activeSessionId;
+    if (!sessionId) {
+      sessionId = await newChat(currentTopic);
+      if (!sessionId) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: "Failed to start a new chat session. Please try again." },
+        ]);
+        return;
+      }
+    }
+
+    // Optimistically add user message to UI
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
+    // Add assistant placeholder
+    isStreamingRef.current = true;
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: "", isStreaming: true },
+    ]);
+
+    let fullResponse = "";
     try {
-      // Build conversation history for LLM
-      const conversationHistory = messages.slice(-10).map(m => ({
-        role: m.role === "user" ? "user" : "assistant",
-        content: m.content
-      }));
-
-      const topic = topicOverride || currentTopic;
-
-      // Streaming API call using fetch + SSE
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const res = await fetch(`${API_BASE_URL}/api/chat/simple/stream`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userMessage,
-          topic,
-          history: conversationHistory,
-        }),
-      });
-
-      if (!res.body) throw new Error("No response body");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let fullResponse = "";
-
-      // Add assistant message placeholder for streaming
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "", isStreaming: true },
-      ]);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith("data: ")) {
-            const jsonStr = trimmed.slice(6);
-            if (jsonStr === "[DONE]") continue;
-            try {
-              const parsed = JSON.parse(jsonStr);
-              if (parsed.event === "delta") {
-                fullResponse += parsed.data;
-                // Update the last assistant message in real-time
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastMsg = updated[updated.length - 1];
-                  if (lastMsg.role === "assistant") {
-                    lastMsg.content = fullResponse;
-                  }
-                  return updated;
-                });
-              }
-            } catch {
-              // ignore malformed lines
-            }
+      await sendSessionMessage(userMessage, topicOverride || currentTopic, (text) => {
+        fullResponse = text;
+        setMessages((prev) => {
+          const updated = [...prev];
+          const lastMsg = updated[updated.length - 1];
+          if (lastMsg?.role === "assistant") {
+            lastMsg.content = text;
           }
-        }
-      }
+          return updated;
+        });
+      }, sessionId);
 
-      // Finalize: remove isStreaming flag
+      // Finalize
       setMessages((prev) => {
         const updated = [...prev];
         const lastMsg = updated[updated.length - 1];
-        if (lastMsg.role === "assistant") {
-          lastMsg.content = fullResponse;
+        if (lastMsg?.role === "assistant") {
+          lastMsg.content = fullResponse || "...";
           delete lastMsg.isStreaming;
         }
         return updated;
       });
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Oh no! 🤔 I'm having a little trouble right now. Let me try again in just a moment!" },
-      ]);
+      setMessages((prev) => {
+        const updated = [...prev];
+        const lastMsg = updated[updated.length - 1];
+        if (lastMsg?.role === "assistant") {
+          lastMsg.content = "Oh no! 🤔 I'm having a little trouble right now. Let me try again in just a moment!";
+          delete lastMsg.isStreaming;
+        }
+        return updated;
+      });
     } finally {
+      isStreamingRef.current = false;
       setIsLoading(false);
     }
   };
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if ((!inputValue.trim() && !selectedImage) || isLoading || isSending || isAnalyzingImage) return;
+
+    // If there's an image selected, analyze it first
+    if (selectedImage) {
+      await handleImageAnalysis();
+      return;
+    }
+
     const msg = inputValue.trim();
     setInputValue("");
     await sendMessageToTutor(msg);
   };
+
+  const handleStopStream = () => {
+    stopStream();
+    setIsLoading(false);
+  };
+
+  const handleImageAnalysis = async () => {
+    if (!selectedImage || !studentId) return;
+
+    setIsAnalyzingImage(true);
+    const question = inputValue.trim();
+    const imageFile = selectedImage;
+    const preview = imagePreview;
+
+    // Clear the image input immediately for better UX
+    setSelectedImage(null);
+    setImagePreview(null);
+    setInputValue("");
+
+    // Add user message with image
+    const userMessage: Message = {
+      role: "user",
+      content: question || "Please analyze this image.",
+      imageUrl: preview || undefined,
+    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    // Add loading message for analysis
+    const loadingMessage: Message = {
+      role: "assistant",
+      content: "",
+      isStreaming: true,
+    };
+    setMessages((prev) => [...prev, loadingMessage]);
+    setIsLoading(true);
+
+    try {
+      const result = await analyzeImage(imageFile, studentId, question);
+
+      // Replace loading message with actual response
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1] = {
+          role: "assistant",
+          content: result.analysis || "I couldn't analyze this image. Please try again.",
+        };
+        return newMessages;
+      });
+
+      // Also send to the tutor session if active
+      if (activeSessionId) {
+        await sendSessionMessage(question || "Image uploaded for analysis");
+      }
+    } catch (error) {
+      console.error("Image analysis failed:", error);
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1] = {
+          role: "assistant",
+          content: "Sorry, I couldn't analyze the image. Please try again or describe what you see.",
+        };
+        return newMessages;
+      });
+    } finally {
+      setIsAnalyzingImage(false);
+      setIsLoading(false);
+    }
+  };
+
+  // Voice input — real-time streaming ASR via WebSocket
+  const voice = useVoiceStream({
+    language: asrLanguage,
+    onPartial: (text) => {
+      // Show interim transcript in the input box while speaking
+      setInputValue(text);
+    },
+    onFinal: (text) => {
+      // Lock in final transcript when streaming ends
+      console.log("[Notebook] onFinal called with:", JSON.stringify(text));
+      setInputValue(text);
+    },
+    onError: (msg) => {
+      console.warn("Voice streaming error:", msg);
+    },
+  });
 
   const handleMindMapNodeClick = (nodeLabel: string) => {
     const prompt = `Give me a brief introduction to "${nodeLabel}" and suggest 2-3 follow-up questions I could ask.`;
@@ -752,6 +893,16 @@ export default function NotebookPage() {
         </div>
       </div>
 
+      {/* Tutor Session Sidebar */}
+      <TutorSessionSidebar
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        onNewChat={() => newChat(currentTopic)}
+        onSelectSession={loadSession}
+        onArchiveSession={archiveSession}
+        onRenameSession={renameSession}
+      />
+
       {/* Center Column - AI Tutor Chat */}
       <div className="flex-1 flex flex-col bg-transparent relative z-10">
         {/* Chat Header */}
@@ -784,6 +935,26 @@ export default function NotebookPage() {
         {/* Messages */}
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4 max-w-3xl mx-auto">
+            {/* Loading indicator when switching sessions */}
+            {isLoadingSessions && (
+              <div className="flex items-center justify-center py-12">
+                <div className="flex items-center gap-3 text-[#8a9ba3]">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="text-sm">Loading messages...</span>
+                </div>
+              </div>
+            )}
+            {!isLoadingSessions && messages.length === 0 && activeSessionId && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-[#B8C3C9]/20 flex items-center justify-center mb-4">
+                  <MessageSquare className="w-8 h-8 text-[#8a9ba3]" />
+                </div>
+                <h3 className="text-lg font-medium text-[#2a2a2a] mb-2">Start a conversation</h3>
+                <p className="text-sm text-[#666] max-w-sm">
+                  Ask me anything about {currentTopic} and I'll help you learn!
+                </p>
+              </div>
+            )}
             {messages.map((message, index) => {
               return (
               <div
@@ -810,17 +981,65 @@ export default function NotebookPage() {
                       : "bg-white border border-[#D6CFC2] shadow-sm"
                   }`}
                 >
-                  <div className="text-sm prose prose-sm max-w-none chat-message text-[#2a2a2a]">
+                  <div className="text-sm prose prose-sm max-w-none chat-message text-[#2a2a2a] min-h-[1.5em]">
+                    {/* Show loading state when streaming but no content yet */}
+                    {message.isStreaming && (!message.content || message.content.trim() === "") ? (
+                      <div className="flex items-center gap-2 text-[#8a9ba3] px-1">
+                        <span className="text-sm">Thinking</span>
+                        <span className="inline-flex items-center gap-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </span>
+                      </div>
+                    ) : !message.content || message.content.trim() === "" ? (
+                      /* Show empty state for assistant messages with no content */
+                      message.role === "assistant" ? (
+                        <div className="flex items-center gap-2 text-[#8a9ba3] px-1">
+                          <span className="text-sm">Thinking</span>
+                          <span className="inline-flex items-center gap-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: "0ms" }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: "150ms" }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: "300ms" }} />
+                          </span>
+                        </div>
+                      ) : null
+                    ) : (
+                    <>
+                    {/* Show image if present */}
+                    {message.imageUrl && (
+                      <div className="mb-3 rounded-xl overflow-hidden border border-[#D6CFC2] bg-[#F7F5F0] max-w-md">
+                        <img
+                          src={message.imageUrl}
+                          alt="Uploaded"
+                          className="w-full h-auto max-h-64 object-contain"
+                        />
+                      </div>
+                    )}
                     {message.content.split("```").map((part, i) => {
                       if (i % 2 === 1) {
-                        const [lang, ...code] = part.split("\n");
+                        const firstNewline = part.indexOf("\n");
+                        const lang = firstNewline > -1 ? part.substring(0, firstNewline).trim().toLowerCase() : "";
+                        const code = firstNewline > -1 ? part.substring(firstNewline + 1) : part;
+
+                        // Handle mermaid diagrams
+                        if (lang === "mermaid") {
+                          return (
+                            <MermaidRenderer
+                              key={i}
+                              chart={code.trim()}
+                            />
+                          );
+                        }
+
+                        // Handle regular code blocks
                         return (
                           <pre
                             key={i}
                             className="bg-[#2a2a2a] rounded-xl p-3 my-2 overflow-x-auto border border-[#444] scrollbar-hide"
                             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                           >
-                            <code className="text-white text-xs font-mono">{code.join("\n")}</code>
+                            <code className="text-white text-xs font-mono">{code}</code>
                           </pre>
                         );
                       }
@@ -882,6 +1101,8 @@ export default function NotebookPage() {
                         <span className="w-1.5 h-1.5 rounded-full bg-[#8a9ba3] animate-bounce" style={{ animationDelay: "300ms" }} />
                       </span>
                     )}
+                    </>
+                    )}
                   </div>
                   {/* Faithfulness Badge for assistant messages */}
                   {message.role === "assistant" && message.faithfulness && (
@@ -903,24 +1124,163 @@ export default function NotebookPage() {
         {/* Input */}
         <div className="p-4 border-t border-[#D6CFC2] bg-[#F7F5F0]/80 backdrop-blur-xl">
           <div className="max-w-3xl mx-auto">
-            <div className="flex gap-3 items-center p-2 rounded-2xl bg-white border border-[#D6CFC2] focus-within:border-[#B8C3C9] focus-within:shadow-md transition-all duration-300">
+            {/* Image preview above input */}
+            {imagePreview && selectedImage && (
+              <div className="mb-3 flex items-center gap-2">
+                <div className="relative inline-block">
+                  <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-[#D6CFC2] bg-[#F7F5F0]">
+                    <img
+                      src={imagePreview}
+                      alt="Selected"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedImage(null);
+                      setImagePreview(null);
+                    }}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
+                    type="button"
+                    title="Remove image"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+                <span className="text-xs text-[#666] truncate max-w-[200px]">
+                  {selectedImage.name}
+                </span>
+              </div>
+            )}
+            <div className="flex gap-2 items-center p-2 rounded-2xl bg-white border border-[#D6CFC2] focus-within:border-[#B8C3C9] focus-within:shadow-md transition-all duration-300">
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                placeholder={`Ask me anything about ${currentTopic}...`}
-                className="flex-1 bg-transparent border-0 focus-visible:ring-0 text-[#2a2a2a] placeholder:text-[#999] text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (isSending || isLoading) {
+                      handleStopStream();
+                    } else {
+                      handleSendMessage();
+                    }
+                  }
+                }}
+                placeholder={isSending || isLoading ? "AI is responding..." : `Ask me anything about ${currentTopic}...`}
+                disabled={isSending || isLoading}
+                className="flex-1 bg-transparent border-0 focus-visible:ring-0 text-[#2a2a2a] placeholder:text-[#999] text-sm disabled:opacity-60"
               />
-              <Button
-                onClick={handleSendMessage}
-                disabled={isLoading || !inputValue.trim()}
-                size="sm"
-                className="bg-[#B8C3C9] hover:bg-[#8a9ba3] text-white font-semibold rounded-xl shadow-md shadow-[#B8C3C9]/30 transition-all h-10 w-10 p-0"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
+
+              {/* Action Buttons Group */}
+              <div className="flex items-center gap-1.5 pr-1">
+                {/* Image Upload - hidden during streaming */}
+                {!isSending && !isLoading && (
+                  <ImageUpload
+                    onImageSelected={(file, preview) => {
+                      setSelectedImage(file);
+                      setImagePreview(preview);
+                    }}
+                    onClear={() => {
+                      setSelectedImage(null);
+                      setImagePreview(null);
+                    }}
+                    selectedImage={selectedImage}
+                    imagePreview={imagePreview}
+                    disabled={voice.isStreaming || voice.isConnecting}
+                  />
+                )}
+
+                {/* Language Toggle - hidden during streaming */}
+                {!isSending && !isLoading && (
+                  <Button
+                    onClick={() => setAsrLanguage((prev) => (prev === "en_us" ? "zh_cn" : "en_us"))}
+                    disabled={voice.isStreaming || voice.isConnecting}
+                    size="sm"
+                    title={asrLanguage === "en_us" ? "Switch to Chinese" : "Switch to English"}
+                    className="rounded-lg shadow-sm transition-all h-9 px-2.5 text-xs font-medium bg-[#F4F1EC] hover:bg-[#E7E2D7] text-[#5a5a5a] border border-[#D6CFC2]"
+                  >
+                    {asrLanguage === "en_us" ? "EN" : "中"}
+                  </Button>
+                )}
+
+                {/* Voice Button - hidden during streaming */}
+                {!isSending && !isLoading && (
+                  <Button
+                    onClick={voice.toggle}
+                    disabled={voice.isConnecting}
+                    size="sm"
+                    title={
+                      voice.isStreaming
+                        ? "Stop recording"
+                        : voice.isConnecting
+                          ? "Connecting..."
+                          : "Record voice question"
+                    }
+                    aria-label={voice.isStreaming ? "Stop recording" : "Start recording"}
+                    aria-pressed={voice.isStreaming}
+                    className={`rounded-lg shadow-sm transition-all h-9 w-9 p-0 ${
+                      voice.isStreaming
+                        ? "bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-red-500/30"
+                        : "bg-[#E7E2D7] hover:bg-[#D6CFC2] text-[#5a5a5a] border border-[#D6CFC2]"
+                    }`}
+                  >
+                    {voice.isConnecting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : voice.isStreaming ? (
+                      <MicOff className="w-4 h-4" />
+                    ) : (
+                      <Mic className="w-4 h-4" />
+                    )}
+                  </Button>
+                )}
+
+                {/* Divider */}
+                <div className="w-px h-6 bg-[#D6CFC2] mx-1" />
+
+                {/* Send / Stop Button */}
+                {isSending || isLoading ? (
+                  <Button
+                    onClick={handleStopStream}
+                    size="sm"
+                    title="Stop generating"
+                    className="bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-md shadow-red-500/30 transition-all h-9 w-9 p-0 animate-pulse"
+                  >
+                    <Square className="w-3.5 h-3.5 fill-current" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={(!inputValue.trim() && !selectedImage) || voice.isStreaming}
+                    size="sm"
+                    title="Send message"
+                    className="bg-[#B8C3C9] hover:bg-[#8a9ba3] text-white font-semibold rounded-lg shadow-md shadow-[#B8C3C9]/30 transition-all h-9 w-9 p-0 disabled:opacity-50"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
-            <p className="text-center text-xs text-[#999] mt-2">Press Enter to send • AI responses may vary</p>
+            {voice.isError ? (
+              <p className="text-center text-xs text-red-500 mt-2">
+                Mic error: check console
+              </p>
+            ) : isAnalyzingImage ? (
+              <p className="text-center text-xs text-[#8a9ba3] mt-2 animate-pulse">
+                📷 Analyzing image...
+              </p>
+            ) : isLoading || isSending ? (
+              <p className="text-center text-xs text-[#8a9ba3] mt-2 animate-pulse">
+                ✨ AI is responding... Press <kbd className="px-1 py-0.5 bg-[#E7E2D7] rounded text-[10px]">Enter</kbd> or click the stop button to cancel
+              </p>
+            ) : voice.isStreaming ? (
+              <p className="text-center text-xs text-red-500 mt-2 animate-pulse">
+                ● Listening ({asrLanguage === "en_us" ? "English" : "中文"}) — click mic to stop
+              </p>
+            ) : voice.isConnecting ? (
+              <p className="text-center text-xs text-[#999] mt-2">Connecting to speech service...</p>
+            ) : (
+              <p className="text-center text-xs text-[#999] mt-2">Press Enter to send • Upload images • Record voice</p>
+            )}
           </div>
         </div>
       </div>

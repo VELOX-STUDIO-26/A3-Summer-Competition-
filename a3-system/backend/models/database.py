@@ -426,6 +426,19 @@ class ChatSession(Base):
     )
 
     # Session metadata
+    title = Column(
+        String(200),
+        nullable=True,
+        default="New Chat",
+        comment="Auto-generated session title"
+    )
+
+    session_type = Column(
+        String(20),
+        default="tutor",
+        comment="tutor | profiling"
+    )
+
     current_node_id = Column(
         String(50),
         nullable=True,
@@ -442,7 +455,7 @@ class ChatSession(Base):
     status = Column(
         String(20),
         default="active",
-        comment="active | closed"
+        comment="active | archived"
     )
 
     created_at = Column(

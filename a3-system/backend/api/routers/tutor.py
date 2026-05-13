@@ -5,18 +5,21 @@ Endpoints:
 - POST /api/tutor/ask        : Ask the AI tutor (non-streaming)
 - POST /api/tutor/ask/stream : Ask the AI tutor (SSE streaming)
 - POST /api/tutor/speak      : Text-to-speech synthesis
+- POST /api/tutor/analyze-image : Analyze an uploaded image (equation, diagram)
 """
 
 import json
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from core.content_moderator import content_moderator
 from core.logging import get_logger
 from core.tts_client import tts_client
 from core.tutor_engine import tutor_engine
+from core.vision_llm_client import vision_llm_client
 from models.schemas import FaithfulnessInfo, TTSRequest, TutorRequest, TutorResponse
 
 logger = get_logger(__name__)
@@ -53,6 +56,26 @@ async def ask_tutor(request: TutorRequest):
     """
     try:
         logger.info(f"Tutor question from {request.student_id}: {request.question[:50]}...")
+
+        # Harmful-content moderation on user input
+        mod = content_moderator.moderate(request.question)
+        if mod.verdict == "block":
+            logger.warning(
+                f"Tutor input blocked by moderator for {request.student_id}: {mod.reason}"
+            )
+            return TutorResponse(
+                answer=mod.refusal_message or "I can't help with that request.",
+                response_type="text",
+                sources=[],
+                current_topic=request.current_topic or "",
+                suggested_followups=[],
+                faithfulness=FaithfulnessInfo(
+                    score=1.0, verified=True, total_claims=0,
+                    supported_count=0, contradicted_count=0, unverifiable_count=0,
+                    citations=[],
+                    warning_message=f"Request blocked by content moderator: {mod.reason}",
+                ),
+            )
 
         # Load profile (in production, fetch from database)
         # For now, we construct a minimal profile from the request or use defaults
@@ -111,6 +134,20 @@ async def ask_tutor_stream(request: TutorRequest):
     - error: Error occurred
     """
     async def event_generator():
+        # Harmful-content moderation on user input
+        mod = content_moderator.moderate(request.question)
+        if mod.verdict == "block":
+            logger.warning(
+                f"Tutor stream input blocked by moderator for "
+                f"{request.student_id}: {mod.reason}"
+            )
+            refusal = mod.refusal_message or "I can't help with that request."
+            yield f"data: {json.dumps({'event': 'start', 'data': None})}\n\n"
+            yield f"data: {json.dumps({'event': 'delta', 'data': refusal})}\n\n"
+            yield f"data: {json.dumps({'event': 'moderation', 'data': mod.to_dict()})}\n\n"
+            yield f"data: {json.dumps({'event': 'complete', 'data': refusal})}\n\n"
+            return
+
         profile = await _load_profile(request.student_id)
         if request.hands_free:
             profile["hands_free"] = True
@@ -223,3 +260,111 @@ async def _load_profile(student_id: str) -> Dict[str, Any]:
         "goals": [],
         "content_preferences": [],
     }
+
+
+@router.post("/analyze-image")
+async def analyze_image(
+    image: UploadFile = File(..., description="Image file to analyze (PNG, JPG, GIF)"),
+    question: str = Form("", description="Optional question about the image"),
+    student_id: str = Form(..., description="Student ID"),
+):
+    """
+    Analyze an uploaded image (equation, diagram, code screenshot, etc.)
+    and provide an AI-generated explanation.
+    """
+    # Validate file type
+    allowed_types = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"]
+    if image.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported image type: {image.content_type}. Allowed: {allowed_types}"
+        )
+
+    # Validate file size (max 5MB)
+    max_size = 5 * 1024 * 1024  # 5MB
+    image_bytes = await image.read()
+    if len(image_bytes) > max_size:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Image too large. Maximum size is 5MB."
+        )
+
+    # Content moderation on the question if provided
+    if question:
+        mod = content_moderator.moderate(question)
+        if mod.verdict == "block":
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "analysis": mod.refusal_message or "I can't help with that request.",
+                    "model_used": None,
+                    "success": False,
+                    "blocked": True,
+                    "reason": mod.reason,
+                }
+            )
+
+    try:
+        # Analyze the image
+        result = await vision_llm_client.analyze_image(
+            image_bytes=image_bytes,
+            question=question,
+            mime_type=image.content_type or "image/png",
+        )
+
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=result,
+        )
+
+    except Exception as e:
+        logger.error(f"Image analysis failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Image analysis failed: {str(e)}"
+        )
+
+
+@router.post("/extract-equation")
+async def extract_equation(
+    image: UploadFile = File(..., description="Image of a mathematical equation"),
+    student_id: str = Form(..., description="Student ID"),
+):
+    """
+    Extract LaTeX from an image of a mathematical equation.
+    """
+    # Validate file type
+    allowed_types = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"]
+    if image.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported image type: {image.content_type}"
+        )
+
+    # Validate file size
+    max_size = 5 * 1024 * 1024  # 5MB
+    image_bytes = await image.read()
+    if len(image_bytes) > max_size:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Image too large. Maximum size is 5MB."
+        )
+
+    try:
+        # Extract equation
+        result = await vision_llm_client.extract_equation(
+            image_bytes=image_bytes,
+            mime_type=image.content_type or "image/png",
+        )
+
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=result,
+        )
+
+    except Exception as e:
+        logger.error(f"Equation extraction failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Equation extraction failed: {str(e)}"
+        )

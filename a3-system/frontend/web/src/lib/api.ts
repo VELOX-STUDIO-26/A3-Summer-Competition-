@@ -222,6 +222,100 @@ export async function* askTutorStream(request: unknown): AsyncGenerator<TutorStr
   }
 }
 
+// Tutor Sessions
+export interface TutorSession {
+  session_id: string;
+  title: string;
+  student_id: string;
+  session_type: string;
+  status: string;
+  current_topic: string | null;
+  message_count: number;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export async function createTutorSession(studentId: string, currentTopic?: string) {
+  const res = await api.post("/api/tutor/sessions", { student_id: studentId, current_topic: currentTopic });
+  return res.data as TutorSession;
+}
+
+export async function listTutorSessions(studentId: string) {
+  const res = await api.get("/api/tutor/sessions", { params: { student_id: studentId } });
+  return res.data as TutorSession[];
+}
+
+export async function getTutorSessionMessages(sessionId: string) {
+  const res = await api.get(`/api/tutor/sessions/${sessionId}/messages`);
+  return res.data as Array<{
+    message_id: string;
+    role: string;
+    content: string;
+    content_type: string;
+    created_at: string | null;
+  }>;
+}
+
+export async function sendTutorMessage(sessionId: string, content: string, currentTopic?: string) {
+  const res = await api.post(`/api/tutor/sessions/${sessionId}/messages`, {
+    content,
+    current_topic: currentTopic,
+  });
+  return res.data;
+}
+
+export async function updateTutorSession(sessionId: string, updates: { title?: string; status?: string }) {
+  const res = await api.patch(`/api/tutor/sessions/${sessionId}`, updates);
+  return res.data;
+}
+
+export async function archiveTutorSession(sessionId: string) {
+  await api.delete(`/api/tutor/sessions/${sessionId}`);
+}
+
+export async function* sendTutorMessageStream(
+  sessionId: string,
+  content: string,
+  currentTopic?: string,
+  abortSignal?: AbortSignal
+): AsyncGenerator<TutorStreamEvent> {
+  const res = await fetch(`${API_BASE_URL}/api/tutor/sessions/${sessionId}/messages/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content, current_topic: currentTopic }),
+    signal: abortSignal,
+  });
+
+  if (!res.body) throw new Error("No response body");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("data: ")) {
+        const jsonStr = trimmed.slice(6);
+        if (jsonStr === "[DONE]") continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          yield parsed as TutorStreamEvent;
+        } catch {
+          // ignore malformed lines
+        }
+      }
+    }
+  }
+}
+
 // Analytics
 export async function getAnalytics(studentId: string) {
   const res = await api.get(`/api/analytics/${studentId}`);
@@ -336,5 +430,53 @@ export async function registerUser(payload: {
 
 export async function getMe(studentId: string) {
   const res = await api.get("/api/auth/me", { params: { student_id: studentId } });
+  return res.data;
+}
+
+// Image Analysis
+export async function analyzeImage(
+  file: File,
+  studentId: string,
+  question?: string
+): Promise<{
+  analysis: string;
+  model_used: string | null;
+  success: boolean;
+  error?: string;
+}> {
+  const formData = new FormData();
+  formData.append("image", file);
+  formData.append("student_id", studentId);
+  if (question) {
+    formData.append("question", question);
+  }
+
+  const res = await api.post("/api/tutor/analyze-image", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function extractEquation(
+  file: File,
+  studentId: string
+): Promise<{
+  analysis: string;
+  latex: string | null;
+  model_used: string | null;
+  success: boolean;
+  error?: string;
+}> {
+  const formData = new FormData();
+  formData.append("image", file);
+  formData.append("student_id", studentId);
+
+  const res = await api.post("/api/tutor/extract-equation", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return res.data;
 }

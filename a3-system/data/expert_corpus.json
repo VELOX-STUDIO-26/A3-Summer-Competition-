@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "description": "Expert reference answers per knowledge node. Used by GapDetector to surface weak points from free-form chat by comparing student utterances against canonical expert text via embedding similarity.",
+  "entries": [
+    {
+      "node_id": "N01",
+      "weak_point_tag": "cloud_computing_basics",
+      "title": "Cloud Computing Basics",
+      "expert_answers": [
+        "Cloud computing is the on-demand delivery of computing services such as servers, storage, databases, networking, and software over the internet, billed on a pay-as-you-go model. Its three core service models are IaaS, PaaS, and SaaS, and it relies on virtualization, multi-tenancy, and elasticity to scale resources dynamically based on demand.",
+        "The five essential characteristics of cloud computing defined by NIST are on-demand self-service, broad network access, resource pooling, rapid elasticity, and measured service. Public, private, hybrid, and community clouds differ in who owns and operates the underlying infrastructure."
+      ]
+    },
+    {
+      "node_id": "N02",
+      "weak_point_tag": "virtualization",
+      "title": "Virtualization",
+      "expert_answers": [
+        "Virtualization is the technique of creating software-based simulations of physical hardware. A hypervisor (Type 1 runs on bare metal, Type 2 runs on a host OS) partitions physical CPU, memory, and storage into isolated virtual machines, each running its own guest operating system. This enables consolidation, isolation, snapshotting, and live migration of workloads.",
+        "Hardware-assisted virtualization uses CPU extensions like Intel VT-x and AMD-V to accelerate guest execution. Paravirtualization, in contrast, modifies the guest OS to cooperate with the hypervisor for better performance. Virtualization underpins containerization but operates at a different layer of abstraction."
+      ]
+    },
+    {
+      "node_id": "N03",
+      "weak_point_tag": "docker",
+      "title": "Docker Containers",
+      "expert_answers": [
+        "Docker is a containerization platform that packages applications with their dependencies into lightweight, portable containers that share the host operating system kernel. Unlike virtual machines, containers do not bundle a guest OS, making them faster to start and more resource-efficient. A Dockerfile declares the build steps, an image is the immutable artifact, and a container is a running instance of an image.",
+        "Docker images are composed of layered filesystem changes that are cached for fast rebuilds. Docker Hub is a public registry for sharing images. Containers run as isolated processes on the host using Linux namespaces and cgroups for filesystem, network, and resource isolation."
+      ]
+    },
+    {
+      "node_id": "N04",
+      "weak_point_tag": "kubernetes",
+      "title": "Kubernetes Orchestration",
+      "expert_answers": [
+        "Kubernetes is an open-source container orchestration platform that automates deployment, scaling, healing, and networking of containerized applications across a cluster of machines. Its core abstractions are Pods (groups of co-scheduled containers), Deployments (declarative pod management), Services (stable network endpoints), and Ingresses (HTTP routing).",
+        "A Kubernetes cluster has a control plane (API server, etcd, scheduler, controller manager) and worker nodes running the kubelet and a container runtime. The desired state is declared in YAML manifests; controllers reconcile the actual state toward the desired state continuously."
+      ]
+    },
+    {
+      "node_id": "N05",
+      "weak_point_tag": "iaas",
+      "title": "Infrastructure as a Service",
+      "expert_answers": [
+        "Infrastructure as a Service (IaaS) is a cloud service model where the provider offers virtualized compute, storage, and networking primitives that the customer rents and configures. The customer manages the operating system, middleware, runtime, and applications, while the provider handles physical hardware, virtualization, and the data center.",
+        "Examples of IaaS include AWS EC2, Google Compute Engine, and Microsoft Azure Virtual Machines. IaaS contrasts with PaaS (which abstracts away the OS) and SaaS (which delivers a complete application). It gives the most flexibility but also the most operational responsibility."
+      ]
+    },
+    {
+      "node_id": "N06",
+      "weak_point_tag": "microservices",
+      "title": "Microservices Architecture",
+      "expert_answers": [
+        "Microservices architecture decomposes a large application into a set of small, independently deployable services that communicate over the network, typically via HTTP/REST or asynchronous messaging. Each service owns its own data store and is built around a single business capability, enabling independent scaling, technology diversity, and team autonomy.",
+        "Compared to a monolith, microservices add operational complexity: service discovery, distributed tracing, eventual consistency, and orchestration become first-class concerns. Patterns like API gateway, circuit breaker, saga, and bulkhead help manage these challenges."
+      ]
+    }
+  ]
+}

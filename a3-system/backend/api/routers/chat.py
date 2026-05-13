@@ -15,6 +15,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from core.content_moderator import content_moderator
 from core.logging import get_logger
 from nlp.session_manager import SessionManager
 
@@ -287,7 +288,16 @@ async def simple_chat(request: SimpleChatRequest):
     For quick tutoring conversations without complex retrieval.
     """
     from core.llm_client import llm_client
-    
+
+    # Harmful-content moderation on user input
+    mod = content_moderator.moderate(request.message)
+    if mod.verdict == "block":
+        logger.warning(f"Simple chat blocked by moderator: {mod.reason}")
+        return SimpleChatResponse(
+            response=mod.refusal_message or "I can't help with that request.",
+            topic=request.topic,
+        )
+
     try:
         # Build messages for LLM with warm, encouraging personality
         system_prompt = f"""You are A3, a warm and enthusiastic AI learning companion helping a student learn about {request.topic}.
@@ -358,6 +368,17 @@ async def simple_chat_stream(request: SimpleChatRequest):
     import json
 
     async def event_generator():
+        # Harmful-content moderation on user input (short-circuit the stream)
+        mod = content_moderator.moderate(request.message)
+        if mod.verdict == "block":
+            logger.warning(f"Simple chat stream blocked by moderator: {mod.reason}")
+            refusal = mod.refusal_message or "I can't help with that request."
+            yield f"data: {json.dumps({'event': 'start', 'data': None})}\n\n"
+            yield f"data: {json.dumps({'event': 'delta', 'data': refusal})}\n\n"
+            yield f"data: {json.dumps({'event': 'moderation', 'data': mod.to_dict()})}\n\n"
+            yield f"data: {json.dumps({'event': 'complete', 'data': refusal})}\n\n"
+            return
+
         try:
             # Build messages for LLM with warm, encouraging personality
             system_prompt = f"""You are A3, a warm and enthusiastic AI learning companion helping a student learn about {request.topic}.

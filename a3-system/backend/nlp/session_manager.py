@@ -15,8 +15,15 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 
+from core.content_moderator import content_moderator
 from core.logging import get_logger
-from nlp.profile_extractor import ProfileExtractor, ProfileBuilder
+from nlp.gap_detector import gap_detector
+from nlp.profile_extractor import (
+    ExtractionResult,
+    ProfileBuilder,
+    ProfileExtraction,
+    ProfileExtractor,
+)
 
 logger = get_logger(__name__)
 
@@ -273,6 +280,25 @@ Do NOT list all the things you want to know. Just ask ONE natural opening questi
                 "status": "error"
             }
 
+        # Harmful-content moderation on user input. Blocked messages short-circuit
+        # the extraction + LLM pipeline and return a polite refusal.
+        mod = content_moderator.moderate(message)
+        if mod.verdict == "block":
+            logger.warning(
+                f"Session {session_id} input blocked by moderator: {mod.reason}"
+            )
+            session.add_message("student", message)
+            refusal = mod.refusal_message or "I can't help with that."
+            session.add_message("assistant", refusal)
+            return {
+                "response": refusal,
+                "session_id": session_id,
+                "status": "active",
+                "progress": session.get_progress(),
+                "extracted_dimensions": [],
+                "moderation": mod.to_dict(),
+            }
+
         try:
             # Store student message
             session.add_message("student", message)
@@ -287,8 +313,24 @@ Do NOT list all the things you want to know. Just ask ONE natural opening questi
             except Exception as e:
                 logger.error(f"Extraction failed: {e}")
                 # Create empty extraction result
-                from nlp.profile_extractor import ExtractionResult
                 extraction_result = ExtractionResult(extractions=[], analysis="Extraction failed")
+
+            # Embedding-based gap detection (PRD Feature 1).
+            # Runs against the curated expert corpus and surfaces any topics
+            # the student appears not to grasp. Failures here must never
+            # block the chat reply, so we swallow exceptions.
+            try:
+                gap_tags = await gap_detector.detect_weak_points(message)
+                if gap_tags:
+                    extraction_result.extractions.append(ProfileExtraction(
+                        dimension="weak_points",
+                        value=gap_tags,
+                        confidence=0.6,
+                        evidence_quote="Detected via embedding similarity vs expert corpus",
+                    ))
+                    logger.info(f"GapDetector flagged weak points: {gap_tags}")
+            except Exception as e:
+                logger.debug(f"Gap detection skipped: {e}")
 
             # Update profile builder
             session.profile_builder.add_extraction(extraction_result)
