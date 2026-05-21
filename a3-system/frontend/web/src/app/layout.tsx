@@ -13,6 +13,11 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "NOBOGYAN — Your Personal AI Learning Swarm",
   description: "NOBOGYAN deploys a swarm of 15+ specialized AI agents that profile, plan, tutor, and assess — all working together to build your perfect learning path.",
+  icons: {
+    icon: "/nobogyan-logo.png",
+    shortcut: "/nobogyan-logo.png",
+    apple: "/nobogyan-logo.png",
+  },
 };
 
 export default function RootLayout({
