@@ -194,7 +194,6 @@ export default function OrbitalSystem() {
           width: 150,
           height: 150,
           border: "1px dashed rgba(124, 154, 107, 0.25)",
-          borderDasharray: "12 8",
         }}
         animate={{ rotate: -360 }}
         transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
@@ -206,7 +205,6 @@ export default function OrbitalSystem() {
           width: 204,
           height: 204,
           border: "1px dotted rgba(124, 154, 107, 0.2)",
-          borderDasharray: "2 4",
         }}
         animate={{ rotate: 360 }}
         transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
