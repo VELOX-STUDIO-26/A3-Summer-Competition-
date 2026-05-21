@@ -86,10 +86,10 @@ class ConversationManager:
     # Core operations
     # ------------------------------------------------------------------
 
-    def add_message(self, role: str, content: str, content_type: str = "text") -> None:
+    async def add_message(self, role: str, content: str, content_type: str = "text") -> None:
         """Add a message and trigger summarization if needed."""
         self.recent.append(Turn(role=role, content=content, content_type=content_type))
-        self._maybe_summarize()
+        await self._maybe_summarize()
 
     def get_context(self) -> List[Dict[str, str]]:
         """Build LLM context list: summary as system msg + recent turns."""
@@ -118,7 +118,7 @@ class ConversationManager:
     # Summarization
     # ------------------------------------------------------------------
 
-    def _maybe_summarize(self) -> None:
+    async def _maybe_summarize(self) -> None:
         """If we have too many full turns, compress the oldest ones."""
         # Count complete turns (pairs of user + assistant)
         turn_count = len(self.recent) // 2
@@ -130,12 +130,12 @@ class ConversationManager:
         turns_to_compress = self.recent[:4]  # 2 user + 2 assistant
         self.recent = self.recent[4:]
 
-        self.summary = self._summarize_chunk(
+        self.summary = await self._summarize_chunk(
             existing_summary=self.summary,
             new_messages=turns_to_compress,
         )
 
-    def _summarize_chunk(
+    async def _summarize_chunk(
         self,
         existing_summary: str,
         new_messages: List[Turn],
@@ -144,6 +144,8 @@ class ConversationManager:
         transcript = "\n".join(
             f"{t.role}: {t.content[:500]}" for t in new_messages
         )
+
+        prev_summary_text = f"Previous summary:\n{existing_summary}\n" if existing_summary else ""
 
         prompt = f"""You are maintaining context for an AI tutor.
 Summarize this conversation segment concisely.
@@ -158,15 +160,14 @@ Key elements to preserve:
 Omit greetings, pleasantries, and exact code snippets.
 Keep under 200 words.
 
-{("Previous summary:\n" + existing_summary) if existing_summary else ""}
-
+{prev_summary_text}
 New conversation:
 {transcript}
 
 Updated summary:"""
 
         try:
-            response = llm_client.generate(
+            response = await llm_client.generate(
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
                 max_tokens=400,

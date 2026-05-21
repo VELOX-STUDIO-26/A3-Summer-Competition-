@@ -332,7 +332,7 @@ class IFlytekASRClient:
                             "ok": True,
                             "handshake": "success",
                             "segments": [s.to_dict() for s in segments],
-                            "text": self._merge_segments(segments),
+                            "text": self._merge_segments(segments, LANGUAGE_EN),
                         }
                 return {
                     "ok": True,
@@ -517,7 +517,7 @@ class IFlytekASRClient:
             logger.error(f"iFlytek IAT transcription failed: {type(e).__name__}: {e}")
             raise RuntimeError(f"iFlytek IAT transcription failed: {e}") from e
 
-        text = self._merge_segments(segments)
+        text = self._merge_segments(segments, language)
         return TranscriptionResult(
             text=text,
             segments=segments,
@@ -577,6 +577,8 @@ class IFlytekASRClient:
         while True:
             try:
                 raw = await ws.recv()
+            except asyncio.CancelledError:
+                raise
             except Exception:
                 break
             raw_str = raw if isinstance(raw, str) else raw.decode("utf-8", "ignore")
@@ -594,7 +596,7 @@ class IFlytekASRClient:
         return segments
 
     @staticmethod
-    def _merge_segments(segments: List[TranscriptionSegment]) -> str:
+    def _merge_segments(segments: List[TranscriptionSegment], language: str = LANGUAGE_EN) -> str:
         """Merge incremental segments into one transcript.
 
         IAT emits both partial and final segments. We dedupe by keeping the
@@ -620,8 +622,11 @@ class IFlytekASRClient:
         if last_partial:
             finals.append(last_partial)
 
-        # Collapse whitespace for English; Chinese already has no spaces.
-        merged = " ".join(p.strip() for p in finals if p.strip())
+        # Chinese text should not have spaces inserted between characters.
+        if language == LANGUAGE_ZH:
+            merged = "".join(p.strip() for p in finals if p.strip())
+        else:
+            merged = " ".join(p.strip() for p in finals if p.strip())
         return merged
 
 

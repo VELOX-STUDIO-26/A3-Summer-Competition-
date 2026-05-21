@@ -229,7 +229,11 @@ class CodeAgent(BaseAgent):
             difficulty = "intermediate" if difficulty == "beginner" else "advanced"
 
         # Check if topic is a weak point for extra scaffolding
-        is_weak_point = topic.lower() in [wp.lower() for wp in weak_points]
+        topic_lower = topic.lower()
+        is_weak_point = any(
+            topic_lower in wp.lower() or wp.lower() in topic_lower
+            for wp in weak_points
+        )
 
         # Retrieve RAG chunks for grounding
         rag_chunks = await self._retrieve_chunks(topic, node_id)
@@ -273,15 +277,8 @@ Return ONLY valid JSON."""
 
             content = response["choices"][0]["message"]["content"]
 
-            # Parse JSON
-            try:
-                code_data = json.loads(content)
-            except json.JSONDecodeError:
-                json_match = re.search(r'\{.*\}', content, re.DOTALL)
-                if json_match:
-                    code_data = json.loads(json_match.group())
-                else:
-                    raise ValueError("Could not parse code JSON")
+            # Parse JSON with progressive fallback for truncated output
+            code_data = self._extract_json(content)
 
             # Ensure exercises array exists with proper structure
             exercises = code_data.get("exercises", [])
@@ -356,6 +353,42 @@ Return ONLY valid JSON."""
         except Exception as e:
             logger.error(f"Code generation failed for {topic}: {e}")
             return self._generate_fallback_response(topic, language, difficulty, mastery, is_weak_point)
+
+    @staticmethod
+    def _extract_json(content: str) -> Dict[str, Any]:
+        """Parse JSON with progressive fallback for truncated LLM output."""
+        # 1. Direct parse
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            pass
+
+        # 2. Extract from markdown code blocks or raw text
+        match = re.search(r'\{.*\}', content, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
+
+        # 3. Progressive fallback: find largest valid JSON by brace counting
+        start = content.find('{')
+        if start == -1:
+            raise ValueError("No JSON object found in response")
+
+        depth = 0
+        for i, ch in enumerate(content[start:], start):
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(content[start:i + 1])
+                    except json.JSONDecodeError:
+                        pass
+
+        raise ValueError("Could not parse code JSON from response")
 
     def _ensure_three_exercises(self, exercises: List[Dict], topic: str, language: str) -> List[Dict]:
         """Ensure we have exactly 3 exercises with proper tier structure."""

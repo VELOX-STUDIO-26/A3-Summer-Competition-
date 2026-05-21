@@ -92,7 +92,7 @@ Be thorough but concise. Use markdown formatting.""",
                     max_tokens=2000,
                 )
 
-                if isinstance(response, dict) and "choices" in response:
+                if isinstance(response, dict) and "choices" in response and response["choices"]:
                     text = response["choices"][0].get("message", {}).get("content", "")
                 elif isinstance(response, dict) and "content" in response:
                     text = response["content"]
@@ -145,7 +145,10 @@ Also provide a brief explanation of what the equation represents."""
             start = analysis.find("```") + 3
             end = analysis.find("```", start)
             if end > start:
-                latex_match = analysis[start:end].strip()
+                candidate = analysis[start:end].strip()
+                # Only accept the fallback block if it looks like math/LaTeX
+                if any(c in candidate for c in ("\\", "^", "_", "{", "}", "\\sum", "\\int", "\\frac")):
+                    latex_match = candidate
 
         return {
             **result,

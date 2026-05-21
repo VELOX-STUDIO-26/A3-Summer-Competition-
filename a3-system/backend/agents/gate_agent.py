@@ -137,30 +137,61 @@ class GateAgent:
         if resource_type == "notes":
             scroll = data.get("max_scroll", 0)
             time_spent = data.get("time_spent", 0)
-            # Estimate read time: assume 200 words per minute
             completion = data.get("completion", 0)
+            word_count = data.get("word_count", 0)
 
-            if scroll >= threshold["scroll_depth"] and completion >= threshold["scroll_depth"]:
+            # Check all three criteria: scroll depth, completion, and read time ratio
+            scroll_met = scroll >= threshold.get("scroll_depth", 0.80)
+            completion_met = completion >= threshold.get("scroll_depth", 0.80)
+
+            # Calculate estimated read time based on word count (200 words per minute)
+            if word_count > 0:
+                estimated_read_time = (word_count / 200) * 60  # seconds
+            else:
+                # Fallback: estimate based on completion (assume 5 min for full completion)
+                estimated_read_time = 300 * completion if completion > 0 else 60
+
+            min_read_time = estimated_read_time * threshold.get("min_read_time_ratio", 0.60)
+            time_met = time_spent >= min_read_time
+
+            if scroll_met and completion_met and time_met:
                 return 1.0
-            elif scroll >= threshold["scroll_depth"] * 0.5 or completion >= threshold["scroll_depth"] * 0.5:
+            elif (scroll_met or completion_met) and time_spent >= min_read_time * 0.5:  # Partial credit
                 return 0.5
             return 0.0
 
         elif resource_type == "mindmap":
-            completion = data.get("completion", 0)
-            if completion >= threshold["min_nodes_ratio"]:
+            total_nodes = data.get("total_nodes", 0)
+            nodes_interacted = data.get("nodes_interacted", 0)
+
+            if total_nodes > 0:
+                actual_completion = nodes_interacted / total_nodes
+            else:
+                actual_completion = data.get("completion", 0)
+
+            if actual_completion >= threshold.get("min_nodes_ratio", 0.70):
                 return 1.0
-            elif completion >= threshold["min_nodes_ratio"] * 0.5:
+            elif actual_completion >= threshold.get("min_nodes_ratio", 0.70) * 0.5:
                 return 0.5
             return 0.0
 
         elif resource_type == "video":
             watch_pct = max(data.get("watch_percentage", 0), data.get("completion", 0))
             speed = data.get("playback_speed", 1.0)
+            time_spent = data.get("time_spent", 0)
+            duration = data.get("duration_seconds", 0)
 
             # Apply speed penalty
             if speed > threshold["speed_penalty_threshold"]:
                 watch_pct *= 0.8
+
+            # Check actual time spent vs expected (for rushed detection)
+            if duration > 0 and time_spent > 0:
+                expected_time = duration / speed  # Adjusted for playback speed
+                actual_watch_ratio = time_spent / expected_time if expected_time > 0 else 0
+                # If they watched less than 50% of expected time even with high percentage, penalize
+                if actual_watch_ratio < 0.5:
+                    watch_pct *= 0.9
 
             if watch_pct >= threshold["min_watch_ratio"]:
                 return 1.0
@@ -196,15 +227,28 @@ class GateAgent:
             "replayed_video_sections": False,
             "debugged_code_actively": False,
             "explored_mindmap_deeply": False,
-            "rushed_through": False
+            "rushed_through": False,
+            "high_practice_quiz_score": False
         }
 
-        # Notes signals
+        # Notes signals - use actual word count if available
         notes_data = resource_data.get("notes", {})
         time_spent = notes_data.get("time_spent", 0)
-        # Assume 5 min read time for ~1000 words
-        if time_spent > 180:  # 3+ minutes
-            signals["likely_read_notes"] = True
+        word_count = notes_data.get("word_count", 0)
+        if word_count > 0:
+            # Expected read time at 200 wpm: (word_count / 200) * 60 seconds
+            expected_read_time = (word_count / 200) * 60
+            if time_spent > expected_read_time:
+                signals["likely_read_notes"] = True
+            # Rushed if read time < 30% of expected
+            if time_spent < expected_read_time * 0.30:
+                signals["rushed_through"] = True
+        else:
+            # Fallback: use completion-based estimate
+            completion = notes_data.get("completion", 0)
+            expected_read_time = max(60, int(150 * completion)) if completion > 0 else 60
+            if time_spent > expected_read_time:
+                signals["likely_read_notes"] = True
 
         # Video signals
         video_data = resource_data.get("video", {})
@@ -212,22 +256,37 @@ class GateAgent:
             signals["replayed_video_sections"] = True
         if video_data.get("playback_speed", 1.0) > 2.0:
             signals["rushed_through"] = True
+        # Video rushed detection: time_spent vs expected
+        duration = video_data.get("duration_seconds", 0)
+        time_spent = video_data.get("time_spent", 0)
+        speed = video_data.get("playback_speed", 1.0)
+        if duration > 0 and time_spent > 0:
+            expected_time = duration / speed
+            if time_spent < expected_time * 0.50:  # Less than 50% of expected time
+                signals["rushed_through"] = True
 
         # Code signals
         code_data = resource_data.get("code", {})
         if code_data.get("run_count", 0) > 3:
             signals["debugged_code_actively"] = True
 
-        # Mindmap signals
+        # Mindmap signals - now with proper time_spent tracking
         mindmap_data = resource_data.get("mindmap", {})
         total_nodes = mindmap_data.get("total_nodes", 0)
         nodes_interacted = mindmap_data.get("nodes_interacted", 0)
-        if total_nodes > 0:
-            avg_time = mindmap_data.get("time_spent", 0) / total_nodes
+        time_spent = mindmap_data.get("time_spent", 0)
+        if total_nodes > 0 and time_spent > 0:
+            avg_time = time_spent / total_nodes
             if avg_time > 3:
                 signals["explored_mindmap_deeply"] = True
             if avg_time < 1.5:
                 signals["rushed_through"] = True
+
+        # Practice quiz signals - now with score tracking
+        practice_data = resource_data.get("practice_quiz", {})
+        score = practice_data.get("score", 0)
+        if score > 0.70:  # 70% threshold for bonus
+            signals["high_practice_quiz_score"] = True
 
         return signals
 
@@ -244,12 +303,13 @@ class GateAgent:
         # Detect engagement signals
         signals = self._detect_engagement_signals(resource_data)
 
-        # Determine engagement quality
+        # Determine engagement quality (include practice quiz score in bonus count)
         bonus_count = sum([
             signals["likely_read_notes"],
             signals["replayed_video_sections"],
             signals["debugged_code_actively"],
-            signals["explored_mindmap_deeply"]
+            signals["explored_mindmap_deeply"],
+            signals.get("high_practice_quiz_score", False)
         ])
 
         if bonus_count >= 2:

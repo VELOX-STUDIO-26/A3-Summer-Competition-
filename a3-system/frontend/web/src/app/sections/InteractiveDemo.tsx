@@ -86,37 +86,37 @@ export default function InteractiveDemo() {
   }, [logs]);
 
   return (
-    <section id="demo" className="py-32 md:py-40 bg-sand-100 relative overflow-hidden">
+    <section id="demo" className="py-16 sm:py-24 md:py-32 lg:py-40 bg-sand-100 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 mesh-gradient opacity-40" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         {/* Header */}
-        <ScrollReveal className="text-center mb-12">
+        <ScrollReveal className="text-center mb-8 sm:mb-12">
           <span
-            className="text-[11px] font-mono font-medium tracking-[0.15em] text-sage-500 uppercase"
+            className="text-[10px] sm:text-[11px] font-mono font-medium tracking-[0.15em] text-sage-500 uppercase"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             Interactive Sandbox
           </span>
           <h2
-            className="mt-4 text-4xl md:text-5xl font-serif font-semibold text-deep-charcoal"
+            className="mt-3 sm:mt-4 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-semibold text-deep-charcoal"
             style={{ fontFamily: "var(--font-serif)", letterSpacing: "-0.02em" }}
           >
             Simulate the Swarm
           </h2>
-          <p className="mt-4 text-lg text-deep-charcoal/60 max-w-xl mx-auto">
+          <p className="mt-2 sm:mt-4 text-sm sm:text-base lg:text-lg text-deep-charcoal/60 max-w-xl mx-auto">
             Watch 15+ agents map a topic in real-time.
           </p>
         </ScrollReveal>
 
         {/* Main Workspace */}
         <ScrollReveal delay={0.2}>
-          <div className="grid lg:grid-cols-[35%_65%] gap-6">
+          <div className="grid lg:grid-cols-[35%_65%] gap-4 sm:gap-6">
             {/* Left: Inputs */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {/* Input Field */}
-              <div className="glass-premium rounded-2xl p-5">
+              <div className="glass-premium rounded-xl sm:rounded-2xl p-3 sm:p-5">
                 <label className="text-xs font-mono font-semibold tracking-wider text-deep-charcoal/40 uppercase mb-3 block">
                   Your Learning Goal
                 </label>
@@ -140,12 +140,12 @@ export default function InteractiveDemo() {
               </div>
 
               {/* Quick Prompts */}
-              <div className="glass-premium rounded-2xl p-5 border border-white/50">
-                <label className="text-xs font-mono font-semibold tracking-wider text-deep-charcoal/40 uppercase mb-4 block flex items-center gap-2">
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <div className="glass-premium rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-white/50">
+                <label className="text-[10px] sm:text-xs font-mono font-semibold tracking-wider text-deep-charcoal/40 uppercase mb-3 sm:mb-4 block flex items-center gap-2">
+                  <Zap className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-amber-500" />
                   Try a Blueprint
                 </label>
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {quickPrompts.map((prompt, i) => (
                     <motion.button
                       key={prompt.label}
@@ -156,31 +156,29 @@ export default function InteractiveDemo() {
                       transition={{ delay: i * 0.1 }}
                       whileHover={{ scale: 1.02, x: 4 }}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white/70 hover:bg-white text-left transition-all border border-sand-200 hover:border-sage-300 hover:shadow-md group disabled:opacity-50"
+                      className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl bg-white/70 hover:bg-white text-left transition-all border border-sand-200 hover:border-sage-300 hover:shadow-md group disabled:opacity-50"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-sand-100 group-hover:bg-sage-400/10 flex items-center justify-center text-xl transition-colors">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-sand-100 group-hover:bg-sage-400/10 flex items-center justify-center text-base sm:text-xl transition-colors shrink-0">
                         {prompt.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-deep-charcoal group-hover:text-sage-600 transition-colors">
-                            {prompt.label}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-deep-charcoal/40 mt-0.5 truncate">
+                        <span className="text-xs sm:text-sm font-semibold text-deep-charcoal group-hover:text-sage-600 transition-colors block truncate">
+                          {prompt.label}
+                        </span>
+                        <p className="text-[9px] sm:text-[10px] text-deep-charcoal/40 mt-0.5 truncate hidden sm:block">
                           {prompt.prompt.slice(0, 40)}...
                         </p>
                       </div>
-                      <div className="w-6 h-6 rounded-full bg-sage-400/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Send className="w-3 h-3 text-sage-500" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-sage-400/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        <Send className="w-2.5 sm:w-3 h-2.5 sm:h-3 text-sage-500" />
                       </div>
                     </motion.button>
                   ))}
                 </div>
               </div>
 
-              {/* Stats */}
-              <div className="glass-premium rounded-2xl p-5 border border-white/50">
+              {/* Stats - hidden on mobile to save space */}
+              <div className="hidden sm:block glass-premium rounded-2xl p-5 border border-white/50">
                 <div className="grid grid-cols-2 gap-4">
                   <motion.div 
                     className="text-center p-3 rounded-xl bg-white/40 hover:bg-white/60 transition-colors cursor-pointer group"
@@ -208,26 +206,26 @@ export default function InteractiveDemo() {
 
             {/* Right: Live Generation Engine */}
             <div
-              className="glass-premium rounded-3xl overflow-hidden"
+              className="glass-premium rounded-2xl sm:rounded-3xl overflow-hidden"
               style={{
                 boxShadow: "inset 0 2px 8px rgba(0,0,0,0.02), 0 24px 48px rgba(0,0,0,0.08)",
               }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-white/20 bg-white/30">
+              <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-white/20 bg-white/30">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-xs font-mono font-semibold tracking-wider text-deep-charcoal/60 uppercase">
-                    Swarm Status: {isSimulating ? "Orchestrating" : isComplete ? "Complete" : "Standby"}
+                  <span className="text-[10px] sm:text-xs font-mono font-semibold tracking-wider text-deep-charcoal/60 uppercase">
+                    {isSimulating ? "Orchestrating" : isComplete ? "Complete" : "Standby"}
                   </span>
                 </div>
                 {isSimulating && (
-                  <span className="text-xs font-mono text-sage-500">{Math.round(progress)}%</span>
+                  <span className="text-[10px] sm:text-xs font-mono text-sage-500">{Math.round(progress)}%</span>
                 )}
               </div>
 
               {/* Content Area */}
-              <div className="min-h-[400px] bg-white/20 relative flex flex-col">
+              <div className="min-h-[280px] sm:min-h-[400px] bg-white/20 relative flex flex-col">
                 <AnimatePresence mode="wait">
                   {!isSimulating && !isComplete ? (
                     <motion.div
@@ -239,7 +237,7 @@ export default function InteractiveDemo() {
                     >
                       {/* Background orbital rings */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <svg className="w-[300px] h-[300px] opacity-20" viewBox="0 0 300 300">
+                        <svg className="w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] opacity-20" viewBox="0 0 300 300">
                           <circle cx="150" cy="150" r="40" fill="none" stroke="#7C9A6B" strokeWidth="1" strokeDasharray="4 6" />
                           <circle cx="150" cy="150" r="80" fill="none" stroke="#7C9A6B" strokeWidth="1" strokeDasharray="4 6" />
                           <circle cx="150" cy="150" r="120" fill="none" stroke="#7C9A6B" strokeWidth="1" strokeDasharray="4 6" />
@@ -251,23 +249,23 @@ export default function InteractiveDemo() {
                         <motion.div
                           animate={{ scale: [1, 1.05, 1] }}
                           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                          className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center shadow-xl"
+                          className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-white flex items-center justify-center shadow-xl"
                           style={{ boxShadow: "0 0 40px rgba(124,154,107,0.3)" }}
                         >
-                          <img src="/nobogyan-logo.png" alt="NOBOGYAN" className="w-14 h-14" />
+                          <img src="/nobogyan-logo.png" alt="NOBOGYAN" className="w-10 h-10 sm:w-14 sm:h-14" />
                         </motion.div>
                         <motion.div
                           animate={{ opacity: [0.3, 0.6, 0.3] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="absolute -inset-4 rounded-3xl border-2 border-sage-400/30"
+                          className="absolute -inset-3 sm:-inset-4 rounded-2xl sm:rounded-3xl border-2 border-sage-400/30"
                         />
                       </div>
 
-                      {/* Floating Agent Nodes */}
-                      {floatingAgents.map((agent) => (
+                      {/* Floating Agent Nodes - fewer on mobile */}
+                      {floatingAgents.slice(0, 4).map((agent) => (
                         <motion.div
                           key={agent.id}
-                          className="absolute group cursor-pointer"
+                          className="absolute group cursor-pointer hidden sm:block"
                           style={{ left: `${agent.x}%`, top: `${agent.y}%` }}
                           initial={{ opacity: 0, scale: 0 }}
                           animate={{ 
@@ -282,7 +280,7 @@ export default function InteractiveDemo() {
                           }}
                         >
                           <div 
-                            className="w-12 h-12 rounded-xl flex items-center justify-center text-lg shadow-lg transition-transform group-hover:scale-110"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center text-base sm:text-lg shadow-lg transition-transform group-hover:scale-110"
                             style={{ backgroundColor: agent.color }}
                           >
                             {agent.icon}
@@ -314,36 +312,38 @@ export default function InteractiveDemo() {
                         </motion.div>
                       ))}
 
-                      {/* Animated particles */}
-                      {[...Array(6)].map((_, i) => (
-                        <motion.div
-                          key={`particle-${i}`}
-                          className="absolute w-1.5 h-1.5 rounded-full bg-sage-400/40"
-                          style={{ left: `${30 + i * 10}%`, top: "50%" }}
-                          animate={{
-                            x: [0, 50, 0],
-                            y: [0, -30 + i * 10, 0],
-                            opacity: [0, 0.6, 0],
-                          }}
-                          transition={{
-                            duration: 3,
-                            delay: i * 0.5,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }}
-                        />
-                      ))}
+                      {/* Animated particles - hidden on mobile */}
+                      <div className="hidden sm:block">
+                        {[...Array(6)].map((_, i) => (
+                          <motion.div
+                            key={`particle-${i}`}
+                            className="absolute w-1.5 h-1.5 rounded-full bg-sage-400/40"
+                            style={{ left: `${30 + i * 10}%`, top: "50%" }}
+                            animate={{
+                              x: [0, 50, 0],
+                              y: [0, -30 + i * 10, 0],
+                              opacity: [0, 0.6, 0],
+                            }}
+                            transition={{
+                              duration: 3,
+                              delay: i * 0.5,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }}
+                          />
+                        ))}
+                      </div>
 
                       {/* Bottom CTA */}
-                      <div className="absolute bottom-6 left-0 right-0 text-center">
+                      <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 text-center px-4">
                         <motion.div
                           animate={{ opacity: [0.5, 1, 0.5] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-sage-300/30 shadow-sm"
+                          className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/60 border border-sage-300/30 shadow-sm"
                         >
-                          <Sparkles className="w-4 h-4 text-sage-500" />
-                          <span className="text-xs font-medium text-deep-charcoal/60">
-                            Select a topic to activate the swarm
+                          <Sparkles className="w-3 sm:w-4 h-3 sm:h-4 text-sage-500" />
+                          <span className="text-[10px] sm:text-xs font-medium text-deep-charcoal/60">
+                            Tap a topic to activate
                           </span>
                         </motion.div>
                       </div>
@@ -354,7 +354,7 @@ export default function InteractiveDemo() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="flex-1 p-6 flex flex-col"
+                      className="flex-1 p-3 sm:p-6 flex flex-col"
                     >
                       {/* Progress Bar */}
                       <div className="mb-6">

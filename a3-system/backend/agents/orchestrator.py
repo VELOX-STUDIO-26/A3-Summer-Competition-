@@ -91,7 +91,9 @@ class Orchestrator:
         # Fast learners get all agents
         if learning_pace > 0.8:
             all_agents = ["content", "quiz", "mindmap", "media", "code"]
-            agents = [a for a in all_agents if a in agents or a in ["content", "quiz", "mindmap"]]
+            for a in all_agents:
+                if a not in agents:
+                    agents.append(a)
 
         return agents
 

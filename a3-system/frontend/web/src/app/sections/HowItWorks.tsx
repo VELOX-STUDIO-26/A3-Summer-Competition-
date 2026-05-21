@@ -58,11 +58,11 @@ const steps = [
 ];
 
 function StepText({ step, index }: { step: (typeof steps)[0]; index: number }) {
-  const { ref, isInView } = useInView<HTMLDivElement>({ threshold: 0.4 });
+  const { ref, isInView } = useInView<HTMLDivElement>({ threshold: 0.3, rootMargin: "-30% 0px -30% 0px" });
 
   return (
-    <div ref={ref} className="min-h-[60vh] flex items-center py-20" data-step-index={index}>
-      <div className="max-w-md pl-8">
+    <div ref={ref} className="min-h-[50vh] lg:min-h-[70vh] flex items-center py-10 lg:py-24" data-step-index={index}>
+      <div className="max-w-md pl-4 lg:pl-8">
         <AnimatePresence mode="wait">
           {isInView && (
             <motion.div
@@ -82,19 +82,19 @@ function StepText({ step, index }: { step: (typeof steps)[0]; index: number }) {
 
               {/* Headline — Playfair Display */}
               <h3
-                className="text-4xl md:text-5xl font-serif font-semibold text-deep-charcoal mb-5"
+                className="text-3xl sm:text-4xl md:text-5xl font-serif font-semibold text-deep-charcoal mb-3 sm:mb-5"
                 style={{ fontFamily: "var(--font-serif)", letterSpacing: "-0.02em", lineHeight: 1.1 }}
               >
                 {step.title}
               </h3>
 
               {/* Subhead — high contrast, medium weight */}
-              <p className="text-xl text-deep-charcoal/90 font-medium mb-4 leading-snug">
+              <p className="text-lg sm:text-xl text-deep-charcoal/90 font-medium mb-3 sm:mb-4 leading-snug">
                 {step.body}
               </p>
 
               {/* Detail — muted, lighter weight */}
-              <p className="text-base text-deep-charcoal/50 leading-relaxed mb-8 font-normal">
+              <p className="text-sm sm:text-base text-deep-charcoal/50 leading-relaxed mb-6 sm:mb-8 font-normal">
                 {step.detail}
               </p>
 
@@ -523,44 +523,50 @@ export default function HowItWorks() {
     const section = sectionRef.current;
     if (!section) return;
 
+    // Cache step elements once
+    let stepElements: Element[] = [];
+    const cacheStepElements = () => {
+      stepElements = Array.from(document.querySelectorAll('[data-step-index]'));
+    };
+    cacheStepElements();
+
+    let ticking = false;
     const handleScroll = () => {
-      const rect = section.getBoundingClientRect();
-      const sectionTop = rect.top;
-      const sectionHeight = rect.height;
-      const viewportHeight = window.innerHeight;
-
-      // Calculate how far through the section we've scrolled
-      // 0 = section top reaches top of viewport
-      // 1 = section bottom reaches top of viewport
-      const scrollEnd = sectionHeight - viewportHeight;
-      const currentScroll = -sectionTop;
-      const progress = Math.max(0, Math.min(1, currentScroll / scrollEnd));
-
-      setScrollProgress(progress);
-
-      // Check if the section bottom is still in view (hide when section bottom reaches 60% of viewport)
-      const sectionBottom = rect.bottom;
-      const isSectionVisible = sectionBottom > viewportHeight * 0.85;
-
-      // Find which step is currently in view by checking step elements
-      const stepElements = document.querySelectorAll('[data-step-index]');
-      let currentStep = 0;
-      let closestDistance = Infinity;
-      const viewportCenter = viewportHeight / 2;
+      if (ticking) return;
+      ticking = true;
       
-      stepElements.forEach((el, i) => {
-        const stepRect = el.getBoundingClientRect();
-        const stepCenter = stepRect.top + stepRect.height / 2;
-        const distance = Math.abs(stepCenter - viewportCenter);
+      requestAnimationFrame(() => {
+        const rect = section.getBoundingClientRect();
+        const sectionTop = rect.top;
+        const sectionHeight = rect.height;
+        const viewportHeight = window.innerHeight;
+
+        // Calculate how far through the section we've scrolled
+        const scrollEnd = sectionHeight - viewportHeight;
+        const currentScroll = -sectionTop;
+        const progress = Math.max(0, Math.min(1, currentScroll / scrollEnd));
+
+        setScrollProgress(progress);
+
+        // Check if the section bottom is still in view
+        const sectionBottom = rect.bottom;
+        const isSectionVisible = sectionBottom > viewportHeight * 0.6 && sectionTop < viewportHeight * 0.4;
+
+        // Find which step is currently in view - use 60% from top as trigger point (earlier trigger)
+        const triggerPoint = viewportHeight * 0.6;
+        let currentStep = 0;
         
-        // Find the step closest to viewport center
-        if (distance < closestDistance && stepRect.top < viewportHeight) {
-          closestDistance = distance;
-          currentStep = i;
+        for (let i = 0; i < stepElements.length; i++) {
+          const stepRect = stepElements[i].getBoundingClientRect();
+          // Step is active when its top crosses the trigger point
+          if (stepRect.top <= triggerPoint) {
+            currentStep = i;
+          }
         }
+        
+        setActiveStep(isSectionVisible ? currentStep : -1);
+        ticking = false;
       });
-      
-      setActiveStep(isSectionVisible ? currentStep : -1);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -654,8 +660,46 @@ export default function HowItWorks() {
         </AnimatePresence>
       </div>
 
+      {/* Mobile: Step cards before content */}
+      <div className="lg:hidden max-w-7xl mx-auto px-4 pb-6">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {steps.map((step, i) => (
+            <button
+              key={step.number}
+              onClick={() => {
+                const stepEl = document.querySelector(`[data-step-index="${i}"]`);
+                stepEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap transition-all duration-300 shrink-0 border ${
+                activeStep === i
+                  ? "bg-sage-400 text-white border-sage-400 shadow-md"
+                  : "bg-white/80 text-deep-charcoal/70 border-sand-200"
+              }`}
+            >
+              <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-mono font-bold ${
+                activeStep === i ? "bg-white/20 text-white" : "bg-sand-100 text-deep-charcoal/50"
+              }`}>
+                {step.number}
+              </span>
+              <span className="text-xs font-medium">{step.title}</span>
+            </button>
+          ))}
+        </div>
+        {/* Progress dots */}
+        <div className="flex justify-center gap-1.5 mt-2">
+          {steps.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1 rounded-full transition-all ${
+                activeStep === i ? "bg-sage-400 w-6" : activeStep > i ? "bg-sage-300 w-2" : "bg-sand-300 w-2"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
       {/* Split canvas */}
-      <div className="max-w-7xl mx-auto px-6 pb-32">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-20 lg:pb-32">
         <div className="lg:flex lg:gap-16">
           {/* Left: scrolling steps */}
           <div className="relative lg:w-1/2">

@@ -1,0 +1,12 @@
+{
+  "student_id": "test_student_001",
+  "knowledge_base": "beginner",
+  "cognitive_style": "visual",
+  "weak_points": ["distributed_systems", "networking_fundamentals", "virtualization_concepts"],
+  "goals": "Learn cloud computing fundamentals to prepare for AWS certification and understand how to deploy scalable applications",
+  "learning_pace": "moderate",
+  "content_preferences": ["video", "hands_on", "diagrams"],
+  "current_topic": "cloud_computing_intro",
+  "completed_nodes": [],
+  "profile_summary": "Beginner student with basic programming knowledge but no prior cloud experience. Prefers visual learning with videos and hands-on labs. Goal is AWS certification. Needs extra support on networking and virtualization concepts."
+}

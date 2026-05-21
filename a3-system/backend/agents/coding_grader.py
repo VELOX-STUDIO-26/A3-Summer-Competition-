@@ -280,7 +280,7 @@ Provide constructive feedback and assessment."""
                 max_tokens=500
             )
 
-            content = response["choices"][0]["message"].get("content", "")
+            content = response["choices"][0]["message"].get("content", "") if response.get("choices") else ""
 
             if not content:
                 return self._fallback_assessment(base_score)

@@ -358,10 +358,13 @@ Return ONLY valid JSON matching the exact structure specified."""
             target_concepts = [c["concept_tag"] for c in concept_analysis if c["severity"] in ["critical", "moderate"]]
 
             # Determine format instructions based on engagement
-            lowest_format = min(
-                resource_engagement.keys(),
-                key=lambda k: resource_engagement.get(k, {}).get("completion", 0)
-            )
+            if resource_engagement:
+                lowest_format = min(
+                    resource_engagement.keys(),
+                    key=lambda k: resource_engagement.get(k, {}).get("completion", 0)
+                )
+            else:
+                lowest_format = "notes"  # Default fallback
 
             # Build profile updates
             weak_add = [c["concept_tag"] for c in concept_analysis if c["severity"] == "critical"]

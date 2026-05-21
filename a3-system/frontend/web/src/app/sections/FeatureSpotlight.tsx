@@ -679,74 +679,122 @@ export default function FeatureSpotlight() {
         />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         {/* Header */}
-        <ScrollReveal className="text-center mb-8 lg:mb-12">
+        <ScrollReveal className="text-center mb-6 sm:mb-8 lg:mb-12">
           <span
-            className="text-[11px] font-mono font-medium tracking-[0.15em] text-sage-500 uppercase"
+            className="text-[10px] sm:text-[11px] font-mono font-medium tracking-[0.15em] text-sage-500 uppercase"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             Feature Spotlight
           </span>
           <h2
-            className="mt-4 text-4xl md:text-5xl font-serif font-semibold text-deep-charcoal"
+            className="mt-2 sm:mt-4 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-semibold text-deep-charcoal"
             style={{ fontFamily: "var(--font-serif)", letterSpacing: "-0.02em" }}
           >
             See the Swarm in Action
           </h2>
-          <p className="mt-4 text-lg text-deep-charcoal/60 max-w-2xl mx-auto">
+          <p className="mt-2 sm:mt-4 text-sm sm:text-base lg:text-lg text-deep-charcoal/60 max-w-2xl mx-auto">
             Five integrated modules. One cohesive learning system.
           </p>
         </ScrollReveal>
 
         {/* Bento Canvas */}
-        <div className="grid lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] gap-6 lg:gap-8">
-          {/* Left: Tab Navigation - horizontal scroll on mobile */}
-          <div className="flex lg:flex-col gap-3 overflow-x-auto pb-4 lg:pb-0 lg:overflow-visible snap-x snap-mandatory">
-            {features.map((feature, index) => {
-              const isActive = activeTab === index;
-              const Icon = feature.icon;
-
-              return (
-                <button
-                  key={feature.id}
-                  onClick={() => setActiveTab(index)}
-                  className={`min-w-[200px] lg:min-w-0 w-full text-left p-3 sm:p-4 rounded-2xl transition-all duration-300 border snap-start shrink-0 lg:shrink ${
-                    isActive
-                      ? "bg-white border-sage-300 shadow-lg shadow-sage-200/50"
-                      : "bg-white/60 border-transparent hover:bg-white/90"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                        isActive ? "bg-sage-400 text-[#111111] font-bold" : "bg-sand-200 text-deep-charcoal/50 group-hover:bg-sand-300"
+        <div className="grid lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] gap-4 sm:gap-6 lg:gap-8">
+          {/* Left: Tab Navigation - compact pills on mobile, full cards on desktop */}
+          <div className="space-y-3">
+            {/* Mobile: 2-row grid showing all features */}
+            <div className="lg:hidden">
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {features.slice(0, 3).map((feature, index) => {
+                  const isActive = activeTab === index;
+                  const Icon = feature.icon;
+                  return (
+                    <button
+                      key={feature.id}
+                      onClick={() => setActiveTab(index)}
+                      className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl transition-all duration-300 ${
+                        isActive
+                          ? "bg-sage-400 text-white shadow-md"
+                          : "bg-white/80 text-deep-charcoal/70 border border-sand-200"
                       }`}
                     >
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-[10px] font-mono font-medium tracking-wider uppercase transition-colors ${
-                            isActive ? "text-sage-500" : "text-deep-charcoal/40 group-hover:text-deep-charcoal/60"
-                          }`}
-                        >
-                          {feature.number} / {feature.label}
-                        </span>
-                      </div>
-                      <h3
-                        className={`text-sm font-semibold mt-1 leading-tight transition-colors ${
-                          isActive ? "text-deep-charcoal" : "text-deep-charcoal/70 group-hover:text-deep-charcoal"
+                      <Icon className="w-4 h-4" />
+                      <span className="text-[10px] font-medium leading-tight text-center">{feature.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {features.slice(3).map((feature, index) => {
+                  const actualIndex = index + 3;
+                  const isActive = activeTab === actualIndex;
+                  const Icon = feature.icon;
+                  return (
+                    <button
+                      key={feature.id}
+                      onClick={() => setActiveTab(actualIndex)}
+                      className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl transition-all duration-300 ${
+                        isActive
+                          ? "bg-sage-400 text-white shadow-md"
+                          : "bg-white/80 text-deep-charcoal/70 border border-sand-200"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="text-[10px] font-medium leading-tight text-center">{feature.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {/* Desktop: Full card navigation */}
+            <div className="hidden lg:flex lg:flex-col gap-3">
+              {features.map((feature, index) => {
+                const isActive = activeTab === index;
+                const Icon = feature.icon;
+
+                return (
+                  <button
+                    key={feature.id}
+                    onClick={() => setActiveTab(index)}
+                    className={`w-full text-left p-4 rounded-2xl transition-all duration-300 border ${
+                      isActive
+                        ? "bg-white border-sage-300 shadow-lg shadow-sage-200/50"
+                        : "bg-white/60 border-transparent hover:bg-white/90"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                          isActive ? "bg-sage-400 text-white" : "bg-sand-200 text-deep-charcoal/50"
                         }`}
                       >
-                        {feature.headline}
-                      </h3>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-[10px] font-mono font-medium tracking-wider uppercase transition-colors ${
+                              isActive ? "text-sage-500" : "text-deep-charcoal/40"
+                            }`}
+                          >
+                            {feature.number} / {feature.label}
+                          </span>
+                        </div>
+                        <h3
+                          className={`text-sm font-semibold mt-1 leading-tight transition-colors ${
+                            isActive ? "text-deep-charcoal" : "text-deep-charcoal/70"
+                          }`}
+                        >
+                          {feature.headline}
+                        </h3>
+                      </div>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Right: Dynamic Bento Canvas */}
@@ -758,13 +806,13 @@ export default function FeatureSpotlight() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                className="glass-premium rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 min-h-[400px] lg:h-[calc(100vh-180px)] lg:max-h-[520px]"
+                className="glass-premium rounded-2xl sm:rounded-3xl p-3 sm:p-6 lg:p-8 lg:h-[calc(100vh-180px)] lg:max-h-[520px]"
               >
                 {/* Bento Grid Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] xl:grid-cols-[1fr_260px] grid-rows-[auto_1fr] gap-3 lg:gap-4 h-full">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] xl:grid-cols-[1fr_260px] gap-3 lg:gap-4 h-full">
                   {/* Top: Header + Metric */}
-                  <div className="lg:col-span-2 flex flex-col sm:flex-row items-start justify-between gap-4">
-                    <div className="flex-1">
+                  <div className="lg:col-span-2 flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                    <div className="flex-1 min-w-0">
                       <span
                         className="text-[10px] sm:text-[11px] font-mono font-medium tracking-[0.15em] text-sage-500 uppercase"
                         style={{ fontFamily: "var(--font-mono)" }}
@@ -772,30 +820,30 @@ export default function FeatureSpotlight() {
                         {activeFeature.number} / {activeFeature.label}
                       </span>
                       <h3
-                        className="mt-2 text-xl sm:text-2xl font-serif font-semibold text-deep-charcoal"
+                        className="mt-1 sm:mt-2 text-lg sm:text-xl lg:text-2xl font-serif font-semibold text-deep-charcoal leading-tight"
                         style={{ fontFamily: "var(--font-serif)" }}
                       >
                         {activeFeature.headline}
                       </h3>
-                      <p className="mt-2 text-xs sm:text-sm text-deep-charcoal/60 max-w-lg">
+                      <p className="mt-1 sm:mt-2 text-xs text-deep-charcoal/60 line-clamp-2 sm:line-clamp-none">
                         {activeFeature.body}
                       </p>
                     </div>
-                    {/* Metric Card */}
+                    {/* Metric Card - inline on mobile */}
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.2 }}
-                      className="w-full sm:w-28 lg:w-32 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center shrink-0"
+                      className="flex sm:flex-col items-center sm:items-center gap-2 sm:gap-0 w-auto sm:w-28 lg:w-32 rounded-xl sm:rounded-2xl px-3 py-2 sm:p-4 sm:text-center shrink-0"
                       style={{ backgroundColor: `${activeFeature.metric.color}15` }}
                     >
                       <div
-                        className="text-xl sm:text-2xl font-mono font-bold"
+                        className="text-lg sm:text-2xl font-mono font-bold"
                         style={{ color: activeFeature.metric.color }}
                       >
                         {activeFeature.metric.value}
                       </div>
-                      <div className="text-[9px] sm:text-[10px] font-mono text-deep-charcoal/50 uppercase mt-1">
+                      <div className="text-[9px] sm:text-[10px] font-mono text-deep-charcoal/50 uppercase sm:mt-1">
                         {activeFeature.metric.label}
                       </div>
                     </motion.div>
@@ -807,42 +855,42 @@ export default function FeatureSpotlight() {
                   </div>
 
                   {/* Right: Capabilities + Agents */}
-                  <div className="space-y-4 lg:col-span-1">
+                  <div className="space-y-2 sm:space-y-3 lg:space-y-4 lg:col-span-1">
                     {/* Capabilities */}
-                    <div className="glass rounded-2xl p-5">
-                      <h4 className="text-xs font-mono font-semibold tracking-wider text-deep-charcoal/40 uppercase mb-3">
+                    <div className="glass rounded-xl sm:rounded-2xl p-3 sm:p-5">
+                      <h4 className="text-[10px] sm:text-xs font-mono font-semibold tracking-wider text-deep-charcoal/40 uppercase mb-2 sm:mb-3">
                         Capabilities
                       </h4>
-                      <ul className="space-y-2">
+                      <ul className="space-y-1.5 sm:space-y-2">
                         {activeFeature.capabilities.map((cap, i) => (
                           <motion.li
                             key={i}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.3 + i * 0.05 }}
-                            className="flex items-start gap-2 text-xs text-deep-charcoal/70"
+                            className="flex items-start gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-deep-charcoal/70"
                           >
-                            <Check className="w-3.5 h-3.5 text-sage-400 shrink-0 mt-0.5" />
-                            <span>{cap}</span>
+                            <Check className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-sage-400 shrink-0 mt-0.5" />
+                            <span className="leading-tight">{cap}</span>
                           </motion.li>
                         ))}
                       </ul>
                     </div>
 
-                    {/* Active Agents - hidden for Profiling card */}
+                    {/* Active Agents - scrollable on mobile */}
                     {activeFeature.id !== "profiling" && (
-                      <div className="glass rounded-2xl p-5">
-                        <h4 className="text-xs font-mono font-semibold tracking-wider text-deep-charcoal/40 uppercase mb-3">
+                      <div className="glass rounded-xl sm:rounded-2xl p-3 sm:p-5">
+                        <h4 className="text-[10px] sm:text-xs font-mono font-semibold tracking-wider text-deep-charcoal/40 uppercase mb-2 sm:mb-3">
                           Active Agents
                         </h4>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide sm:flex-wrap sm:overflow-visible">
                           {activeFeature.agents.map((agent, i) => (
                             <motion.span
                               key={agent}
                               initial={{ opacity: 0, scale: 0.8 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: 0.4 + i * 0.05 }}
-                              className="px-2.5 py-1.5 rounded-lg bg-sage-400/10 text-sage-600 text-[10px] font-mono font-medium border border-sage-400/20"
+                              className="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md sm:rounded-lg bg-sage-400/10 text-sage-600 text-[9px] sm:text-[10px] font-mono font-medium border border-sage-400/20 whitespace-nowrap shrink-0 sm:shrink"
                             >
                               {agent}
                             </motion.span>

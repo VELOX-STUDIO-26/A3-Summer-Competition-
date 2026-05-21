@@ -90,6 +90,29 @@ class ChatMessage:
     extracted_profile: Optional[Dict[str, Any]] = None
 
 
+def _safe_extract_llm_content(response: Any) -> str:
+    """Safely extract text content from an LLM response dict.
+
+    Handles the normalized OpenAI-compatible format returned by all
+    providers in ``llm_client``. Raises ValueError on missing fields.
+    """
+    if not isinstance(response, dict):
+        raise ValueError(f"LLM response is not a dict: {type(response)}")
+    choices = response.get("choices")
+    if not choices or not isinstance(choices, list):
+        raise ValueError(f"LLM response missing 'choices': {response.keys()}")
+    first = choices[0]
+    if not isinstance(first, dict):
+        raise ValueError("LLM response 'choices[0]' is not a dict")
+    message = first.get("message")
+    if not isinstance(message, dict):
+        raise ValueError("LLM response missing 'choices[0].message'")
+    content = message.get("content")
+    if content is None:
+        raise ValueError("LLM response missing 'choices[0].message.content'")
+    return str(content)
+
+
 @dataclass
 class ProfilingSession:
     """State of a profiling conversation."""
@@ -98,6 +121,7 @@ class ProfilingSession:
     messages: List[ChatMessage] = field(default_factory=list)
     current_question_index: int = 0
     profile_builder: ProfileBuilder = field(default_factory=ProfileBuilder)
+    extractor: ProfileExtractor = field(default_factory=ProfileExtractor)
     status: str = "active"  # active, complete, expired
     created_at: datetime = field(default_factory=datetime.utcnow)
     last_activity: datetime = field(default_factory=datetime.utcnow)
@@ -171,12 +195,12 @@ class SessionManager:
 
     def __init__(self):
         self.sessions: Dict[str, ProfilingSession] = {}
-        self.extractor = ProfileExtractor()
         self.session_timeout = timedelta(hours=24)
         self._lock = asyncio.Lock()  # Lock for thread-safe session operations
 
     async def create_session(self, student_id: str) -> ProfilingSession:
         """Create a new profiling session (thread-safe)."""
+        self.cleanup_expired_sessions()
         async with self._lock:
             # Check if student already has an active session
             for session in self.sessions.values():
@@ -233,8 +257,8 @@ Do NOT list all the things you want to know. Just ask ONE natural opening questi
             if response.get("mock"):
                 logger.warning("First question got mock response, using fallback")
                 return "Hi! I'm A3, your learning assistant. I'd love to help you create a personalized learning path. What topics are you interested in learning about?"
-            
-            content = response["choices"][0]["message"]["content"]
+
+            content = _safe_extract_llm_content(response)
             logger.info(f"First question generated: {content[:50]}...")
             return content
         except Exception as e:
@@ -243,6 +267,7 @@ Do NOT list all the things you want to know. Just ask ONE natural opening questi
 
     def get_session(self, session_id: str) -> Optional[ProfilingSession]:
         """Get a session by ID."""
+        self.cleanup_expired_sessions()
         session = self.sessions.get(session_id)
         if session and self._is_session_expired(session):
             session.status = "expired"
@@ -306,7 +331,7 @@ Do NOT list all the things you want to know. Just ask ONE natural opening questi
             # Extract profile information from the message
             logger.info(f"Extracting profile from message for session {session_id}")
             try:
-                extraction_result = await self.extractor.extract_from_message(
+                extraction_result = await session.extractor.extract_from_message(
                     message,
                     session.get_conversation_history()
                 )
@@ -349,6 +374,9 @@ Do NOT list all the things you want to know. Just ask ONE natural opening questi
 
             # Store assistant response
             session.add_message("assistant", response_text)
+
+            # Advance question index for progress tracking
+            session.advance_question()
 
             return {
                 "response": response_text,
@@ -426,8 +454,8 @@ Instructions:
             if response.get("mock"):
                 logger.warning("LLM returned mock response, using fallback")
                 raise Exception("Mock response received")
-            
-            content = response["choices"][0]["message"]["content"]
+
+            content = _safe_extract_llm_content(response)
             logger.info(f"LLM response received: {content[:100]}...")
             return content
         except Exception as e:

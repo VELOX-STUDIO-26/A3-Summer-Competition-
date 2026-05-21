@@ -36,7 +36,7 @@ export default function TutorSessionSidebar({
 }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const startRename = (session: TutorSession) => {
     setEditingId(session.session_id);

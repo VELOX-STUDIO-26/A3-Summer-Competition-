@@ -143,7 +143,7 @@ Grade fairly and generously. Return ONLY JSON."""
                 max_tokens=500
             )
 
-            content = response["choices"][0]["message"].get("content", "")
+            content = response["choices"][0]["message"].get("content", "") if response.get("choices") else ""
 
             if not content:
                 logger.warning("LLM returned empty content for grading")

@@ -130,7 +130,7 @@ export default function OrbitalSystem() {
     <div
       ref={containerRef}
       className="relative w-full h-full transition-transform duration-300 ease-out"
-      style={{ transformStyle: "preserve-3d" }}
+      style={{ transformStyle: "preserve-3d", willChange: "transform" }}
     >
       {/* Central Core - Multi-layered with breathing glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
@@ -152,11 +152,10 @@ export default function OrbitalSystem() {
           {/* Core layers */}
           <div className="w-16 h-16 rounded-full bg-sage-400/20" />
           <div className="absolute inset-2 rounded-full bg-sage-400/40" />
-          {/* Rotating dash ring around core */}
-          <motion.div
-            className="absolute -inset-1 rounded-full border-2 border-dashed border-sage-400/30"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          {/* Rotating dash ring around core - CSS animation for performance */}
+          <div
+            className="absolute -inset-1 rounded-full border-2 border-dashed border-sage-400/30 animate-spin"
+            style={{ animationDuration: "8s" }}
           />
           <motion.div
             className="absolute inset-5 rounded-full bg-sage-400 flex items-center justify-center shadow-lg"
@@ -175,39 +174,37 @@ export default function OrbitalSystem() {
         </div>
       </div>
 
-      {/* Differentiated Orbit Rings */}
+      {/* Differentiated Orbit Rings - using CSS animations for performance */}
       {/* Inner ring - solid faint */}
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-full"
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-full animate-spin"
         style={{
           width: 96,
           height: 96,
           border: "1px solid rgba(124, 154, 107, 0.1)",
+          animationDuration: "40s",
         }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
       />
       {/* Middle ring - widely spaced dash */}
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-full"
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-full animate-spin"
         style={{
           width: 150,
           height: 150,
           border: "1px dashed rgba(124, 154, 107, 0.25)",
+          animationDuration: "60s",
+          animationDirection: "reverse",
         }}
-        animate={{ rotate: -360 }}
-        transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
       />
       {/* Outer ring - rapid dot-density */}
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-full"
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-full animate-spin"
         style={{
           width: 204,
           height: 204,
           border: "1px dotted rgba(124, 154, 107, 0.2)",
+          animationDuration: "80s",
         }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
       />
 
       {/* Faint Axis Markings at Cardinal Points */}
@@ -236,43 +233,33 @@ export default function OrbitalSystem() {
         <div className="absolute left-1/2 top-[10%] bottom-[10%] w-px bg-gradient-to-b from-transparent via-sage-300/10 to-transparent" />
       </div>
 
-      {/* Main satellite orbits with data trailing */}
+      {/* Main satellite orbits - CSS animations for performance */}
       {orbs.map((orb, i) => (
         <div key={i}>
           {/* Orbiting agent with trail */}
-          <motion.div
-            className="absolute top-1/2 left-1/2"
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin"
             style={{
-              x: "-50%",
-              y: "-50%",
-            }}
-            animate={{
-              rotate: orb.direction === "counter" ? -360 : 360,
-            }}
-            transition={{
-              duration: orb.speed,
-              repeat: Infinity,
-              ease: "linear",
+              animationDuration: `${orb.speed}s`,
+              animationDirection: orb.direction === "counter" ? "reverse" : "normal",
             }}
           >
             {/* Orbit radius offset */}
             <div style={{ transform: `translateX(${orb.radius}px)` }}>
-              {/* Comet trail effect */}
-              <motion.div
+              {/* Comet trail effect - static for performance */}
+              <div
                 className="absolute rounded-full"
                 style={{
                   width: orb.size * 2,
                   height: orb.size * 2,
                   backgroundColor: orb.color,
                   filter: "blur(8px)",
-                  opacity: 0.3,
+                  opacity: 0.2,
+                  transform: orb.direction === "counter" ? "translateX(15px)" : "translateX(-15px)",
                 }}
-                initial={{ scale: 0.5, x: orb.direction === "counter" ? 20 : -20 }}
-                animate={{ scale: [0.5, 0.8, 0.5], opacity: [0.1, 0.3, 0.1] }}
-                transition={{ duration: 1, repeat: Infinity }}
               />
               {/* Main agent bubble */}
-              <motion.div
+              <div
                 className="rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 relative"
                 style={{
                   width: orb.size * 2,
@@ -281,33 +268,24 @@ export default function OrbitalSystem() {
                   boxShadow: `0 0 12px ${orb.color}50, 0 0 24px ${orb.color}30`,
                   zIndex: 5,
                 }}
-                whileHover={{ scale: 1.1 }}
               >
                 <span className="text-white font-mono text-[7px] font-medium whitespace-nowrap">
                   {orb.label}
                 </span>
-              </motion.div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       ))}
 
-      {/* Small system orbits with subtle trails */}
+      {/* Small system orbits - CSS animations for performance */}
       {smallOrbs.map((orb, i) => (
-        <motion.div
+        <div
           key={`small-${i}`}
-          className="absolute top-1/2 left-1/2"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin"
           style={{
-            x: "-50%",
-            y: "-50%",
-          }}
-          animate={{
-            rotate: orb.direction === "counter" ? 360 : -360,
-          }}
-          transition={{
-            duration: orb.speed,
-            repeat: Infinity,
-            ease: "linear",
+            animationDuration: `${orb.speed}s`,
+            animationDirection: orb.direction === "counter" ? "normal" : "reverse",
           }}
         >
           <div style={{ transform: `translateX(${orb.radius}px)` }}>
@@ -334,7 +312,7 @@ export default function OrbitalSystem() {
               }}
             />
           </div>
-        </motion.div>
+        </div>
       ))}
 
       {/* Live Terminal Tooltips */}

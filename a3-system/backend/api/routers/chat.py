@@ -43,9 +43,9 @@ def sanitize_user_input(text: str, max_length: int = 10000) -> str:
         r"ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)",
         r"disregard\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)",
         r"forget\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?)",
-        r"you\s+are\s+now\s+(?:a|an|the)\s+\w+",
-        r"new\s+instructions?:",
-        r"system\s*:\s*",
+        r"(?:^|\n)\s*you\s+are\s+now\s+(?:a|an|the)\s+\w+",
+        r"(?:^|\n)\s*new\s+instructions?:",
+        r"(?:^|\n)\s*system\s*:\s*",
     ]
     
     for pattern in injection_patterns:

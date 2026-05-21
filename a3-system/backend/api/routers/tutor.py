@@ -9,9 +9,10 @@ Endpoints:
 """
 
 import json
+from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -28,7 +29,8 @@ router = APIRouter()
 
 # In-memory conversation history storage (replace with Redis in production)
 # Key: student_id, Value: list of turns
-_conversation_history: Dict[str, List[Dict[str, str]]] = {}
+_MAX_IN_MEMORY_STUDENTS = 1000
+_conversation_history: OrderedDict[str, List[Dict[str, str]]] = OrderedDict()
 
 
 def _get_history(student_id: str) -> List[Dict[str, str]]:
@@ -39,11 +41,16 @@ def _get_history(student_id: str) -> List[Dict[str, str]]:
 def _add_to_history(student_id: str, role: str, content: str, max_turns: int = 10):
     """Add a turn to conversation history."""
     if student_id not in _conversation_history:
+        # Evict oldest student if at capacity
+        if len(_conversation_history) >= _MAX_IN_MEMORY_STUDENTS:
+            _conversation_history.popitem(last=False)
         _conversation_history[student_id] = []
     _conversation_history[student_id].append({"role": role, "content": content})
     # Trim to max turns
     if len(_conversation_history[student_id]) > max_turns:
         _conversation_history[student_id] = _conversation_history[student_id][-max_turns:]
+    # Mark as recently used
+    _conversation_history.move_to_end(student_id, last=True)
 
 
 @router.post("/ask", response_model=TutorResponse)
@@ -88,6 +95,10 @@ async def ask_tutor(request: TutorRequest):
         # Get conversation history
         history = _get_history(request.student_id)
 
+        # Store user message before generation so the question is preserved
+        # even if generation fails.
+        _add_to_history(request.student_id, "user", request.question)
+
         # Generate answer
         result = await tutor_engine.answer(
             question=request.question,
@@ -96,8 +107,7 @@ async def ask_tutor(request: TutorRequest):
             history=history,
         )
 
-        # Store in history
-        _add_to_history(request.student_id, "user", request.question)
+        # Store assistant response
         _add_to_history(request.student_id, "assistant", result["answer"])
 
         # Override response type if requested
@@ -122,7 +132,10 @@ async def ask_tutor(request: TutorRequest):
 
 
 @router.post("/ask/stream")
-async def ask_tutor_stream(request: TutorRequest):
+async def ask_tutor_stream(
+    request: TutorRequest,
+    raw_request: Request = None,
+):
     """
     Ask the AI tutor with streaming response (Server-Sent Events).
 
@@ -133,48 +146,75 @@ async def ask_tutor_stream(request: TutorRequest):
     - complete: Generation complete
     - error: Error occurred
     """
-    async def event_generator():
-        # Harmful-content moderation on user input
-        mod = content_moderator.moderate(request.question)
-        if mod.verdict == "block":
-            logger.warning(
-                f"Tutor stream input blocked by moderator for "
-                f"{request.student_id}: {mod.reason}"
-            )
-            refusal = mod.refusal_message or "I can't help with that request."
-            yield f"data: {json.dumps({'event': 'start', 'data': None})}\n\n"
-            yield f"data: {json.dumps({'event': 'delta', 'data': refusal})}\n\n"
-            yield f"data: {json.dumps({'event': 'moderation', 'data': mod.to_dict()})}\n\n"
-            yield f"data: {json.dumps({'event': 'complete', 'data': refusal})}\n\n"
+    # Detect client disconnection so we can stop the LLM stream early
+    disconnect_event = asyncio.Event()
+
+    async def disconnect_monitor():
+        if raw_request is None:
             return
-
-        profile = await _load_profile(request.student_id)
-        if request.hands_free:
-            profile["hands_free"] = True
-
-        history = _get_history(request.student_id)
-
-        full_answer = ""
         try:
-            async for event in tutor_engine.answer_stream(
-                question=request.question,
-                profile=profile,
-                current_topic=request.current_topic,
-                history=history,
-            ):
-                # SSE format: data: {json}\n\n
-                yield f"data: {json.dumps(event)}\n\n"
+            while not disconnect_event.is_set():
+                if await raw_request.is_disconnected():
+                    disconnect_event.set()
+                    logger.info(
+                        f"[tutor] Client disconnected from /ask/stream for "
+                        f"{request.student_id}"
+                    )
+                    break
+                await asyncio.sleep(0.5)
+        except Exception:
+            pass
 
-                if event["event"] == "delta":
-                    full_answer += event["data"]
+    monitor_task = asyncio.create_task(disconnect_monitor())
 
-            # Store complete answer in history
-            _add_to_history(request.student_id, "user", request.question)
-            _add_to_history(request.student_id, "assistant", full_answer)
+    async def event_generator():
+        try:
+            # Harmful-content moderation on user input
+            mod = content_moderator.moderate(request.question)
+            if mod.verdict == "block":
+                logger.warning(
+                    f"Tutor stream input blocked by moderator for "
+                    f"{request.student_id}: {mod.reason}"
+                )
+                refusal = mod.refusal_message or "I can't help with that request."
+                yield f"data: {json.dumps({'event': 'start', 'data': None})}\n\n"
+                yield f"data: {json.dumps({'event': 'delta', 'data': refusal})}\n\n"
+                yield f"data: {json.dumps({'event': 'moderation', 'data': mod.to_dict()})}\n\n"
+                yield f"data: {json.dumps({'event': 'complete', 'data': refusal})}\n\n"
+                return
 
-        except Exception as e:
-            logger.error(f"Tutor stream failed: {e}")
-            yield f"data: {json.dumps({'event': 'error', 'data': str(e)})}\n\n"
+            profile = await _load_profile(request.student_id)
+            if request.hands_free:
+                profile["hands_free"] = True
+
+            history = _get_history(request.student_id)
+
+            full_answer = ""
+            try:
+                async for event in tutor_engine.answer_stream(
+                    question=request.question,
+                    profile=profile,
+                    current_topic=request.current_topic,
+                    history=history,
+                ):
+                    if disconnect_event.is_set():
+                        break
+                    # SSE format: data: {json}\n\n
+                    yield f"data: {json.dumps(event)}\n\n"
+
+                    if event["event"] == "delta":
+                        full_answer += event["data"]
+
+                # Store complete answer in history
+                _add_to_history(request.student_id, "user", request.question)
+                _add_to_history(request.student_id, "assistant", full_answer)
+
+            except Exception as e:
+                logger.error(f"Tutor stream failed: {e}")
+                yield f"data: {json.dumps({'event': 'error', 'data': str(e)})}\n\n"
+        finally:
+            if not monitor_task.done():
+                monitor_task.cancel()
 
     return StreamingResponse(
         event_generator(),
@@ -240,6 +280,7 @@ async def _load_profile(student_id: str) -> Dict[str, Any]:
             if profile:
                 return {
                     "student_id": profile.student_id,
+                    "name": getattr(profile, "name", None) or "there",
                     "cognitive_style": profile.cognitive_style or "mixed",
                     "learning_pace": profile.learning_pace or 0.5,
                     "knowledge_base": profile.knowledge_base or {},
@@ -253,6 +294,7 @@ async def _load_profile(student_id: str) -> Dict[str, Any]:
     # Default profile
     return {
         "student_id": student_id,
+        "name": "there",
         "cognitive_style": "mixed",
         "learning_pace": 0.5,
         "knowledge_base": {},

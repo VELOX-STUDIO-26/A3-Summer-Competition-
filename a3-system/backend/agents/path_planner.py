@@ -170,6 +170,25 @@ class AdaptivePathPlanner:
         self.lambda2 = LAMBDA_2
         self.delta = DELTA
 
+    @staticmethod
+    def _get_topic_mastery(topic: str, knowledge_base: Dict[str, float]) -> float:
+        """Get mastery level with substring matching for flexible key formats."""
+        if not knowledge_base:
+            return 0.0
+        topic_lower = topic.lower().replace(" ", "_")
+        # Exact match first
+        if topic_lower in knowledge_base:
+            val = knowledge_base[topic_lower]
+            if isinstance(val, (int, float)):
+                return float(val)
+        # Substring fallback
+        for key, score in knowledge_base.items():
+            key_lower = key.lower()
+            if topic_lower in key_lower or key_lower in topic_lower:
+                if isinstance(score, (int, float)):
+                    return float(score)
+        return 0.0
+
     def _heuristic(self, node_id: str, goal_id: str) -> float:
         """Estimate cost from node to goal using PageRank difference."""
         node = self.graph.nodes.get(node_id)
@@ -196,7 +215,15 @@ class AdaptivePathPlanner:
         bias = 0.0
 
         # Weak points: penalize nodes that are weak points (make them harder = earlier)
-        if node.title in student.weak_points or node.node_id in student.weak_points:
+        node_title_lower = node.title.lower()
+        node_id_lower = node.node_id.lower()
+        if any(
+            wp.lower() == node_id_lower
+            or wp.lower() == node_title_lower
+            or wp.lower() in node_title_lower
+            or node_title_lower in wp.lower()
+            for wp in student.weak_points
+        ):
             bias -= 0.3
 
         # Goals: reward nodes that match goals
@@ -205,7 +232,7 @@ class AdaptivePathPlanner:
                 bias -= 0.2
 
         # Knowledge base: already mastered nodes should not appear
-        mastery = student.knowledge_base.get(node.node_id, 0.0)
+        mastery = self._get_topic_mastery(node.node_id, student.knowledge_base)
         if mastery >= 0.8:
             bias += 10.0  # Very high cost to exclude mastered nodes
 
@@ -355,6 +382,7 @@ class AdaptivePathPlanner:
         # Dependency satisfaction: fraction of nodes with prerequisites satisfied by earlier nodes
         dep_satisfaction = 0.0
         path_set = set(path)
+        path_index = {nid: idx for idx, nid in enumerate(path)}
         for i, nid in enumerate(path):
             node = self.graph.nodes.get(nid)
             if not node:
@@ -363,7 +391,7 @@ class AdaptivePathPlanner:
             if not prereqs:
                 dep_satisfaction += 1.0
             else:
-                satisfied = sum(1 for p in prereqs if p in path_set and path.index(p) < i)
+                satisfied = sum(1 for p in prereqs if p in path_set and path_index.get(p, -1) < i)
                 dep_satisfaction += satisfied / len(prereqs)
         dep_satisfaction /= len(path)
 
@@ -395,8 +423,9 @@ class AdaptivePathPlanner:
             weak_titles = set(w for w in student.weak_points if any(
                 n.title == w for n in self.graph.nodes.values()
             ))
+            in_graph_weak = weak_ids | weak_titles
             covered = sum(1 for nid in path if nid in weak_ids or self.graph.nodes[nid].title in weak_titles)
-            weak_point_coverage = covered / len(student.weak_points)
+            weak_point_coverage = covered / len(in_graph_weak) if in_graph_weak else 1.0
         else:
             weak_point_coverage = 1.0
 

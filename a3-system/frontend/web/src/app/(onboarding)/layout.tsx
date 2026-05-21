@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import SwarmCanvas from "@/app/components/landing/SwarmCanvas";
 
 export default function OnboardingLayout({
   children,
@@ -18,17 +19,26 @@ export default function OnboardingLayout({
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-[#050505] relative overflow-hidden">
-      {/* Mesh Gradient Background */}
-      <div className="mesh-gradient" />
+    <div className="min-h-screen bg-[#FAF8F5] relative overflow-hidden">
+      {/* Subtle Background Gradients */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#E7E2D7]/50 via-[#FAF8F5] to-[#C9D2D6]/30" />
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#6B7F6B]/10 rounded-full blur-[128px]" />
+      <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-[#D6CFC2]/40 rounded-full blur-[128px]" />
+      
+      {/* Swarm Animation - Subtle in background */}
+      <div className="absolute inset-0 opacity-30">
+        <SwarmCanvas particleCount={25} />
+      </div>
       
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-8 py-4 sm:py-6">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#2DD4BF] to-[#0d9488] flex items-center justify-center shadow-lg shadow-[#2DD4BF]/20">
-            <span className="text-white font-bold text-base sm:text-lg">A3</span>
-          </div>
-          <span className="text-white/80 font-medium text-sm sm:text-base">Personalized Learning.</span>
+          <img 
+            src="/nobogyan-logo.png" 
+            alt="NOBOGYAN" 
+            className="w-9 h-9 sm:w-10 sm:h-10"
+          />
+          <span className="font-serif text-[#050505] font-semibold text-sm sm:text-base">NOBOGYAN</span>
         </div>
       </header>
 
@@ -45,11 +55,9 @@ export default function OnboardingLayout({
         </div>
       </main>
 
-      {/* Decorative Star */}
+      {/* Decorative Element */}
       <div className="fixed bottom-8 right-8 z-20">
-        <svg className="w-6 h-6 text-white/20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L14.09 8.26L20.18 9.27L15.54 13.14L16.82 19.02L12 16.27L7.18 19.02L8.46 13.14L3.82 9.27L9.91 8.26L12 2Z" />
-        </svg>
+        <div className="w-3 h-3 rounded-full bg-[#6B7F6B]/40" />
       </div>
     </div>
   );

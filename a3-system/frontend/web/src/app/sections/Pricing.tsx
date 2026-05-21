@@ -61,13 +61,13 @@ const plans: {
       { text: "Standard quizzes" },
       { text: "Community support", tooltip: "Discord community access" },
     ],
-    cta: "Get Started",
+    cta: "Join Waitlist",
     popular: false,
   },
   {
     name: "Pro",
-    monthlyPrice: 12,
-    yearlyPrice: 9,
+    monthlyPrice: 19,
+    yearlyPrice: 15,
     period: "/month",
     description: "For serious learners",
     features: [
@@ -78,13 +78,13 @@ const plans: {
       { text: "Priority support", tooltip: "< 4 hour response time" },
       { text: "Custom learning paths", tooltip: "Create and share your own curricula" },
     ],
-    cta: "Start Pro Trial",
+    cta: "Join Waitlist",
     popular: true,
   },
   {
     name: "Team",
-    monthlyPrice: 29,
-    yearlyPrice: 23,
+    monthlyPrice: 49,
+    yearlyPrice: 39,
     period: "/user/month",
     description: "For organizations",
     features: [
@@ -95,7 +95,7 @@ const plans: {
       { text: "API access", tooltip: "Integrate NOBOGYAN into your LMS or workflow" },
       { text: "Dedicated support", tooltip: "Named account manager" },
     ],
-    cta: "Contact Sales",
+    cta: "Contact Us",
     popular: false,
   },
 ];
@@ -150,6 +150,9 @@ export default function Pricing() {
           >
             Access the Swarm
           </h2>
+          <p className="mt-3 text-sm text-deep-charcoal/50">
+            Early access pricing — lock in these rates by joining the waitlist
+          </p>
         </ScrollReveal>
 
         {/* Billing toggle */}
@@ -187,7 +190,8 @@ export default function Pricing() {
           </div>
         </ScrollReveal>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto items-center">
+        {/* Mobile: Stacked cards with Pro highlighted */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto items-stretch">
           {plans.map((plan, i) => {
             const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
             const displayPrice = price === 0 ? "$0" : `$${price}`;
@@ -196,9 +200,9 @@ export default function Pricing() {
             return (
               <ScrollReveal key={plan.name} delay={i * 0.1}>
                 <div
-                  className={`relative rounded-2xl p-5 sm:p-6 flex flex-col transition-all duration-500 ${
+                  className={`relative rounded-2xl p-4 sm:p-5 lg:p-6 flex flex-col transition-all duration-500 h-full ${
                     plan.popular
-                      ? "bg-deep-charcoal text-white sm:col-span-2 lg:col-span-1 lg:-my-4 lg:py-10 shadow-2xl shadow-deep-charcoal/30 lg:scale-105 order-first lg:order-none"
+                      ? "bg-deep-charcoal text-white shadow-2xl shadow-deep-charcoal/30 lg:scale-105 lg:-my-4 lg:py-10 order-first sm:order-none"
                       : "bg-white border border-sand-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-sand-200/50"
                   }`}
                   style={plan.popular ? {
@@ -336,21 +340,23 @@ export default function Pricing() {
 
                   {/* Custom buttons based on plan */}
                   {plan.popular ? (
-                    <motion.button
+                    <motion.a
+                      href="#waitlist"
                       whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(124,154,107,0.4)" }}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full px-5 py-3 rounded-full font-bold text-sm bg-sage-400 text-[#111111] hover:bg-sage-500 transition-colors duration-300 shadow-lg shadow-sage-400/30"
+                      className="block w-full px-5 py-3 rounded-full font-bold text-sm bg-sage-400 text-[#111111] hover:bg-sage-500 transition-colors duration-300 shadow-lg shadow-sage-400/30 text-center"
                     >
                       {plan.cta}
-                    </motion.button>
+                    </motion.a>
                   ) : (
-                    <motion.button
+                    <motion.a
+                      href="#waitlist"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full px-5 py-3 rounded-full font-semibold text-sm bg-sand-100 text-deep-charcoal border border-sand-300 hover:bg-sand-200 hover:border-sand-400 transition-colors duration-300"
+                      className="block w-full px-5 py-3 rounded-full font-semibold text-sm bg-sand-100 text-deep-charcoal border border-sand-300 hover:bg-sand-200 hover:border-sand-400 transition-colors duration-300 text-center"
                     >
                       {plan.cta}
-                    </motion.button>
+                    </motion.a>
                   )}
                 </div>
               </ScrollReveal>

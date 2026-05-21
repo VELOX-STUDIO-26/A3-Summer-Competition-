@@ -30,6 +30,8 @@ class TutorEngine:
         profile: Dict[str, Any],
         current_topic: Optional[str] = None,
         history: Optional[List[Dict[str, str]]] = None,
+        previous_mastery: Optional[float] = None,
+        learning_path: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """
         Generate a tutoring answer with RAG grounding.
@@ -47,7 +49,11 @@ class TutorEngine:
         rag_chunks = await self._retrieve_chunks(question, current_topic)
 
         # Build prompt
-        messages = self._build_messages(question, profile, rag_chunks, current_topic, history)
+        messages = self._build_messages(
+            question, profile, rag_chunks, current_topic, history,
+            previous_mastery=previous_mastery,
+            learning_path=learning_path,
+        )
 
         # Generate response
         try:
@@ -119,6 +125,8 @@ class TutorEngine:
         profile: Dict[str, Any],
         current_topic: Optional[str] = None,
         history: Optional[List[Dict[str, str]]] = None,
+        previous_mastery: Optional[float] = None,
+        learning_path: Optional[List[Dict[str, Any]]] = None,
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
         Stream a tutoring answer with RAG grounding.
@@ -131,7 +139,11 @@ class TutorEngine:
         yield {"event": "sources", "data": rag_chunks}
 
         # Build prompt
-        messages = self._build_messages(question, profile, rag_chunks, current_topic, history)
+        messages = self._build_messages(
+            question, profile, rag_chunks, current_topic, history,
+            previous_mastery=previous_mastery,
+            learning_path=learning_path,
+        )
 
         # Stream response
         yield {"event": "start", "data": None}
@@ -230,10 +242,8 @@ class TutorEngine:
         knowledge_base = profile.get("knowledge_base", {})
         student_name = profile.get("name", "there")
 
-        # Compute current topic mastery
-        topic_mastery = 0.0
-        if current_topic and knowledge_base:
-            topic_mastery = knowledge_base.get(current_topic, 0.0)
+        # Compute current topic mastery (fuzzy lookup like path_planner)
+        topic_mastery = self._get_topic_mastery(current_topic, knowledge_base)
 
         # Detect mastery milestone
         mastery_celebration = ""
@@ -243,9 +253,17 @@ class TutorEngine:
             elif previous_mastery < 0.5 and topic_mastery >= 0.5:
                 mastery_celebration = f"\n👏 MILESTONE: The student just crossed 50% mastery in {current_topic}! Encourage them!"
 
-        # Check if current topic is a weak point
-        is_weak_point = current_topic in weak_points if weak_points else False
+        # Check if current topic is a weak point (substring matching)
+        topic_lower = (current_topic or "").lower()
+        is_weak_point = False
         weak_point_note = ""
+        if weak_points and topic_lower:
+            is_weak_point = any(
+                wp.lower() == topic_lower
+                or wp.lower() in topic_lower
+                or topic_lower in wp.lower()
+                for wp in weak_points
+            )
         if is_weak_point:
             weak_point_note = f"\n⚠️ FOCUS AREA: {current_topic} is one of the student's weak points. Provide EXTRA scaffolding, encouragement, and reassurance."
 
@@ -372,6 +390,25 @@ Provide a warm, encouraging, and pedagogically sound answer. Make the student fe
         messages.append({"role": "user", "content": user_prompt})
         return messages
 
+    @staticmethod
+    def _get_topic_mastery(topic: Optional[str], knowledge_base: Dict[str, float]) -> float:
+        """Get mastery level with substring matching for flexible key formats."""
+        if not topic or not knowledge_base:
+            return 0.0
+        topic_lower = topic.lower().replace(" ", "_")
+        # Exact match first
+        if topic_lower in knowledge_base:
+            val = knowledge_base[topic_lower]
+            if isinstance(val, (int, float)):
+                return float(val)
+        # Substring fallback
+        for key, score in knowledge_base.items():
+            key_lower = key.lower()
+            if topic_lower in key_lower or key_lower in topic_lower:
+                if isinstance(score, (int, float)):
+                    return float(score)
+        return 0.0
+
     def _detect_response_type(self, question: str, profile: Dict[str, Any]) -> str:
         """Determine the best response type for this question and profile."""
         question_lower = question.lower()
@@ -411,11 +448,18 @@ Provide a warm, encouraging, and pedagogically sound answer. Make the student fe
             matches = re.findall(pattern, answer, re.IGNORECASE)
             for match in matches:
                 clean = match.strip()
-                if clean and len(clean) > 10 and clean.endswith('?'):
+                if clean and len(clean) > 10:
                     followups.append(clean)
 
-        # Limit to 3
-        return followups[:3]
+        # De-duplicate and limit to 3
+        seen = set()
+        unique = []
+        for fu in followups:
+            lower = fu.lower()
+            if lower not in seen:
+                seen.add(lower)
+                unique.append(fu)
+        return unique[:3]
 
 
 # Global tutor engine instance

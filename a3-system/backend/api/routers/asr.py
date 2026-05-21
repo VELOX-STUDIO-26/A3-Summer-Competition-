@@ -334,8 +334,6 @@ async def _ingest_browser_audio(
 
         chunk = msg.get("bytes")
         if not chunk:
-            if msg.get("type") == "websocket.disconnect":
-                return
             continue
 
         if not sent_first:

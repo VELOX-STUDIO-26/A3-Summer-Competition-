@@ -9,7 +9,7 @@ Endpoints:
 - POST /api/milestone/{milestone_id}/progress : Update progress
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Set
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -37,7 +37,7 @@ class ProgressUpdate(BaseModel):
 
 @router.get("")
 async def list_milestones(
-    student_id: str = None,
+    student_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """List all milestones for a student from their active learning path."""
@@ -71,22 +71,8 @@ async def list_milestones(
             "message": "No active learning path found. Generate a path first.",
         }
 
-    # Get completed quiz attempts for this student
-    attempts_result = await db.execute(
-        select(QuizAttempt).where(
-            QuizAttempt.student_id == student_id,
-            QuizAttempt.score.is_not(None),
-        )
-    )
-    attempts = attempts_result.scalars().all()
-    completed_quiz_topics = set()
-    for attempt in attempts:
-        quiz_result = await db.execute(
-            select(GeneratedQuiz).where(GeneratedQuiz.quiz_id == attempt.quiz_id)
-        )
-        quiz = quiz_result.scalar_one_or_none()
-        if quiz:
-            completed_quiz_topics.add(quiz.topic)
+    # Get completed quiz topics for this student
+    completed_quiz_topics = await _get_completed_quiz_topics(student_id, db)
 
     # Build milestones from path
     milestones = []
@@ -165,7 +151,7 @@ async def list_milestones(
 @router.get("/{milestone_id}")
 async def get_milestone(
     milestone_id: str,
-    student_id: str = None,
+    student_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Get a specific milestone by ID."""
@@ -193,7 +179,7 @@ async def get_milestone(
 @router.get("/{milestone_id}/nodes")
 async def get_milestone_nodes(
     milestone_id: str,
-    student_id: str = None,
+    student_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Get all nodes for a milestone."""
@@ -238,22 +224,8 @@ async def get_milestone_nodes(
 
     node_ids = milestone_groups[milestone_idx]
 
-    # Get completed quiz topics
-    attempts_result = await db.execute(
-        select(QuizAttempt).where(
-            QuizAttempt.student_id == student_id,
-            QuizAttempt.score.is_not(None),
-        )
-    )
-    attempts = attempts_result.scalars().all()
-    completed_quiz_topics = set()
-    for attempt in attempts:
-        quiz_result = await db.execute(
-            select(GeneratedQuiz).where(GeneratedQuiz.quiz_id == attempt.quiz_id)
-        )
-        quiz = quiz_result.scalar_one_or_none()
-        if quiz:
-            completed_quiz_topics.add(quiz.topic)
+    # Get completed quiz topics for this student
+    completed_quiz_topics = await _get_completed_quiz_topics(student_id, db)
 
     # Get node details
     nodes_result = await db.execute(
@@ -295,7 +267,7 @@ async def get_milestone_nodes(
 async def update_progress(
     milestone_id: str,
     update: ProgressUpdate,
-    student_id: str = None,
+    student_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Update progress for a milestone node."""
@@ -323,7 +295,7 @@ async def update_progress(
 @router.get("/{milestone_id}/next")
 async def get_next_node(
     milestone_id: str,
-    student_id: str = None,
+    student_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Get the next available node for a student."""
@@ -405,3 +377,23 @@ def _calculate_difficulty(nodes: Dict[str, KnowledgeNode], node_ids: List[str]) 
     elif avg_difficulty < 0.66:
         return "Intermediate"
     return "Advanced"
+
+
+async def _get_completed_quiz_topics(student_id: str, db: AsyncSession) -> Set[str]:
+    """Batch-fetch quiz topics for a student's completed attempts."""
+    attempts_result = await db.execute(
+        select(QuizAttempt).where(
+            QuizAttempt.student_id == student_id,
+            QuizAttempt.score.is_not(None),
+        )
+    )
+    attempts = attempts_result.scalars().all()
+    if not attempts:
+        return set()
+
+    quiz_ids = [a.quiz_id for a in attempts]
+    quizzes_result = await db.execute(
+        select(GeneratedQuiz).where(GeneratedQuiz.quiz_id.in_(quiz_ids))
+    )
+    quizzes = quizzes_result.scalars().all()
+    return {q.topic for q in quizzes if q.topic}

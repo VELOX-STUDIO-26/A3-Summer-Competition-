@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -237,9 +238,10 @@ async def list_quizzes(
 
     # Get total count
     count_query = select(func.count()).select_from(GeneratedQuiz).where(
-        GeneratedQuiz.student_id == student_id,
-        GeneratedQuiz.is_active == True
+        GeneratedQuiz.student_id == student_id
     )
+    if not include_inactive:
+        count_query = count_query.where(GeneratedQuiz.is_active == True)
     count_result = await db.execute(count_query)
     total = count_result.scalar()
 
@@ -417,10 +419,16 @@ async def start_quiz(
 async def submit_quiz(
     quiz_id: str,
     student_id: str = Query(..., description="Student ID"),
-    submission: QuizSubmissionRequest = None,
+    submission: Optional[QuizSubmissionRequest] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Submit quiz answers and grade."""
+    if submission is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Submission body is required"
+        )
+
     logger.info(f"Student {student_id} submitting quiz {quiz_id}")
 
     # Get quiz
@@ -533,7 +541,13 @@ async def submit_quiz(
         elif question_type == "true_false":
             # Check answer and justification
             answer_correct = student_answer.strip().lower() == correct_answer.strip().lower()
-            justification = answer_data.get("justification", "") if isinstance(answer_data, dict) else ""
+
+            # Extract justification from either dict or Pydantic model
+            if isinstance(answer_data, dict):
+                justification = answer_data.get("justification", "")
+            else:
+                justification = getattr(answer_data, "justification", "") or ""
+
             has_justification = len(justification.strip()) > 10
 
             if answer_correct and has_justification:
@@ -601,15 +615,33 @@ async def submit_quiz(
     await db.commit()
     await db.refresh(attempt)
 
-    # Count consecutive low scores for this student
+    # Count consecutive low scores for this student on this milestone/topic
     consecutive_low = 0
     try:
+        # Build filter for same milestone/topic
+        past_attempts_filter = [
+            QuizAttempt.student_id == student_id,
+            QuizAttempt.completed_at.isnot(None),
+            QuizAttempt.attempt_id != attempt.attempt_id
+        ]
+
+        # Filter by node_id if available, otherwise by quiz topic via join
+        if quiz.node_id:
+            # Get attempt IDs for quizzes on the same node
+            same_node_quiz_ids_result = await db.execute(
+                select(GeneratedQuiz.quiz_id).where(
+                    GeneratedQuiz.student_id == student_id,
+                    GeneratedQuiz.node_id == quiz.node_id
+                )
+            )
+            same_node_quiz_ids = [r[0] for r in same_node_quiz_ids_result.all()]
+            if same_node_quiz_ids:
+                past_attempts_filter.append(QuizAttempt.quiz_id.in_(same_node_quiz_ids))
+
         past_attempts_result = await db.execute(
-            select(QuizAttempt).where(
-                QuizAttempt.student_id == student_id,
-                QuizAttempt.completed_at.isnot(None),
-                QuizAttempt.attempt_id != attempt.attempt_id
-            ).order_by(QuizAttempt.completed_at.desc()).limit(3)
+            select(QuizAttempt).where(*past_attempts_filter)
+            .order_by(QuizAttempt.completed_at.desc())
+            .limit(3)
         )
         past_attempts = past_attempts_result.scalars().all()
         for past in past_attempts:
@@ -872,7 +904,7 @@ async def get_quiz_results(
         "passed": attempt.score >= 0.6 if attempt.score else False,
         "outcome": attempt.outcome,
         "next_milestone_unlocked": attempt.outcome in ["accelerate", "continue"] if attempt.outcome else (attempt.score >= 0.6 if attempt.score else False),
-        "student_message": attempt.answers.get("student_message") if attempt.answers else None,
+        "student_message": attempt.answers.get("student_message") if isinstance(attempt.answers, dict) else None,
         "concept_analysis": attempt.critical_concepts_failed if attempt.critical_concepts_failed else [],
         "xp_earned": 100 if (attempt.score and attempt.score >= 0.6) else 0,
         "time_taken": attempt.time_spent_seconds,
@@ -1021,19 +1053,30 @@ INSTRUCTIONS:
         )
 
 
+class SandboxExecuteRequest(BaseModel):
+    """Request for sandbox code execution."""
+    code: str
+    language: str
+    test_cases: List[Dict[str, Any]]
+
+
+class SandboxGradeRequest(BaseModel):
+    """Request for sandbox code grading."""
+    code: str
+    language: str
+    test_cases: List[Dict[str, Any]]
+    question_context: str = ""
+
+
 @router.post("/sandbox/execute")
 async def execute_sandbox(
-    code: str,
-    language: str,
-    test_cases: List[Dict[str, Any]],
+    request: SandboxExecuteRequest,
 ):
     """
     Execute code against test cases in sandbox.
 
     Args:
-        code: Source code to execute
-        language: Programming language
-        test_cases: List of test cases with input/expected_output
+        request: Sandbox execution request with code, language, and test cases
 
     Returns:
         Test execution results
@@ -1041,12 +1084,12 @@ async def execute_sandbox(
     from agents.coding_grader import CodingGrader
     from core.llm_client import llm_client
 
-    logger.info(f"Sandbox execution: {language} with {len(test_cases)} tests")
+    logger.info(f"Sandbox execution: {request.language} with {len(request.test_cases)} tests")
 
     grader = CodingGrader(llm_client)
 
     try:
-        result = await grader.run_tests_only(code, language, test_cases)
+        result = await grader.run_tests_only(request.code, request.language, request.test_cases)
         return result
     except Exception as e:
         logger.error(f"Sandbox execution failed: {e}")
@@ -1058,19 +1101,13 @@ async def execute_sandbox(
 
 @router.post("/sandbox/grade")
 async def grade_coding_submission(
-    code: str,
-    language: str,
-    test_cases: List[Dict[str, Any]],
-    question_context: str = "",
+    request: SandboxGradeRequest,
 ):
     """
     Grade a coding submission with full assessment.
 
     Args:
-        code: Source code to grade
-        language: Programming language
-        test_cases: List of test cases
-        question_context: Problem description
+        request: Grading request with code, language, test cases, and context
 
     Returns:
         Grading results with feedback
@@ -1078,12 +1115,12 @@ async def grade_coding_submission(
     from agents.coding_grader import CodingGrader
     from core.llm_client import llm_client
 
-    logger.info(f"Grading coding submission: {language}")
+    logger.info(f"Grading coding submission: {request.language}")
 
     grader = CodingGrader(llm_client)
 
     try:
-        result = await grader.grade(code, language, test_cases, question_context)
+        result = await grader.grade(request.code, request.language, request.test_cases, request.question_context)
         return result
     except Exception as e:
         logger.error(f"Coding grading failed: {e}")

@@ -16,6 +16,7 @@ interface Dimension {
 }
 
 interface Message {
+  id: string;
   role: "ai" | "user";
   content: string;
   tags?: { dimension: string; value: string }[];
@@ -48,6 +49,7 @@ export default function ProfileChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isBackendAvailable, setIsBackendAvailable] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -62,19 +64,24 @@ export default function ProfileChatPage() {
   useEffect(() => {
     const initSession = async () => {
       try {
-        // Use unique ID to ensure fresh session each time
-        const uniqueId = studentId ? `${studentId}-${Date.now()}` : `guest-${Date.now()}`;
-        const data = await startChat(uniqueId);
+        const id = studentId || `guest-${Date.now()}`;
+        const data = await startChat(id);
         setSessionId(data.session_id);
-        setMessages([{ role: "ai", content: data.first_question }]);
-        
+        setMessages([{
+          id: crypto.randomUUID(),
+          role: "ai",
+          content: data.first_question,
+        }]);
+
         // Update dimensions from progress
         if (data.progress?.confidence_scores) {
           updateDimensionsFromProgress(data.progress.confidence_scores);
         }
       } catch (error) {
-        console.log("Backend not available, using mock mode");
+        console.error("Backend not available, using mock mode:", error);
+        setIsBackendAvailable(false);
         setMessages([{
+          id: crypto.randomUUID(),
           role: "ai",
           content: `Welcome, ${userName || "there"}! I'm A3. To build your personalized path, tell me a bit about your goals and how you prefer to learn.`,
         }]);
@@ -108,7 +115,7 @@ export default function ProfileChatPage() {
 
     const userMessage = input.trim();
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "user", content: userMessage }]);
     setIsTyping(true);
 
     try {
@@ -119,7 +126,7 @@ export default function ProfileChatPage() {
         console.log("API Response:", data);
         console.log("Progress:", data.progress);
         console.log("Confidence scores:", data.progress?.confidence_scores);
-        
+
         // Update dimensions from progress
         if (data.progress?.confidence_scores) {
           console.log("Updating dimensions with:", data.progress.confidence_scores);
@@ -130,13 +137,14 @@ export default function ProfileChatPage() {
 
         // Build extracted tags for display
         const extractedTags = (data.extracted_dimensions || []).map((dim: string) => ({
-          dimension: dim.toUpperCase().replace("_", " "),
+          dimension: dim.toUpperCase().replace(/_/g, " "),
           value: "Detected",
         }));
 
         setMessages((prev) => [
           ...prev,
           {
+            id: crypto.randomUUID(),
             role: "ai",
             content: data.response,
             tags: extractedTags,
@@ -146,10 +154,12 @@ export default function ProfileChatPage() {
         checkProgress(data.status, data.profile);
       } else {
         // Fallback to mock mode
+        setIsBackendAvailable(false);
         await handleMockResponse(userMessage);
       }
     } catch (error) {
-      console.log("API error, using mock mode", error);
+      console.error("API error, switching to mock mode:", error);
+      setIsBackendAvailable(false);
       await handleMockResponse(userMessage);
     } finally {
       setIsTyping(false);
@@ -236,16 +246,16 @@ export default function ProfileChatPage() {
       aiResponse = responses[unfilled[0].id] || "Tell me more about your learning preferences.";
     }
     
-    setMessages((prev) => [...prev, { role: "ai", content: aiResponse, tags: extractedTags }]);
+    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "ai", content: aiResponse, tags: extractedTags }]);
   };
 
   if (isInitializing) {
     return (
       <div className="min-h-[calc(100vh-6rem)] flex flex-col items-center justify-center">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2DD4BF] to-[#0d9488] flex items-center justify-center shadow-lg shadow-[#2DD4BF]/30 animate-pulse">
-          <span className="text-white font-bold text-2xl">A</span>
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#6B7F6B] to-[#8a9ba3] flex items-center justify-center shadow-lg shadow-[#6B7F6B]/30 animate-pulse">
+          <span className="text-white font-bold text-2xl">A³</span>
         </div>
-        <p className="mt-4 text-white/60">Initializing your session...</p>
+        <p className="mt-4 text-[#666]">Initializing your session...</p>
       </div>
     );
   }
@@ -254,8 +264,8 @@ export default function ProfileChatPage() {
     <div className="min-h-[calc(100vh-6rem)] flex flex-col justify-center px-4 sm:px-6 pb-6 sm:pb-8">
       {/* Phase Header */}
       <div className="text-center mb-8">
-        <h1 className="text-2xl md:text-3xl font-semibold text-white">
-          Phase 02: <span className="text-white/60">Initializing Your Profile</span>
+        <h1 className="text-2xl md:text-3xl font-serif font-semibold text-[#2a2a2a]">
+          Phase 02: <span className="text-[#666]">Initializing Your Profile</span>
         </h1>
       </div>
 
@@ -273,45 +283,52 @@ export default function ProfileChatPage() {
           <div className="relative">
             {/* AI Avatar */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2DD4BF] to-[#0d9488] flex items-center justify-center shadow-lg shadow-[#2DD4BF]/30">
-                <span className="text-white font-bold text-2xl">A</span>
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#6B7F6B] to-[#8a9ba3] flex items-center justify-center shadow-lg shadow-[#6B7F6B]/30">
+                <span className="text-white font-bold text-2xl">A³</span>
               </div>
             </div>
 
             {/* Chat Container - Floating */}
-            <div className="bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/[0.1] rounded-3xl p-6 pt-14 shadow-2xl shadow-black/50 ring-1 ring-white/[0.05]">
+            <div className="bg-white/90 backdrop-blur-2xl border border-[#D6CFC2] rounded-3xl p-6 pt-14 shadow-2xl shadow-black/10">
               {/* Messages */}
               <div className="space-y-4 min-h-[300px] sm:min-h-[400px] lg:min-h-[450px] max-h-[400px] sm:max-h-[500px] lg:max-h-[600px] overflow-y-auto pr-2 hide-scrollbar">
-                {messages.map((msg, i) => (
-                  <div key={i} className={cn("flex gap-3", msg.role === "user" && "flex-row-reverse")}>
+                {!isBackendAvailable && (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-center">
+                    <p className="text-xs text-amber-700">
+                      Running in offline mode — backend is unavailable.
+                    </p>
+                  </div>
+                )}
+                {messages.map((msg) => (
+                  <div key={msg.id} className={cn("flex gap-3", msg.role === "user" && "flex-row-reverse")}>
                     {msg.role === "ai" && (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#2DD4BF] to-[#0d9488] flex items-center justify-center shrink-0">
-                        <span className="text-white font-bold text-sm">A</span>
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6B7F6B] to-[#8a9ba3] flex items-center justify-center shrink-0">
+                        <span className="text-white font-bold text-sm">A³</span>
                       </div>
                     )}
                     <div
                       className={cn(
                         "max-w-[80%] p-4 rounded-2xl",
                         msg.role === "ai"
-                          ? "bg-white/[0.03] border border-white/[0.06]"
-                          : "bg-[#2DD4BF]/10 border border-[#2DD4BF]/20"
+                          ? "bg-[#F7F5F0] border border-[#E7E2D7]"
+                          : "bg-[#6B7F6B]/10 border border-[#6B7F6B]/20"
                       )}
                     >
-                      <p className="text-sm text-white/80 leading-relaxed">{msg.content}</p>
+                      <p className="text-sm text-[#2a2a2a] leading-relaxed">{msg.content}</p>
                     </div>
                   </div>
                 ))}
                 
                 {isTyping && (
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#2DD4BF] to-[#0d9488] flex items-center justify-center shrink-0">
-                      <span className="text-white font-bold text-sm">A</span>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6B7F6B] to-[#8a9ba3] flex items-center justify-center shrink-0">
+                      <span className="text-white font-bold text-sm">A³</span>
                     </div>
-                    <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+                    <div className="p-4 rounded-2xl bg-[#F7F5F0] border border-[#E7E2D7]">
                       <div className="flex gap-1">
-                        <div className="w-2 h-2 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <div className="w-2 h-2 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <div className="w-2 h-2 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: "300ms" }} />
+                        <div className="w-2 h-2 rounded-full bg-[#8a9ba3] animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <div className="w-2 h-2 rounded-full bg-[#8a9ba3] animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <div className="w-2 h-2 rounded-full bg-[#8a9ba3] animate-bounce" style={{ animationDelay: "300ms" }} />
                       </div>
                     </div>
                   </div>
@@ -326,13 +343,13 @@ export default function ProfileChatPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  placeholder="Tell A3 your learning story..."
-                  className="w-full px-5 py-4 pr-14 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white placeholder-white/30 focus:outline-none focus:border-[#2DD4BF]/50 transition-colors"
+                  placeholder="Tell A³ your learning story..."
+                  className="w-full px-5 py-4 pr-14 rounded-xl bg-[#F7F5F0] border border-[#D6CFC2] text-[#2a2a2a] placeholder-[#999] focus:outline-none focus:border-[#6B7F6B]/50 focus:ring-2 focus:ring-[#6B7F6B]/20 transition-all"
                 />
                 <button
                   onClick={handleSend}
                   disabled={!input.trim()}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg bg-[#2DD4BF] flex items-center justify-center text-black hover:bg-[#5EEAD4] transition-colors disabled:opacity-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg bg-[#6B7F6B] flex items-center justify-center text-white hover:bg-[#5a6d5a] transition-colors disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -370,10 +387,10 @@ function DimensionCard({ dimension, compact = false }: { dimension: Dimension; c
         "relative rounded-2xl border transition-all duration-500",
         compact ? "p-3" : "p-4",
         isFilled
-          ? "bg-[#2DD4BF]/10 border-[#2DD4BF]/30"
+          ? "bg-[#6B7F6B]/10 border-[#6B7F6B]/30"
           : isActive
-          ? "bg-white/[0.03] border-white/[0.08]"
-          : "bg-white/[0.02] border-white/[0.04]"
+          ? "bg-white/80 border-[#D6CFC2]"
+          : "bg-white/50 border-[#E7E2D7]"
       )}
     >
       {/* Tube Light Effect */}
@@ -385,11 +402,11 @@ function DimensionCard({ dimension, compact = false }: { dimension: Dimension; c
           )}
         >
           {/* Background */}
-          <div className="absolute inset-0 bg-[#1a1a1a] rounded-xl" />
+          <div className="absolute inset-0 bg-[#E7E2D7] rounded-xl" />
           
           {/* Fill */}
           <div
-            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#2DD4BF] to-[#2DD4BF]/50 transition-all duration-1000 ease-out rounded-b-xl"
+            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#6B7F6B] to-[#8a9ba3] transition-all duration-1000 ease-out rounded-b-xl"
             style={{ height: `${dimension.progress}%` }}
           />
           
@@ -399,7 +416,7 @@ function DimensionCard({ dimension, compact = false }: { dimension: Dimension; c
               className={cn(
                 "transition-colors duration-500",
                 compact ? "w-5 h-5" : "w-6 h-6",
-                isFilled ? "text-white" : isActive ? "text-[#2DD4BF]" : "text-white/30"
+                isFilled ? "text-white" : isActive ? "text-[#6B7F6B]" : "text-[#999]"
               )}
             />
           </div>
@@ -411,7 +428,7 @@ function DimensionCard({ dimension, compact = false }: { dimension: Dimension; c
         className={cn(
           "text-center font-medium transition-colors duration-500",
           compact ? "text-[10px]" : "text-xs",
-          isFilled ? "text-[#2DD4BF]" : isActive ? "text-white/70" : "text-white/30"
+          isFilled ? "text-[#6B7F6B]" : isActive ? "text-[#555]" : "text-[#999]"
         )}
       >
         {dimension.name}

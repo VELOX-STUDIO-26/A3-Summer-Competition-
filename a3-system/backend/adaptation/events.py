@@ -9,7 +9,7 @@ API handlers, background jobs, tests — without DB coupling.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -33,7 +33,7 @@ class AdaptationEvent:
     # Placeholder value — subclasses override in ``__post_init__``. Having
     # a default means subclasses can add required fields of their own.
     event_type: EventType = EventType.QUIZ_COMPLETED
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 

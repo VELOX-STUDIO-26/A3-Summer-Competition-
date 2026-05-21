@@ -379,9 +379,22 @@ class QuizAgent(BaseAgent):
         """Get student's mastery level for a topic."""
         if not knowledge_base:
             return 0.0
-        topic_data = knowledge_base.get(topic, {})
-        if isinstance(topic_data, dict):
-            return topic_data.get("mastery", 0.0)
+        topic_lower = topic.lower().replace(" ", "_")
+        # Try exact match first (handles Dict[str, float] schema)
+        if topic_lower in knowledge_base:
+            val = knowledge_base[topic_lower]
+            if isinstance(val, (int, float)):
+                return float(val)
+            if isinstance(val, dict):
+                return val.get("mastery", 0.0)
+        # Fall back to substring matching
+        for key, score in knowledge_base.items():
+            key_lower = key.lower()
+            if topic_lower in key_lower or key_lower in topic_lower:
+                if isinstance(score, (int, float)):
+                    return float(score)
+                if isinstance(score, dict):
+                    return score.get("mastery", 0.0)
         return 0.0
 
     def _calculate_difficulty_distribution(self, mastery: float, num_questions: int) -> Dict[str, int]:
@@ -600,14 +613,70 @@ Return ONLY valid JSON with all questions."""
 
             validated.append(q)
 
-        # If we don't have enough questions, generate fallbacks
+        # If we don't have enough questions, generate fallbacks respecting type distribution
+        current_types: Dict[str, int] = {}
+        for q in validated:
+            current_types[q.get("type", "multiple_choice")] = current_types.get(q.get("type", "multiple_choice"), 0) + 1
+
         while len(validated) < expected_count:
-            validated.append(self._create_fallback_question(len(validated) + 1))
+            # Find a question type that is still needed
+            needed_type = "multiple_choice"
+            for qtype, needed_count in question_types.items():
+                if needed_count > current_types.get(qtype, 0):
+                    needed_type = qtype
+                    break
+
+            fallback_q = self._create_fallback_question(len(validated) + 1, needed_type)
+            validated.append(fallback_q)
+            current_types[needed_type] = current_types.get(needed_type, 0) + 1
 
         return validated[:expected_count]
 
-    def _create_fallback_question(self, q_num: int) -> Dict[str, Any]:
-        """Create a single fallback question."""
+    def _create_fallback_question(self, q_num: int, q_type: str = "multiple_choice") -> Dict[str, Any]:
+        """Create a single fallback question of the specified type."""
+        if q_type == "true_false":
+            return {
+                "id": f"q{q_num}",
+                "type": "true_false",
+                "question": f"Question {q_num}: This statement about the topic is true.",
+                "options": ["True", "False"],
+                "correct_answer": "True",
+                "requires_justification": True,
+                "justification_prompt": "Explain your reasoning (1-2 sentences)",
+                "explanation": "This is a fundamental concept that is correct.",
+                "difficulty": "easy",
+                "difficulty_score": 0.3,
+                "topic_tested": "core concepts",
+                "is_critical": False,
+                "weight": 1.0,
+                "hints": [
+                    "Think about the definition",
+                    "Consider the basic properties",
+                    "What is always true?"
+                ],
+            }
+        elif q_type == "short_answer":
+            return {
+                "id": f"q{q_num}",
+                "type": "short_answer",
+                "question": f"Question {q_num}: In 2-4 sentences, explain what this concept is and why it matters.",
+                "options": [],
+                "correct_answer": None,
+                "expected_response_guide": "A good answer should define the concept and explain its importance",
+                "explanation": "This concept is fundamental to understanding the topic.",
+                "difficulty": "medium",
+                "difficulty_score": 0.6,
+                "topic_tested": "core concepts",
+                "is_critical": False,
+                "weight": 1.0,
+                "hints": [
+                    "Define it simply",
+                    "Give a use case",
+                    "Explain the benefit"
+                ],
+            }
+
+        # Default multiple_choice
         return {
             "id": f"q{q_num}",
             "type": "multiple_choice",

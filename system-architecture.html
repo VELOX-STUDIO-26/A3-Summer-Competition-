@@ -1,0 +1,2049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A3 Learning System Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --bg-card: rgba(255, 255, 255, 0.8);
+            --bg-card-hover: rgba(255, 255, 255, 0.95);
+            --border-color: #e2e8f0;
+            --border-hover: #6366f1;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.15);
+
+            /* Category colors */
+            --color-content: #10b981;
+            --color-content-glow: rgba(16, 185, 129, 0.2);
+            --color-assessment: #f59e0b;
+            --color-assessment-glow: rgba(245, 158, 11, 0.2);
+            --color-planning: #8b5cf6;
+            --color-planning-glow: rgba(139, 92, 246, 0.2);
+            --color-core: #06b6d4;
+            --color-core-glow: rgba(6, 182, 212, 0.2);
+
+            /* Graph colors */
+            --graph-node-bg: #ffffff;
+            --graph-edge: #cbd5e1;
+            --graph-edge-active: #6366f1;
+            --layer-client: #3b82f6;
+            --layer-gateway: #10b981;
+            --layer-service: #8b5cf6;
+            --layer-agent: #ec4899;
+            --layer-external: #f59e0b;
+            --layer-data: #6366f1;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse at 15% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                radial-gradient(ellipse at 85% 30%, rgba(236, 72, 153, 0.05) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 40%),
+                linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            padding: 80px 0 60px;
+            text-align: center;
+            position: relative;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+
+        .badge-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 8px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 100px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .badge:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            background: var(--bg-card-hover);
+        }
+
+        /* Stats */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 60px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.12);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #6366f1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* Collapsible Section */
+        .section-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .section-container:hover {
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .section-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .section-title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .section-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .section-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+        }
+
+        .section-toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--text-tertiary);
+            transition: all 0.3s ease;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-container.collapsed .section-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 0 28px 28px;
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .section-container.collapsed .section-content {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Grid Layouts */
+        .two-column-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .two-column-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* File Grid */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 8px;
+        }
+
+        .file-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .file-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        /* Page Cards */
+        .page-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+
+        .page-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .page-card:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+            background: var(--bg-card-hover);
+        }
+
+        .page-route {
+            font-size: 0.7rem;
+            color: #818cf8;
+            font-family: 'Monaco', monospace;
+            margin-bottom: 6px;
+        }
+
+        .page-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .page-desc {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Agent Cards - Categorized Colors */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .agent-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .agent-card:hover::before {
+            opacity: 1;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Category colors */
+        .agent-card.content::before,
+        .agent-card.content:hover { border-color: var(--color-content); box-shadow: 0 12px 32px var(--color-content-glow); }
+        .agent-card.assessment::before,
+        .agent-card.assessment:hover { border-color: var(--color-assessment); box-shadow: 0 12px 32px var(--color-assessment-glow); }
+        .agent-card.planning::before,
+        .agent-card.planning:hover { border-color: var(--color-planning); box-shadow: 0 12px 32px var(--color-planning-glow); }
+        .agent-card.core::before,
+        .agent-card.core:hover { border-color: var(--color-core); box-shadow: 0 12px 32px var(--color-core-glow); }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .agent-emoji {
+            font-size: 1.6rem;
+            line-height: 1;
+        }
+
+        .agent-title {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .agent-role {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        .agent-file {
+            font-family: 'Monaco', monospace;
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .agent-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Infrastructure */
+        .infra-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 1024px) {
+            .infra-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .infra-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .infra-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .infra-card:hover {
+            border-color: rgba(236, 72, 153, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .infra-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 14px;
+            background: rgba(236, 72, 153, 0.15);
+            color: #f472b6;
+        }
+
+        .infra-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .infra-features {
+            list-style: none;
+        }
+
+        .infra-features li {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .infra-features li::before {
+            content: '›';
+            color: #f472b6;
+            font-size: 0.9rem;
+        }
+
+        /* Services */
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .service-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .service-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .service-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .service-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .service-name {
+            font-weight: 600;
+        }
+
+        .service-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .service-config {
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-family: 'Monaco', monospace;
+            font-size: 0.7rem;
+            color: #6366f1;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Horizontal Flow Diagram */
+        .flow-wrapper {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            overflow-x: auto;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0;
+            min-width: 900px;
+            position: relative;
+        }
+
+        .flow-line {
+            position: absolute;
+            top: 50%;
+            left: 60px;
+            right: 60px;
+            height: 2px;
+            background: linear-gradient(to right,
+                rgba(99, 102, 241, 0.3),
+                rgba(139, 92, 246, 0.3),
+                rgba(236, 72, 153, 0.3));
+            z-index: 0;
+        }
+
+        .flow-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            z-index: 1;
+            position: relative;
+        }
+
+        .flow-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .flow-node:hover .flow-icon {
+            border-color: var(--accent);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .flow-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .flow-detail {
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            text-align: center;
+            max-width: 100px;
+            white-space: nowrap;
+        }
+
+        /* Arrow between nodes */
+        .flow-arrow {
+            color: var(--text-tertiary);
+            font-size: 1rem;
+            opacity: 0.5;
+        }
+
+        /* System Design Architecture Graph Styles */
+        .arch-graph-container {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            overflow-x: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .arch-graph-svg {
+            width: 100%;
+            min-width: 1200px;
+            height: 920px;
+        }
+
+        .arch-node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .arch-node:hover {
+            filter: brightness(0.95);
+            transform: scale(1.02);
+        }
+
+        .graph-edges line {
+            transition: all 0.3s ease;
+        }
+
+        .graph-edges line:hover {
+            stroke: #6366f1;
+            stroke-width: 3;
+        }
+
+        /* Architecture Legend */
+        .arch-legend {
+            margin-top: 24px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .legend-item span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Tech Stack Grid */
+        .tech-stack-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .tech-stack-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .tech-stack-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .tech-stack-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .tech-stack-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 20px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        .stack-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stack-icon {
+            font-size: 1.3rem;
+        }
+
+        .stack-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .stack-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .stack-item {
+            font-size: 0.75rem;
+            padding: 5px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .stack-item:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* API Section - Grouped by Method */
+        .api-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .api-tab {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .api-tab:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .api-tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .tab-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        .api-content {
+            display: none;
+        }
+
+        .api-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .api-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .api-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .api-item:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+            transform: translateX(4px);
+        }
+
+        .api-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .api-method {
+            font-family: 'Monaco', monospace;
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .method-get { background: rgba(16, 185, 129, 0.15); color: #059669; }
+        .method-post { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
+        .method-put { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        .method-delete { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+
+        .api-path {
+            font-family: 'Monaco', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .api-desc {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 60px 0;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-tertiary);
+            margin-top: 40px;
+        }
+
+        footer p {
+            margin-bottom: 8px;
+        }
+
+        .tech-row {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tech-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .tech-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">🎓</div>
+            </div>
+            <h1>A3 Learning System</h1>
+            <p class="subtitle">Adaptive AI Tutoring Platform Architecture</p>
+            <div class="badge-container">
+                <span class="badge">15th China Software Cup</span>
+                <span class="badge">iFlytek Track</span>
+                <span class="badge">FastAPI</span>
+                <span class="badge">Next.js 16</span>
+                <span class="badge">Multi-Agent AI</span>
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-number">9</div>
+                <div class="stat-label">AI Agents</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">16</div>
+                <div class="stat-label">API Routers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">7</div>
+                <div class="stat-label">Frontend Pages</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5</div>
+                <div class="stat-label">Content Types</div>
+            </div>
+        </div>
+
+        <!-- Frontend & Backend Section -->
+        <div class="section-container" onclick="toggleSection(this)">
+            <div class="section-header">
+                <div class="section-title-group">
+                    <div class="section-icon">⚛️</div>
+                    <div>
+                        <div class="section-title">Frontend & Backend</div>
+                        <div class="section-subtitle">Next.js 16 + FastAPI Architecture</div>
+                    </div>
+                </div>
+                <div class="section-toggle">▼</div>
+            </div>
+            <div class="section-content">
+                <div class="two-column-grid">
+                    <!-- Frontend -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">🎨</div>
+                            <div class="card-title">Frontend Stack</div>
+                        </div>
+                        <div class="page-grid">
+                            <div class="page-card">
+                                <div class="page-route">/login</div>
+                                <div class="page-name">Login</div>
+                                <div class="page-desc">Authentication</div>
+                            </div>
+                            <div class="page-card">
+                                <div class="page-route">/register</div>
+                                <div class="page-name">Register</div>
+                                <div class="page-desc">Account creation</div>
+                            </div>
+                            <div class="page-card">
+                                <div class="page-route">/profile-chat</div>
+                                <div class="page-name">Profile Chat</div>
+                                <div class="page-desc">Conversational profiling</div>
+                            </div>
+                            <div class="page-card">
+                                <div class="page-route">/profile-summary</div>
+                                <div class="page-name">Profile Summary</div>
+                                <div class="page-desc">Review profile</div>
+                            </div>
+                            <div class="page-card">
+                                <div class="page-route">/notebook</div>
+                                <div class="page-name">Notebook</div>
+                                <div class="page-desc">Main learning UI</div>
+                            </div>
+                            <div class="page-card">
+                                <div class="page-route">/quiz</div>
+                                <div class="page-name">Quiz</div>
+                                <div class="page-desc">Assessment</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Backend -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">⚙️</div>
+                            <div class="card-title">API Routers</div>
+                        </div>
+                        <div class="file-grid">
+                            <div class="file-item">💬 chat.py</div>
+                            <div class="file-item">👤 profile.py</div>
+                            <div class="file-item">🛤️ path.py</div>
+                            <div class="file-item">📚 resources.py</div>
+                            <div class="file-item">👨‍🏫 tutor.py</div>
+                            <div class="file-item">📅 tutor_sessions.py</div>
+                            <div class="file-item">❓ quiz.py</div>
+                            <div class="file-item">🎯 milestone.py</div>
+                            <div class="file-item">📊 analytics.py</div>
+                            <div class="file-item">📈 tracking.py</div>
+                            <div class="file-item">⚡ adaptation.py</div>
+                            <div class="file-item">🔊 tts.py</div>
+                            <div class="file-item">🎤 asr.py</div>
+                            <div class="file-item">🔐 auth.py</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Agents Section -->
+        <div class="section-container" onclick="toggleSection(this)">
+            <div class="section-header">
+                <div class="section-title-group">
+                    <div class="section-icon">🤖</div>
+                    <div>
+                        <div class="section-title">AI Agent System</div>
+                        <div class="section-subtitle">12 Specialized Agents by Category</div>
+                    </div>
+                </div>
+                <div class="section-toggle">▼</div>
+            </div>
+            <div class="section-content">
+                <div class="agent-grid">
+                    <!-- Content Generation Agents -->
+                    <div class="agent-card content">
+                        <div class="agent-header">
+                            <span class="agent-emoji">🎓</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Scholar</div>
+                                <div class="agent-role">Content Generation</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">content_agent.py</div>
+                        <p class="agent-desc">Creates personalized study notes adapted to learning style and knowledge level</p>
+                    </div>
+
+                    <div class="agent-card content">
+                        <div class="agent-header">
+                            <span class="agent-emoji">🗺️</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Mapper</div>
+                                <div class="agent-role">Content Generation</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">mindmap_agent.py</div>
+                        <p class="agent-desc">Generates visual concept maps showing topic relationships and dependencies</p>
+                    </div>
+
+                    <div class="agent-card content">
+                        <div class="agent-header">
+                            <span class="agent-emoji">🎬</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Director</div>
+                                <div class="agent-role">Content Generation</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">media_agent.py</div>
+                        <p class="agent-desc">Generates video scripts and lecture content with TTS narration</p>
+                    </div>
+
+                    <div class="agent-card content">
+                        <div class="agent-header">
+                            <span class="agent-emoji">💻</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Architect</div>
+                                <div class="agent-role">Content Generation</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">code_agent.py</div>
+                        <p class="agent-desc">Creates hands-on coding exercises with Judge0 sandbox integration</p>
+                    </div>
+
+                    <!-- Assessment Agents -->
+                    <div class="agent-card assessment">
+                        <div class="agent-header">
+                            <span class="agent-emoji">🧠</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Sage</div>
+                                <div class="agent-role">Assessment</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">quiz_agent.py</div>
+                        <p class="agent-desc">Creates adaptive quizzes with personalized difficulty and question types</p>
+                    </div>
+
+                    <div class="agent-card assessment">
+                        <div class="agent-header">
+                            <span class="agent-emoji">✅</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Coding Grader</div>
+                                <div class="agent-role">Assessment</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">coding_grader.py</div>
+                        <p class="agent-desc">Evaluates code submissions using Judge0 with detailed feedback</p>
+                    </div>
+
+                    <div class="agent-card assessment">
+                        <div class="agent-header">
+                            <span class="agent-emoji">📝</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Answer Grader</div>
+                                <div class="agent-role">Assessment</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">short_answer_grader.py</div>
+                        <p class="agent-desc">AI-powered grading for short answer and open-ended responses</p>
+                    </div>
+
+                    <div class="agent-card assessment">
+                        <div class="agent-header">
+                            <span class="agent-emoji">📊</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Evaluator</div>
+                                <div class="agent-role">Assessment</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">evaluator_agent.py</div>
+                        <p class="agent-desc">Analyzes learning outcomes and provides adaptive feedback</p>
+                    </div>
+
+                    <!-- Planning Agents -->
+                    <div class="agent-card planning">
+                        <div class="agent-header">
+                            <span class="agent-emoji">🛤️</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Path Planner</div>
+                                <div class="agent-role">Planning</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">path_planner.py</div>
+                        <p class="agent-desc">Generates optimal learning paths through knowledge graph using A* search</p>
+                    </div>
+
+                    <div class="agent-card planning">
+                        <div class="agent-header">
+                            <span class="agent-emoji">🚪</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Gate Agent</div>
+                                <div class="agent-role">Planning</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">gate_agent.py</div>
+                        <p class="agent-desc">Evaluates multi-signal gate conditions to unlock milestones</p>
+                    </div>
+
+                    <!-- Core Agents -->
+                    <div class="agent-card core">
+                        <div class="agent-header">
+                            <span class="agent-emoji">🎯</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Orchestrator</div>
+                                <div class="agent-role">Core System</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">orchestrator.py</div>
+                        <p class="agent-desc">Coordinates all agents, manages parallel execution of content generation pipeline</p>
+                    </div>
+
+                    <div class="agent-card core">
+                        <div class="agent-header">
+                            <span class="agent-emoji">🔍</span>
+                            <div class="agent-title">
+                                <div class="agent-name">Profile Extractor</div>
+                                <div class="agent-role">Core System</div>
+                            </div>
+                        </div>
+                        <div class="agent-file">profile_extractor.py</div>
+                        <p class="agent-desc">Extracts 6-dimension student profile from conversational chat</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Infrastructure Section -->
+        <div class="section-container" onclick="toggleSection(this)">
+            <div class="section-header">
+                <div class="section-title-group">
+                    <div class="section-icon">🗄️</div>
+                    <div>
+                        <div class="section-title">Database & Infrastructure</div>
+                        <div class="section-subtitle">PostgreSQL · Redis · Weaviate · Docker</div>
+                    </div>
+                </div>
+                <div class="section-toggle">▼</div>
+            </div>
+            <div class="section-content">
+                <div class="infra-grid">
+                    <div class="infra-card">
+                        <div class="infra-icon">🐘</div>
+                        <div class="infra-name">PostgreSQL</div>
+                        <ul class="infra-features">
+                            <li>Primary relational database</li>
+                            <li>User data & sessions</li>
+                            <li>Learning progress tracking</li>
+                            <li>Knowledge graph storage</li>
+                        </ul>
+                    </div>
+
+                    <div class="infra-card">
+                        <div class="infra-icon">⚡</div>
+                        <div class="infra-name">Redis</div>
+                        <ul class="infra-features">
+                            <li>Session management</li>
+                            <li>Response caching</li>
+                            <li>Rate limiting</li>
+                            <li>Real-time data</li>
+                        </ul>
+                    </div>
+
+                    <div class="infra-card">
+                        <div class="infra-icon">🔍</div>
+                        <div class="infra-name">Weaviate</div>
+                        <ul class="infra-features">
+                            <li>Vector database</li>
+                            <li>RAG semantic search</li>
+                            <li>Content similarity</li>
+                            <li>Knowledge indexing</li>
+                        </ul>
+                    </div>
+
+                    <div class="infra-card">
+                        <div class="infra-icon">📦</div>
+                        <div class="infra-name">Docker</div>
+                        <ul class="infra-features">
+                            <li>Containerized services</li>
+                            <li>Compose orchestration</li>
+                            <li>Easy deployment</li>
+                            <li>Development parity</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- External Services Section -->
+        <div class="section-container" onclick="toggleSection(this)">
+            <div class="section-header">
+                <div class="section-title-group">
+                    <div class="section-icon">☁️</div>
+                    <div>
+                        <div class="section-title">External AI Services</div>
+                        <div class="section-subtitle">OpenRouter · iFlytek · Edge-TTS · Judge0</div>
+                    </div>
+                </div>
+                <div class="section-toggle">▼</div>
+            </div>
+            <div class="section-content">
+                <div class="service-grid">
+                    <div class="service-card">
+                        <div class="service-header">
+                            <div class="service-icon">🤖</div>
+                            <div class="service-name">OpenRouter LLM</div>
+                        </div>
+                        <p class="service-desc">Primary LLM provider with automatic fallback rotation for high availability</p>
+                        <div class="service-config">
+                            meta-llama/llama-3.1-70b-instruct<br>
+                            core/llm_client.py
+                        </div>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-header">
+                            <div class="service-icon">🎤</div>
+                            <div class="service-name">iFlytek ASR</div>
+                        </div>
+                        <p class="service-desc">Real-time speech-to-text for voice input in tutoring sessions</p>
+                        <div class="service-config">
+                            iFlytek IST API<br>
+                            core/asr_client.py
+                        </div>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-header">
+                            <div class="service-icon">🔊</div>
+                            <div class="service-name">Edge-TTS</div>
+                        </div>
+                        <p class="service-desc">Neural text-to-speech for narrated content and video lectures</p>
+                        <div class="service-config">
+                            zh-CN-XiaoxiaoNeural<br>
+                            core/tts_client.py
+                        </div>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-header">
+                            <div class="service-icon">⚖️</div>
+                            <div class="service-name">Judge0</div>
+                        </div>
+                        <p class="service-desc">Secure code execution sandbox for 60+ programming languages</p>
+                        <div class="service-config">
+                            Sandboxed execution<br>
+                            core/judge0_client.py
+                        </div>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-header">
+                            <div class="service-icon">👁️</div>
+                            <div class="service-name">Vision LLM</div>
+                        </div>
+                        <p class="service-desc">Multimodal analysis for diagrams, screenshots, and visual content</p>
+                        <div class="service-config">
+                            GPT-4V / Claude 3<br>
+                            core/vision_llm_client.py
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Design Section -->
+        <div class="section-container" onclick="toggleSection(this)">
+            <div class="section-header">
+                <div class="section-title-group">
+                    <div class="section-icon">🏗️</div>
+                    <div>
+                        <div class="section-title">System Architecture</div>
+                        <div class="section-subtitle">Graph-Based Component Topology</div>
+                    </div>
+                </div>
+                <div class="section-toggle">▼</div>
+            </div>
+            <div class="section-content">
+                <!-- Technical Architecture Graph -->
+                <div class="arch-graph-container">
+                    <svg class="arch-graph-svg" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid meet">
+                        <!-- Definitions for markers and gradients -->
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#cbd5e1" />
+                            </marker>
+                            <marker id="arrowhead-active" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#6366f1" />
+                            </marker>
+                            <linearGradient id="grad-client" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.2" />
+                                <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.05" />
+                            </linearGradient>
+                            <linearGradient id="grad-gateway" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.2" />
+                                <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.05" />
+                            </linearGradient>
+                            <linearGradient id="grad-service" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.2" />
+                                <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.05" />
+                            </linearGradient>
+                            <linearGradient id="grad-agent" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#ec4899;stop-opacity:0.2" />
+                                <stop offset="100%" style="stop-color:#ec4899;stop-opacity:0.05" />
+                            </linearGradient>
+                            <linearGradient id="grad-external" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.2" />
+                                <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.05" />
+                            </linearGradient>
+                            <linearGradient id="grad-data" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.2" />
+                                <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.05" />
+                            </linearGradient>
+                        </defs>
+
+                        <!-- Connection Lines -->
+                        <g class="graph-edges">
+                            <!-- Client to Gateway -->
+                            <line x1="300" y1="160" x2="290" y2="200" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="610" y1="160" x2="590" y2="200" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="890" y1="160" x2="890" y2="200" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+
+                            <!-- Gateway to Services -->
+                            <!-- API Gateway → Orchestrator & Path Planner -->
+                            <line x1="290" y1="280" x2="180" y2="360" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="290" y1="280" x2="380" y2="360" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Streaming Manager → Tutor Engine & NLP Pipeline -->
+                            <line x1="590" y1="280" x2="580" y2="360" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="590" y1="280" x2="780" y2="360" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Rate Limiter → Adaptation -->
+                            <line x1="890" y1="280" x2="980" y2="360" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+
+                            <!-- Services to External (direct usage) -->
+                            <!-- Tutor Engine → OpenRouter (LLM) + Weaviate (RAG) -->
+                            <line x1="580" y1="440" x2="145" y2="680" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowhead)" />
+                            <line x1="580" y1="440" x2="895" y2="680" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowhead)" />
+                            <!-- NLP Pipeline → OpenRouter (LLM) + iFlytek (ASR) -->
+                            <line x1="780" y1="440" x2="145" y2="680" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowhead)" />
+                            <line x1="780" y1="440" x2="295" y2="680" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowhead)" />
+                            <!-- Adaptation → OpenRouter -->
+                            <line x1="980" y1="440" x2="145" y2="680" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowhead)" />
+
+                            <!-- Services to Agents -->
+                            <!-- Orchestrator → All 5 Content Generation Agents -->
+                            <line x1="180" y1="440" x2="100" y2="520" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="180" y1="440" x2="220" y2="520" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="180" y1="440" x2="340" y2="520" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="180" y1="440" x2="460" y2="520" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="180" y1="440" x2="580" y2="520" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Tutor Engine uses LLM directly (no agents) - no connections -->
+                            <!-- NLP Pipeline uses LLM directly - no connections -->
+                            <!-- Adaptation → triggers Orchestrator (dashed) -->
+                            <line x1="980" y1="440" x2="180" y2="440" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowhead)" />
+                            <!-- Path Planner → No direct agent connections -->
+                            <!-- Grader/Evaluator/Gate/Adapter are support agents used by system -->
+                            <!-- Cross-service coordination -->
+                            <line x1="180" y1="400" x2="980" y2="400" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5,5" opacity="0.5" />
+
+                            <!-- Agents to External -->
+                            <!-- Content Agents → OpenRouter (LLM) -->
+                            <line x1="100" y1="600" x2="145" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="220" y1="600" x2="145" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Director → OpenRouter + Edge-TTS (audio) -->
+                            <line x1="340" y1="600" x2="145" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="340" y1="600" x2="445" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Architect → OpenRouter + Judge0 -->
+                            <line x1="460" y1="600" x2="145" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="460" y1="600" x2="595" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Assessment Agents → OpenRouter + Judge0 -->
+                            <line x1="580" y1="600" x2="145" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="700" y1="600" x2="595" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Planning Agents → OpenRouter -->
+                            <line x1="820" y1="600" x2="145" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <line x1="940" y1="600" x2="145" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Evaluator → OpenRouter -->
+                            <line x1="1060" y1="600" x2="145" y2="680" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+
+                            <!-- External to Data -->
+                            <!-- OpenRouter → PostgreSQL -->
+                            <line x1="145" y1="760" x2="375" y2="840" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- iFlytek → PostgreSQL -->
+                            <line x1="295" y1="760" x2="375" y2="840" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Edge-TTS → Redis (audio cache) -->
+                            <line x1="445" y1="760" x2="775" y2="840" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Judge0 → PostgreSQL -->
+                            <line x1="595" y1="760" x2="375" y2="840" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Vision LLM → PostgreSQL -->
+                            <line x1="745" y1="760" x2="375" y2="840" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Weaviate ↔ Redis (index cache) -->
+                            <line x1="895" y1="760" x2="775" y2="840" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                            <!-- Docker → Redis (container state) -->
+                            <line x1="1045" y1="760" x2="775" y2="840" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowhead)" />
+                        </g>
+
+                        <!-- Nodes -->
+                        <g class="graph-nodes">
+                            <!-- Layer 1: Client Layer -->
+                            <g class="layer-group" data-layer="client">
+                                <rect x="200" y="80" width="200" height="80" rx="12" fill="url(#grad-client)" stroke="#3b82f6" stroke-width="2" class="arch-node"/>
+                                <text x="300" y="105" text-anchor="middle" font-size="14" font-weight="600" fill="#1e40af">Web Client</text>
+                                <text x="300" y="125" text-anchor="middle" font-size="11" fill="#64748b">Next.js 16 + TypeScript</text>
+                                <text x="300" y="142" text-anchor="middle" font-size="9" fill="#94a3b8">SSR / React / Tailwind</text>
+
+                                <rect x="520" y="80" width="180" height="80" rx="12" fill="url(#grad-client)" stroke="#3b82f6" stroke-width="2" class="arch-node"/>
+                                <text x="610" y="105" text-anchor="middle" font-size="14" font-weight="600" fill="#1e40af">WebSocket Client</text>
+                                <text x="610" y="125" text-anchor="middle" font-size="11" fill="#64748b">Real-time Streaming</text>
+                                <text x="610" y="142" text-anchor="middle" font-size="9" fill="#94a3b8">Streaming Responses</text>
+
+                                <rect x="800" y="80" width="180" height="80" rx="12" fill="url(#grad-client)" stroke="#3b82f6" stroke-width="2" class="arch-node"/>
+                                <text x="890" y="105" text-anchor="middle" font-size="14" font-weight="600" fill="#1e40af">Auth Client</text>
+                                <text x="890" y="125" text-anchor="middle" font-size="11" fill="#64748b">JWT / OAuth2</text>
+                                <text x="890" y="142" text-anchor="middle" font-size="9" fill="#94a3b8">Token Management</text>
+                            </g>
+
+                            <!-- Layer 2: Gateway Layer -->
+                            <g class="layer-group" data-layer="gateway">
+                                <rect x="180" y="200" width="220" height="80" rx="12" fill="url(#grad-gateway)" stroke="#10b981" stroke-width="2" class="arch-node"/>
+                                <text x="290" y="225" text-anchor="middle" font-size="13" font-weight="600" fill="#065f46">API Gateway</text>
+                                <text x="290" y="245" text-anchor="middle" font-size="10" fill="#64748b">FastAPI + Uvicorn</text>
+                                <text x="290" y="260" text-anchor="middle" font-size="9" fill="#94a3b8">16 Routers / JWT Auth / CORS</text>
+
+                                <rect x="480" y="200" width="220" height="80" rx="12" fill="url(#grad-gateway)" stroke="#10b981" stroke-width="2" class="arch-node"/>
+                                <text x="590" y="225" text-anchor="middle" font-size="13" font-weight="600" fill="#065f46">Streaming Manager</text>
+                                <text x="590" y="245" text-anchor="middle" font-size="10" fill="#64748b">WebSocket / SSE</text>
+                                <text x="590" y="260" text-anchor="middle" font-size="9" fill="#94a3b8">Real-time Tutor Responses</text>
+
+                                <rect x="780" y="200" width="220" height="80" rx="12" fill="url(#grad-gateway)" stroke="#10b981" stroke-width="2" class="arch-node"/>
+                                <text x="890" y="225" text-anchor="middle" font-size="13" font-weight="600" fill="#065f46">Rate Limiter</text>
+                                <text x="890" y="245" text-anchor="middle" font-size="10" fill="#64748b">100 req/min per IP</text>
+                                <text x="890" y="260" text-anchor="middle" font-size="9" fill="#94a3b8">Middleware Protection</text>
+                            </g>
+
+                            <!-- Layer 3: Core Services -->
+                            <g class="layer-group" data-layer="service">
+                                <rect x="100" y="360" width="160" height="80" rx="12" fill="url(#grad-service)" stroke="#8b5cf6" stroke-width="2" class="arch-node"/>
+                                <text x="180" y="385" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">Orchestrator</text>
+                                <text x="180" y="402" text-anchor="middle" font-size="9" fill="#64748b">Agent Coordinator</text>
+                                <text x="180" y="417" text-anchor="middle" font-size="8" fill="#94a3b8">Pipeline Dispatch</text>
+
+                                <rect x="300" y="360" width="160" height="80" rx="12" fill="url(#grad-service)" stroke="#8b5cf6" stroke-width="2" class="arch-node"/>
+                                <text x="380" y="385" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">Path Planner</text>
+                                <text x="380" y="402" text-anchor="middle" font-size="9" fill="#64748b">A* Algorithm</text>
+                                <text x="380" y="417" text-anchor="middle" font-size="8" fill="#94a3b8">Knowledge Graph</text>
+
+                                <rect x="500" y="360" width="160" height="80" rx="12" fill="url(#grad-service)" stroke="#8b5cf6" stroke-width="2" class="arch-node"/>
+                                <text x="580" y="385" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">Tutor Engine</text>
+                                <text x="580" y="402" text-anchor="middle" font-size="9" fill="#64748b">Context Manager</text>
+                                <text x="580" y="417" text-anchor="middle" font-size="8" fill="#94a3b8">Streaming / RAG</text>
+
+                                <rect x="700" y="360" width="160" height="80" rx="12" fill="url(#grad-service)" stroke="#8b5cf6" stroke-width="2" class="arch-node"/>
+                                <text x="780" y="385" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">NLP Pipeline</text>
+                                <text x="780" y="402" text-anchor="middle" font-size="9" fill="#64748b">Profile Extraction</text>
+                                <text x="780" y="417" text-anchor="middle" font-size="8" fill="#94a3b8">Gap Detection</text>
+
+                                <rect x="900" y="360" width="160" height="80" rx="12" fill="url(#grad-service)" stroke="#8b5cf6" stroke-width="2" class="arch-node"/>
+                                <text x="980" y="385" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">Adaptation</text>
+                                <text x="980" y="402" text-anchor="middle" font-size="9" fill="#64748b">Dynamic Engine</text>
+                                <text x="980" y="417" text-anchor="middle" font-size="8" fill="#94a3b8">Recommender</text>
+                            </g>
+
+                            <!-- Layer 4: AI Agents -->
+                            <g class="layer-group" data-layer="agent">
+                                <!-- Content Agents -->
+                                <rect x="50" y="520" width="100" height="80" rx="8" fill="url(#grad-agent)" stroke="#10b981" stroke-width="2" class="arch-node content-agent"/>
+                                <text x="100" y="545" text-anchor="middle" font-size="10" font-weight="600" fill="#065f46">Scholar</text>
+                                <text x="100" y="562" text-anchor="middle" font-size="8" fill="#64748b">Content</text>
+                                <text x="100" y="575" text-anchor="middle" font-size="7" fill="#94a3b8">Generation</text>
+
+                                <rect x="170" y="520" width="100" height="80" rx="8" fill="url(#grad-agent)" stroke="#10b981" stroke-width="2" class="arch-node content-agent"/>
+                                <text x="220" y="545" text-anchor="middle" font-size="10" font-weight="600" fill="#065f46">Mapper</text>
+                                <text x="220" y="562" text-anchor="middle" font-size="8" fill="#64748b">Mind Map</text>
+                                <text x="220" y="575" text-anchor="middle" font-size="7" fill="#94a3b8">Generation</text>
+
+                                <rect x="290" y="520" width="100" height="80" rx="8" fill="url(#grad-agent)" stroke="#10b981" stroke-width="2" class="arch-node content-agent"/>
+                                <text x="340" y="545" text-anchor="middle" font-size="10" font-weight="600" fill="#065f46">Director</text>
+                                <text x="340" y="562" text-anchor="middle" font-size="8" fill="#64748b">Video/Slides</text>
+                                <text x="340" y="575" text-anchor="middle" font-size="7" fill="#94a3b8">TTS Pipeline</text>
+
+                                <rect x="410" y="520" width="100" height="80" rx="8" fill="url(#grad-agent)" stroke="#10b981" stroke-width="2" class="arch-node content-agent"/>
+                                <text x="460" y="545" text-anchor="middle" font-size="10" font-weight="600" fill="#065f46">Architect</text>
+                                <text x="460" y="562" text-anchor="middle" font-size="8" fill="#64748b">Coding</text>
+                                <text x="460" y="575" text-anchor="middle" font-size="7" fill="#94a3b8">Exercises</text>
+
+                                <!-- Assessment Agents -->
+                                <rect x="530" y="520" width="100" height="80" rx="8" fill="url(#grad-agent)" stroke="#f59e0b" stroke-width="2" class="arch-node assessment-agent"/>
+                                <text x="580" y="545" text-anchor="middle" font-size="10" font-weight="600" fill="#92400e">Sage</text>
+                                <text x="580" y="562" text-anchor="middle" font-size="8" fill="#64748b">Quiz</text>
+                                <text x="580" y="575" text-anchor="middle" font-size="7" fill="#94a3b8">Generation</text>
+
+                                <rect x="650" y="520" width="100" height="80" rx="8" fill="url(#grad-agent)" stroke="#f59e0b" stroke-width="2" class="arch-node assessment-agent"/>
+                                <text x="700" y="545" text-anchor="middle" font-size="10" font-weight="600" fill="#92400e">Grader</text>
+                                <text x="700" y="562" text-anchor="middle" font-size="8" fill="#64748b">Code/QA</text>
+                                <text x="700" y="575" text-anchor="middle" font-size="7" fill="#94a3b8">Evaluation</text>
+
+                                <!-- Planning Agents -->
+                                <rect x="770" y="520" width="100" height="80" rx="8" fill="url(#grad-agent)" stroke="#8b5cf6" stroke-width="2" class="arch-node planning-agent"/>
+                                <text x="820" y="545" text-anchor="middle" font-size="10" font-weight="600" fill="#5b21b6">Gate</text>
+                                <text x="820" y="562" text-anchor="middle" font-size="8" fill="#64748b">Milestone</text>
+                                <text x="820" y="575" text-anchor="middle" font-size="7" fill="#94a3b8">Checker</text>
+
+                                <rect x="890" y="520" width="100" height="80" rx="8" fill="url(#grad-agent)" stroke="#8b5cf6" stroke-width="2" class="arch-node planning-agent"/>
+                                <text x="940" y="545" text-anchor="middle" font-size="10" font-weight="600" fill="#5b21b6">Adapter</text>
+                                <text x="940" y="562" text-anchor="middle" font-size="8" fill="#64748b">Dynamic</text>
+                                <text x="940" y="575" text-anchor="middle" font-size="7" fill="#94a3b8">Adjustment</text>
+
+                                <!-- Core Agents -->
+                                <rect x="1010" y="520" width="100" height="80" rx="8" fill="url(#grad-agent)" stroke="#06b6d4" stroke-width="2" class="arch-node core-agent"/>
+                                <text x="1060" y="545" text-anchor="middle" font-size="10" font-weight="600" fill="#155e75">Evaluator</text>
+                                <text x="1060" y="562" text-anchor="middle" font-size="8" fill="#64748b">Learning</text>
+                                <text x="1060" y="575" text-anchor="middle" font-size="7" fill="#94a3b8">Outcomes</text>
+                            </g>
+
+                            <!-- Layer 5: External Services -->
+                            <g class="layer-group" data-layer="external">
+                                <rect x="80" y="680" width="130" height="80" rx="8" fill="url(#grad-external)" stroke="#f59e0b" stroke-width="2" class="arch-node"/>
+                                <text x="145" y="705" text-anchor="middle" font-size="10" font-weight="600" fill="#92400e">OpenRouter</text>
+                                <text x="145" y="722" text-anchor="middle" font-size="8" fill="#64748b">LLM API</text>
+                                <text x="145" y="735" text-anchor="middle" font-size="7" fill="#94a3b8">LLaMA/Claude</text>
+
+                                <rect x="230" y="680" width="130" height="80" rx="8" fill="url(#grad-external)" stroke="#f59e0b" stroke-width="2" class="arch-node"/>
+                                <text x="295" y="705" text-anchor="middle" font-size="10" font-weight="600" fill="#92400e">iFlytek</text>
+                                <text x="295" y="722" text-anchor="middle" font-size="8" fill="#64748b">ASR / Spark</text>
+                                <text x="295" y="735" text-anchor="middle" font-size="7" fill="#94a3b8">Speech-to-Text</text>
+
+                                <rect x="380" y="680" width="130" height="80" rx="8" fill="url(#grad-external)" stroke="#f59e0b" stroke-width="2" class="arch-node"/>
+                                <text x="445" y="705" text-anchor="middle" font-size="10" font-weight="600" fill="#92400e">Edge-TTS</text>
+                                <text x="445" y="722" text-anchor="middle" font-size="8" fill="#64748b">TTS</text>
+                                <text x="445" y="735" text-anchor="middle" font-size="7" fill="#94a3b8">Neural Voice</text>
+
+                                <rect x="530" y="680" width="130" height="80" rx="8" fill="url(#grad-external)" stroke="#f59e0b" stroke-width="2" class="arch-node"/>
+                                <text x="595" y="705" text-anchor="middle" font-size="10" font-weight="600" fill="#92400e">Judge0</text>
+                                <text x="595" y="722" text-anchor="middle" font-size="8" fill="#64748b">Sandbox</text>
+                                <text x="595" y="735" text-anchor="middle" font-size="7" fill="#94a3b8">Code Execution</text>
+
+                                <rect x="680" y="680" width="130" height="80" rx="8" fill="url(#grad-external)" stroke="#f59e0b" stroke-width="2" class="arch-node"/>
+                                <text x="745" y="705" text-anchor="middle" font-size="10" font-weight="600" fill="#92400e">Vision LLM</text>
+                                <text x="745" y="722" text-anchor="middle" font-size="8" fill="#64748b">Multimodal</text>
+                                <text x="745" y="735" text-anchor="middle" font-size="7" fill="#94a3b8">GPT-4V/Claude3</text>
+
+                                <rect x="830" y="680" width="130" height="80" rx="8" fill="url(#grad-external)" stroke="#f59e0b" stroke-width="2" class="arch-node"/>
+                                <text x="895" y="705" text-anchor="middle" font-size="10" font-weight="600" fill="#92400e">Weaviate</text>
+                                <text x="895" y="722" text-anchor="middle" font-size="8" fill="#64748b">Vector DB</text>
+                                <text x="895" y="735" text-anchor="middle" font-size="7" fill="#94a3b8">RAG / Semantic</text>
+
+                                <rect x="980" y="680" width="130" height="80" rx="8" fill="url(#grad-external)" stroke="#f59e0b" stroke-width="2" class="arch-node"/>
+                                <text x="1045" y="705" text-anchor="middle" font-size="10" font-weight="600" fill="#92400e">Docker</text>
+                                <text x="1045" y="722" text-anchor="middle" font-size="8" fill="#64748b">Container</text>
+                                <text x="1045" y="735" text-anchor="middle" font-size="7" fill="#94a3b8">Compose Stack</text>
+                            </g>
+
+                            <!-- Layer 6: Data Layer -->
+                            <g class="layer-group" data-layer="data">
+                                <rect x="250" y="840" width="250" height="60" rx="8" fill="url(#grad-data)" stroke="#6366f1" stroke-width="2" class="arch-node"/>
+                                <text x="375" y="865" text-anchor="middle" font-size="13" font-weight="600" fill="#3730a3">PostgreSQL</text>
+                                <text x="375" y="885" text-anchor="middle" font-size="10" fill="#64748b">Users / Progress / Knowledge Graph / 16 Tables</text>
+
+                                <rect x="650" y="840" width="250" height="60" rx="8" fill="url(#grad-data)" stroke="#6366f1" stroke-width="2" class="arch-node"/>
+                                <text x="775" y="865" text-anchor="middle" font-size="13" font-weight="600" fill="#3730a3">Redis</text>
+                                <text x="775" y="885" text-anchor="middle" font-size="10" fill="#64748b">Cache / Sessions / Rate Limit / PubSub</text>
+                            </g>
+                        </g>
+
+                        <!-- Layer Labels -->
+                        <g class="layer-labels">
+                            <text x="20" y="120" font-size="11" font-weight="600" fill="#64748b" style="writing-mode: vertical-rl; text-orientation: mixed;">L1: CLIENT</text>
+                            <text x="20" y="240" font-size="11" font-weight="600" fill="#64748b" style="writing-mode: vertical-rl; text-orientation: mixed;">L2: GATEWAY</text>
+                            <text x="20" y="400" font-size="11" font-weight="600" fill="#64748b" style="writing-mode: vertical-rl; text-orientation: mixed;">L3: SERVICE</text>
+                            <text x="20" y="560" font-size="11" font-weight="600" fill="#64748b" style="writing-mode: vertical-rl; text-orientation: mixed;">L4: AGENTS</text>
+                            <text x="20" y="720" font-size="11" font-weight="600" fill="#64748b" style="writing-mode: vertical-rl; text-orientation: mixed;">L5: EXTERNAL</text>
+                            <text x="20" y="870" font-size="11" font-weight="600" fill="#64748b" style="writing-mode: vertical-rl; text-orientation: mixed;">L6: DATA</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Architecture Legend -->
+                <div class="arch-legend">
+                    <div class="legend-title">📐 Architecture Layers</div>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3b82f6;"></div>
+                            <span>Client Layer (Web Only)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #10b981;"></div>
+                            <span>Gateway Layer (API/WebSocket/Rate Limit)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8b5cf6;"></div>
+                            <span>Core Services (Orchestrator/Planner/Tutor/NLP/Adaptation)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ec4899;"></div>
+                            <span>AI Agent Layer (9 Agents)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f59e0b;"></div>
+                            <span>External Services (LLM/ASR/TTS/Judge0)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #6366f1;"></div>
+                            <span>Data Layer (PostgreSQL/Redis)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Flow Explanation -->
+                <div class="arch-legend" style="margin-top: 16px;">
+                    <div class="legend-title">🔄 Data Flow</div>
+                    <div class="legend-items" style="flex-direction: column; align-items: flex-start;">
+                        <div class="legend-item" style="width: 100%;">
+                            <span><strong>Request Flow:</strong> Client → Gateway → Services | Services → Agents → OpenRouter (LLM)</span>
+                        </div>
+                        <div class="legend-item" style="width: 100%;">
+                            <span><strong>Direct Service Usage:</strong> Tutor Engine → OpenRouter+Weaviate | NLP → OpenRouter+iFlytek | Adaptation → OpenRouter</span>
+                        </div>
+                        <div class="legend-item" style="width: 100%;">
+                            <span><strong>Orchestrator Pattern:</strong> Only Orchestrator dispatches to 5 agents (Content, Quiz, MindMap, Media, Code)</span>
+                        </div>
+                        <div class="legend-item" style="width: 100%;">
+                            <span><strong>Persistence:</strong> LLM results → PostgreSQL | TTS audio → Redis cache | Vector data → Weaviate</span>
+                        </div>
+                        <div class="legend-item" style="width: 100%;">
+                            <span><strong>Code Execution:</strong> Architect → Judge0 | Grader → Judge0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tech Stack Summary -->
+                <div class="tech-stack-grid">
+                    <div class="tech-stack-card">
+                        <div class="stack-header">
+                            <span class="stack-icon">⚛️</span>
+                            <span class="stack-name">Frontend</span>
+                        </div>
+                        <div class="stack-items">
+                            <span class="stack-item">Next.js 16</span>
+                            <span class="stack-item">React 18</span>
+                            <span class="stack-item">TypeScript</span>
+                            <span class="stack-item">Tailwind CSS</span>
+                        </div>
+                    </div>
+                    <div class="tech-stack-card">
+                        <div class="stack-header">
+                            <span class="stack-icon">⚡</span>
+                            <span class="stack-name">Backend</span>
+                        </div>
+                        <div class="stack-items">
+                            <span class="stack-item">FastAPI</span>
+                            <span class="stack-item">Python 3.11</span>
+                            <span class="stack-item">Uvicorn</span>
+                            <span class="stack-item">WebSocket</span>
+                            <span class="stack-item">JWT Auth</span>
+                        </div>
+                    </div>
+                    <div class="tech-stack-card">
+                        <div class="stack-header">
+                            <span class="stack-icon">🤖</span>
+                            <span class="stack-name">AI/ML</span>
+                        </div>
+                        <div class="stack-items">
+                            <span class="stack-item">OpenRouter</span>
+                            <span class="stack-item">LLaMA 3.1</span>
+                            <span class="stack-item">Claude 3</span>
+                            <span class="stack-item">iFlytek ASR</span>
+                            <span class="stack-item">Edge-TTS</span>
+                            <span class="stack-item">Weaviate</span>
+                        </div>
+                    </div>
+                    <div class="tech-stack-card">
+                        <div class="stack-header">
+                            <span class="stack-icon">🗄️</span>
+                            <span class="stack-name">Data</span>
+                        </div>
+                        <div class="stack-items">
+                            <span class="stack-item">PostgreSQL 15</span>
+                            <span class="stack-item">Redis 7</span>
+                            <span class="stack-item">SQLAlchemy</span>
+                            <span class="stack-item">Alembic</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Section -->
+        <div class="section-container" onclick="toggleSection(this)">
+            <div class="section-header">
+                <div class="section-title-group">
+                    <div class="section-icon">🔗</div>
+                    <div>
+                        <div class="section-title">API Endpoints</div>
+                        <div class="section-subtitle">Grouped by HTTP Method</div>
+                    </div>
+                </div>
+                <div class="section-toggle">▼</div>
+            </div>
+            <div class="section-content">
+                <div class="api-tabs">
+                    <div class="api-tab active" onclick="switchTab('get')">
+                        GET <span class="tab-count">5</span>
+                    </div>
+                    <div class="api-tab" onclick="switchTab('post')">
+                        POST <span class="tab-count">11</span>
+                    </div>
+                </div>
+
+                <div id="tab-get" class="api-content active">
+                    <div class="api-list">
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-get">GET</span>
+                                <span class="api-path">/api/chat/history</span>
+                            </div>
+                            <span class="api-desc">Get chat history</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-get">GET</span>
+                                <span class="api-path">/api/profile/{id}</span>
+                            </div>
+                            <span class="api-desc">Get student profile</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-get">GET</span>
+                                <span class="api-path">/api/tutor/ask</span>
+                            </div>
+                            <span class="api-desc">Streaming tutor response</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-get">GET</span>
+                                <span class="api-path">/api/milestone/{id}</span>
+                            </div>
+                            <span class="api-desc">Get milestone progress</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-get">GET</span>
+                                <span class="api-path">/api/analytics/{id}</span>
+                            </div>
+                            <span class="api-desc">Get learning analytics</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-post" class="api-content">
+                    <div class="api-list">
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/chat</span>
+                            </div>
+                            <span class="api-desc">Send message to AI tutor</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/profile</span>
+                            </div>
+                            <span class="api-desc">Create or update profile</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/path/generate</span>
+                            </div>
+                            <span class="api-desc">Generate learning path</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/resources/generate</span>
+                            </div>
+                            <span class="api-desc">Generate learning resources</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/quiz/generate</span>
+                            </div>
+                            <span class="api-desc">Generate adaptive quiz</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/quiz/submit</span>
+                            </div>
+                            <span class="api-desc">Submit quiz answers</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/tutor/session</span>
+                            </div>
+                            <span class="api-desc">Create tutoring session</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/milestone/check-gate</span>
+                            </div>
+                            <span class="api-desc">Check gate conditions</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/auth/login</span>
+                            </div>
+                            <span class="api-desc">Authenticate user</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/tts/synthesize</span>
+                            </div>
+                            <span class="api-desc">Text to speech</span>
+                        </div>
+                        <div class="api-item">
+                            <div class="api-left">
+                                <span class="api-method method-post">POST</span>
+                                <span class="api-path">/api/asr/transcribe</span>
+                            </div>
+                            <span class="api-desc">Speech to text</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>A3 Learning System — 15th China Software Cup Competition</p>
+            <p>Adaptive AI Tutoring Platform</p>
+            <div class="tech-row">
+                <div class="tech-item">
+                    <div class="tech-dot" style="background: #60a5fa;"></div>
+                    <span>FastAPI</span>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-dot" style="background: #34d399;"></div>
+                    <span>Next.js</span>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-dot" style="background: #a78bfa;"></div>
+                    <span>OpenRouter</span>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-dot" style="background: #f472b6;"></div>
+                    <span>Weaviate</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Toggle section collapse
+        function toggleSection(element) {
+            // Prevent closing when clicking inside content
+            if (event.target.closest('.section-content')) return;
+
+            element.classList.toggle('collapsed');
+            const toggle = element.querySelector('.section-toggle');
+            toggle.textContent = element.classList.contains('collapsed') ? '▶' : '▼';
+        }
+
+        // Switch API tabs
+        function switchTab(method) {
+            // Update tabs
+            document.querySelectorAll('.api-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.api-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('tab-' + method).classList.add('active');
+        }
+
+        // Initialize all sections as collapsed except first few
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = document.querySelectorAll('.section-container');
+            sections.forEach((section, index) => {
+                if (index > 1) { // Keep first 2 sections expanded
+                    section.classList.add('collapsed');
+                    section.querySelector('.section-toggle').textContent = '▶';
+                }
+            });
+        });
+
+        // Scroll animation
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.section-container').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

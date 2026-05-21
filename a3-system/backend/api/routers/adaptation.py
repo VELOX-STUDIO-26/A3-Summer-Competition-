@@ -49,6 +49,7 @@ class QuizCompletedRequest(BaseModel):
     consecutive_low_scores: int = 0
     rushed_through: bool = False
     weak_concepts: List[str] = Field(default_factory=list)
+    profile: Dict[str, Any] = Field(default_factory=dict, description="Optional student profile for enriched strategy selection")
 
 
 class GateCalculatedRequest(BaseModel):
@@ -58,12 +59,14 @@ class GateCalculatedRequest(BaseModel):
     quiz_unlocked: bool = False
     engagement_quality: str = "surface"
     blocking_resources: List[str] = Field(default_factory=list)
+    profile: Dict[str, Any] = Field(default_factory=dict, description="Optional student profile for enriched strategy selection")
 
 
 class GoalChangedRequest(BaseModel):
     student_id: str
     new_goals: List[str] = Field(default_factory=list)
     previous_goals: List[str] = Field(default_factory=list)
+    profile: Dict[str, Any] = Field(default_factory=dict, description="Optional student profile for enriched strategy selection")
 
 
 class MilestoneStuckRequest(BaseModel):
@@ -71,6 +74,7 @@ class MilestoneStuckRequest(BaseModel):
     milestone_id: str = ""
     days_in_progress: int = 0
     attempt_count: int = 0
+    profile: Dict[str, Any] = Field(default_factory=dict, description="Optional student profile for enriched strategy selection")
 
 
 class AdaptResponse(BaseModel):
@@ -134,7 +138,7 @@ async def on_quiz_completed(req: QuizCompletedRequest) -> AdaptResponse:
         rushed_through=req.rushed_through,
         weak_concepts=req.weak_concepts,
     )
-    result = await adaptation_engine.handle_event(event)
+    result = await adaptation_engine.handle_event(event, profile=req.profile)
     return AdaptResponse(**result.to_dict())
 
 
@@ -148,7 +152,7 @@ async def on_gate_calculated(req: GateCalculatedRequest) -> AdaptResponse:
         engagement_quality=req.engagement_quality,
         blocking_resources=req.blocking_resources,
     )
-    result = await adaptation_engine.handle_event(event)
+    result = await adaptation_engine.handle_event(event, profile=req.profile)
     return AdaptResponse(**result.to_dict())
 
 
@@ -159,7 +163,7 @@ async def on_goal_changed(req: GoalChangedRequest) -> AdaptResponse:
         new_goals=req.new_goals,
         previous_goals=req.previous_goals,
     )
-    result = await adaptation_engine.handle_event(event)
+    result = await adaptation_engine.handle_event(event, profile=req.profile)
     return AdaptResponse(**result.to_dict())
 
 
@@ -171,7 +175,7 @@ async def on_milestone_stuck(req: MilestoneStuckRequest) -> AdaptResponse:
         days_in_progress=req.days_in_progress,
         attempt_count=req.attempt_count,
     )
-    result = await adaptation_engine.handle_event(event)
+    result = await adaptation_engine.handle_event(event, profile=req.profile)
     return AdaptResponse(**result.to_dict())
 
 

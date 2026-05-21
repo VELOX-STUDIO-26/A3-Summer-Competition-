@@ -22,8 +22,16 @@ from models.database import GeneratedResource, get_db
 logger = get_logger(__name__)
 router = APIRouter()
 
-# Global orchestrator instance
-orchestrator = Orchestrator()
+# Lazy orchestrator initialization
+_orchestrator: Optional[Orchestrator] = None
+
+
+def get_orchestrator() -> Orchestrator:
+    """Get or create the global orchestrator instance."""
+    global _orchestrator
+    if _orchestrator is None:
+        _orchestrator = Orchestrator()
+    return _orchestrator
 
 
 # ============================================================================
@@ -67,7 +75,7 @@ async def generate_resources(request: ResourceRequest):
             f"student {request.student_id}"
         )
 
-        result = await orchestrator.generate_resources(
+        result = await get_orchestrator().generate_resources(
             topic=request.topic,
             profile=request.profile,
             context=request.context,
@@ -111,7 +119,7 @@ async def generate_resources_stream(request: ResourceRequest):
                 f"Streaming resources for topic '{request.topic}' "
                 f"student {request.student_id}"
             )
-            async for event in orchestrator.generate_resources_stream(
+            async for event in get_orchestrator().generate_resources_stream(
                 topic=request.topic,
                 profile=request.profile,
                 context=request.context,

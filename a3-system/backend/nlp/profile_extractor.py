@@ -206,7 +206,15 @@ class ProfileExtractor:
                 max_tokens=1000
             )
 
-            raw_content = response["choices"][0]["message"]["content"]
+            # Safely extract content from response
+            raw_content = self._safe_extract_content(response)
+            if not raw_content:
+                logger.error(f"Failed to extract content from LLM response: {response.keys()}")
+                return ExtractionResult(
+                    extractions=[],
+                    analysis="Failed to extract content from LLM response",
+                    raw_response=str(response)
+                )
             logger.info(f"Raw extraction response: {raw_content[:500]}...")
 
             # Parse the JSON response
@@ -234,8 +242,39 @@ class ProfileExtractor:
                 raw_response=""
             )
 
+    def _safe_extract_content(self, response: Any) -> Optional[str]:
+        """Safely extract content from LLM response dict.
+
+        Handles the normalized OpenAI-compatible format returned by all
+        providers in ``llm_client``. Returns None on missing fields.
+        """
+        if not isinstance(response, dict):
+            logger.error(f"LLM response is not a dict: {type(response)}")
+            return None
+        choices = response.get("choices")
+        if not choices or not isinstance(choices, list) or len(choices) == 0:
+            logger.error(f"LLM response missing 'choices': {response.keys()}")
+            return None
+        first = choices[0]
+        if not isinstance(first, dict):
+            logger.error("LLM response 'choices[0]' is not a dict")
+            return None
+        message = first.get("message")
+        if not isinstance(message, dict):
+            logger.error("LLM response missing 'choices[0].message'")
+            return None
+        content = message.get("content")
+        if content is None:
+            logger.error("LLM response missing 'choices[0].message.content'")
+            return None
+        return str(content)
+
     def _parse_extraction_response(self, content: str) -> ExtractionResult:
-        """Parse JSON response from LLM into ExtractionResult."""
+        """Parse JSON response from LLM into ExtractionResult.
+
+        Handles both the expected format with 'extractions' array
+        and the direct format where dimensions are top-level keys.
+        """
         # Strip markdown code blocks if present
         content = content.strip()
         if content.startswith("```json"):
@@ -245,7 +284,7 @@ class ProfileExtractor:
         if content.endswith("```"):
             content = content[:-3]
         content = content.strip()
-        
+
         # Try to find JSON block
         json_match = re.search(r'\{.*\}', content, re.DOTALL)
         if not json_match:
@@ -256,18 +295,37 @@ class ProfileExtractor:
             data = json.loads(json_match.group())
 
             extractions = []
-            for ext_data in data.get("extractions", []):
-                extraction = ProfileExtraction(
-                    dimension=ext_data.get("dimension", ""),
-                    value=ext_data.get("value"),
-                    confidence=ext_data.get("confidence", 0.0),
-                    evidence_quote=ext_data.get("evidence_quote", "")
-                )
-                extractions.append(extraction)
+
+            # Check if this is the expected format with 'extractions' array
+            if "extractions" in data and isinstance(data["extractions"], list):
+                for ext_data in data.get("extractions", []):
+                    extraction = ProfileExtraction(
+                        dimension=ext_data.get("dimension", ""),
+                        value=ext_data.get("value"),
+                        confidence=ext_data.get("confidence", 0.0),
+                        evidence_quote=ext_data.get("evidence_quote", "")
+                    )
+                    extractions.append(extraction)
+                analysis = data.get("analysis", "")
+            else:
+                # Handle direct format where dimensions are top-level keys
+                # Map known dimension keys to extractions
+                for dim_key in DIMENSION_SCHEMA.keys():
+                    if dim_key in data:
+                        value = data[dim_key]
+                        # Create extraction with high confidence
+                        extraction = ProfileExtraction(
+                            dimension=dim_key,
+                            value=value,
+                            confidence=0.8,  # Default confidence for direct format
+                            evidence_quote=f"Extracted from: {str(value)[:100]}"
+                        )
+                        extractions.append(extraction)
+                analysis = "Extracted from direct format"
 
             return ExtractionResult(
                 extractions=extractions,
-                analysis=data.get("analysis", "")
+                analysis=analysis
             )
 
         except json.JSONDecodeError as e:
@@ -317,7 +375,8 @@ class ProfileExtractor:
             if isinstance(value, list):
                 return [str(v).lower().replace(" ", "_") for v in value]
             elif isinstance(value, str):
-                return [value.lower().replace(" ", "_")]
+                parts = [p.strip() for p in value.split(",") if p.strip()]
+                return [p.lower().replace(" ", "_") for p in parts]
             return []
 
         elif value_type == "str":

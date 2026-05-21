@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.content_moderator import content_moderator
@@ -110,6 +110,7 @@ async def _load_profile(student_id: str, db: AsyncSession) -> Dict[str, Any]:
     if profile:
         return {
             "student_id": profile.student_id,
+            "name": getattr(profile, "name", None) or "there",
             "cognitive_style": profile.cognitive_style or "mixed",
             "learning_pace": profile.learning_pace or 0.5,
             "knowledge_base": profile.knowledge_base or {},
@@ -119,6 +120,7 @@ async def _load_profile(student_id: str, db: AsyncSession) -> Dict[str, Any]:
         }
     return {
         "student_id": student_id,
+        "name": "there",
         "cognitive_style": "mixed",
         "learning_pace": 0.5,
         "knowledge_base": {},
@@ -199,24 +201,20 @@ async def list_sessions(
 ):
     """List all active tutor sessions for a student, newest first."""
     result = await db.execute(
-        select(ChatSession)
+        select(ChatSession, func.count(ChatMessage.message_id).label("msg_count"))
+        .outerjoin(ChatMessage, ChatMessage.session_id == ChatSession.session_id)
         .where(
             ChatSession.student_id == student_id,
             ChatSession.session_type == "tutor",
             ChatSession.status == "active",
         )
+        .group_by(ChatSession.session_id)
         .order_by(desc(ChatSession.updated_at))
     )
-    sessions = result.scalars().all()
-
-    # Count messages per session
-    out = []
-    for s in sessions:
-        count_result = await db.execute(
-            select(ChatMessage).where(ChatMessage.session_id == s.session_id)
-        )
-        count = len(count_result.scalars().all())
-        out.append(_session_to_dict(s, count))
+    out = [
+        _session_to_dict(session, count)
+        for session, count in result.all()
+    ]
     return out
 
 
@@ -370,7 +368,7 @@ async def send_message(
     )
 
     # Add user message
-    conv.add_message("user", request.content)
+    await conv.add_message("user", request.content)
 
     # Store user message
     db.add(ChatMessage(
@@ -384,9 +382,10 @@ async def send_message(
     profile = request.profile or await _load_profile(session.student_id, db)
 
     # Generate answer
+    # Pass the full context including the ConversationManager summary system
+    # message so the LLM sees compressed older turns.
     context = conv.get_context()
-    # Extract history from context (skip system msg if present)
-    history = [m for m in context if m["role"] != "system"]
+    history = [m for m in context]
 
     result_data = await tutor_engine.answer(
         question=request.content,
@@ -398,7 +397,7 @@ async def send_message(
     answer = result_data["answer"]
 
     # Add assistant response to conversation manager
-    conv.add_message("assistant", answer)
+    await conv.add_message("assistant", answer)
 
     # Store assistant message
     db.add(ChatMessage(
@@ -477,7 +476,7 @@ async def send_message_stream(
     )
 
     # Add user message
-    conv.add_message("user", request.content)
+    await conv.add_message("user", request.content)
 
     # Store user message
     db.add(ChatMessage(
@@ -493,7 +492,7 @@ async def send_message_stream(
 
     # Stream generation
     context = conv.get_context()
-    history = [m for m in context if m["role"] != "system"]
+    history = [m for m in context]
 
     # Create placeholder assistant message BEFORE streaming
     assistant_msg = ChatMessage(
@@ -557,9 +556,16 @@ async def send_message_stream(
         headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
     )
 
+    # Detect response type so the DB record reflects the actual format
+    response_type = tutor_engine._detect_response_type(request.content, profile)
+
     # Schedule incremental background updater
+    is_first_message = len(db_messages) == 0
     asyncio.create_task(_update_message_after_stream(
-        assistant_msg_id, session_id, answer_container, conv, db_messages
+        assistant_msg_id, session_id, answer_container, conv, db_messages,
+        response_type=response_type,
+        is_first_message=is_first_message,
+        first_user_message=request.content if is_first_message else None,
     ))
 
     return response
@@ -570,7 +576,10 @@ async def _update_message_after_stream(
     session_id: str,
     answer_container: dict,
     conv: ConversationManager,
-    db_messages: list
+    db_messages: list,
+    response_type: str = "text",
+    is_first_message: bool = False,
+    first_user_message: Optional[str] = None,
 ):
     """Background task to update assistant message incrementally during and after streaming."""
     max_wait = 300  # 5 minutes absolute ceiling
@@ -596,6 +605,7 @@ async def _update_message_after_stream(
                     msg = await fresh_db.get(ChatMessage, assistant_msg_id)
                     if msg:
                         msg.content = current_text
+                        msg.content_type = response_type
                     else:
                         logger.error(f"[tutor_stream] Could not find message {assistant_msg_id}")
 
@@ -603,21 +613,19 @@ async def _update_message_after_stream(
                     if is_complete or waited >= max_wait:
                         session_obj = await fresh_db.get(ChatSession, session_id)
                         if session_obj:
-                            # Load messages from DB to get the first user message for title generation
-                            from sqlalchemy import select as sa_select
-                            result = await fresh_db.execute(
-                                sa_select(ChatMessage)
-                                .where(ChatMessage.session_id == session_id)
-                                .where(ChatMessage.role == "user")
-                                .order_by(ChatMessage.created_at)
-                            )
-                            user_messages = result.scalars().all()
-                            if session_obj.title == "New Chat" and len(user_messages) >= 1 and current_text:
-                                first_user = user_messages[0].content
-                                session_obj.title = await _generate_title(first_user, current_text)
+                            # Generate title only for the very first exchange
+                            if (
+                                is_first_message
+                                and session_obj.title == "New Chat"
+                                and first_user_message
+                                and current_text
+                            ):
+                                session_obj.title = await _generate_title(
+                                    first_user_message, current_text
+                                )
                                 logger.info(f"[tutor_stream] Generated title: {session_obj.title}")
 
-                            conv.add_message("assistant", current_text)
+                            await conv.add_message("assistant", current_text)
                             session_obj.context_summary = conv.get_summary()
             finally:
                 await fresh_db.close()

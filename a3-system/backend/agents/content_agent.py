@@ -192,7 +192,7 @@ Remember to cite sources using [Source: chunk_id] format when referencing specif
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.7,
-                max_tokens=2000
+                max_tokens=4000
             )
 
             content = response["choices"][0]["message"].get("content") or ""

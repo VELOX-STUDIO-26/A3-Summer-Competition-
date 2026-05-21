@@ -124,9 +124,9 @@ class FaithfulnessChecker:
 
         except Exception as e:
             logger.error(f"Faithfulness check failed: {e}")
-            # Return permissive result on error to avoid blocking content
+            # Return unverified result on error so callers know content was not checked
             return FaithfulnessResult(
-                score=1.0,
+                score=0.0,
                 total_claims=0,
                 supported_count=0,
                 contradicted_count=0,
@@ -192,11 +192,12 @@ Rules:
         if not response:
             logger.warning("Empty response from faithfulness verification LLM")
             return FaithfulnessResult(
-                score=1.0,
+                score=0.0,
                 total_claims=0,
                 supported_count=0,
                 contradicted_count=0,
                 unverifiable_count=0,
+                warning_message="Empty verification response",
             )
 
         # Extract JSON from response (handle markdown code blocks)
@@ -212,13 +213,14 @@ Rules:
             data = json.loads(json_str)
         except json.JSONDecodeError as e:
             logger.warning(f"Failed to parse verification response as JSON: {e}")
-            # Fallback: assume everything is supported
+            # Fallback: unverified since we could not parse the LLM response
             return FaithfulnessResult(
-                score=1.0,
+                score=0.0,
                 total_claims=0,
                 supported_count=0,
                 contradicted_count=0,
                 unverifiable_count=0,
+                warning_message="Unable to parse verification response",
             )
 
         claims = data.get("claims", [])

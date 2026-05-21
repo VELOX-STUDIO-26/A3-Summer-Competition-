@@ -260,6 +260,23 @@ class Recommender:
             ))
 
         recs.sort(key=lambda r: r.score, reverse=True)
+
+        # Cold-start fallback: if the student has no signals and no neighbours,
+        # recommend the easiest unmastered nodes so they aren't left empty-handed.
+        if not recs:
+            unmastered = [n for n in catalog if n.node_id not in mastered]
+            unmastered.sort(key=lambda n: n.difficulty)
+            for node in unmastered[:top_n]:
+                recs.append(
+                    Recommendation(
+                        node_id=node.node_id,
+                        score=0.1,
+                        content_score=0.0,
+                        collab_score=0.0,
+                        reason="Good starting point for new learners",
+                    )
+                )
+
         return recs[:top_n]
 
     # ------------------------------------------------------------------

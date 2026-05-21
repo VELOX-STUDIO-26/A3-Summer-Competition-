@@ -189,12 +189,14 @@ def test_recommend_alpha_validation():
         Recommender(alpha=-0.1)
 
 
-def test_recommend_with_no_signals_returns_empty():
+def test_recommend_with_no_signals_returns_fallback():
     rec = Recommender()
     student = StudentSnapshot(student_id="s1")  # no goals, no weak points, no kb
     catalog = [CatalogNode(node_id="n1", title="Unrelated topic")]
     recs = rec.recommend(student, catalog)
-    assert recs == []
+    # Cold-start students should still get fallback recommendations
+    assert len(recs) > 0
+    assert recs[0].node_id == "n1"
 
 
 def test_recommend_alpha_one_uses_only_content():

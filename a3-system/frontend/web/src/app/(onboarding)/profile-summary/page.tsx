@@ -16,12 +16,12 @@ interface ProfileData {
 }
 
 const dimensionMeta = {
-  knowledge: { icon: Database, label: "Knowledge Base", color: "from-blue-500 to-blue-600" },
-  style: { icon: Layers, label: "Learning Style", color: "from-purple-500 to-purple-600" },
-  goals: { icon: Target, label: "Goals", color: "from-orange-500 to-orange-600" },
-  pace: { icon: Clock, label: "Pace", color: "from-pink-500 to-pink-600" },
-  weakpoints: { icon: Zap, label: "Weak Points", color: "from-red-500 to-red-600" },
-  preferences: { icon: Settings, label: "Preferences", color: "from-[#2DD4BF] to-[#0d9488]" },
+  knowledge: { icon: Database, label: "Knowledge Base", color: "from-[#6B7F6B] to-[#5a6d5a]" },
+  style: { icon: Layers, label: "Learning Style", color: "from-[#8a9ba3] to-[#6B7F6B]" },
+  goals: { icon: Target, label: "Goals", color: "from-amber-600 to-amber-700" },
+  pace: { icon: Clock, label: "Pace", color: "from-[#B8C3C9] to-[#8a9ba3]" },
+  weakpoints: { icon: Zap, label: "Weak Points", color: "from-rose-500 to-rose-600" },
+  preferences: { icon: Settings, label: "Preferences", color: "from-[#6B7F6B] to-[#8a9ba3]" },
 };
 
 export default function ProfileSummaryPage() {
@@ -208,33 +208,20 @@ export default function ProfileSummaryPage() {
       setStudentId(finalStudentId);
     }
     
-    // Build profile object
-    const profilePayload: Record<string, any> = {
-      knowledge_base: profileData.knowledge.value,
-      learning_style: profileData.style.value,
-      goals: profileData.goals.tags,
-      pace: profileData.pace.value,
-      weak_points: profileData.weakpoints.tags,
-      content_preferences: profileData.preferences.tags,
-    };
-    
-    // Save profile to frontend store
-    setProfile(profilePayload as any);
-    
     // Save profile to backend database for path planning
     try {
       const { createProfile } = await import("@/lib/api");
-      
+
       // Map learning style to cognitive_style enum values
       const styleMap: Record<string, string> = {
         "visual": "visual",
-        "verbal": "verbal", 
+        "verbal": "verbal",
         "kinesthetic": "kinesthetic",
         "hands-on": "kinesthetic",
         "mixed": "mixed",
       };
-      const cognitiveStyle = styleMap[profilePayload.learning_style?.toLowerCase()] || "mixed";
-      
+      const cognitiveStyle = styleMap[profileData.style.value?.toLowerCase()] || "mixed";
+
       // Map preferences to content_preferences enum values
       const prefMap: Record<string, string> = {
         "videos": "video",
@@ -248,22 +235,24 @@ export default function ProfileSummaryPage() {
         "diagrams": "diagram",
         "diagram": "diagram",
       };
-      const contentPrefs = (profilePayload.preferences || [])
+      const contentPrefs = (profileData.preferences.tags || [])
         .map((p: string) => prefMap[p.toLowerCase().replace(/_/g, "-")] || null)
-        .filter(Boolean);
-      
+        .filter((p): p is string => p !== null);
+
       // Build knowledge_base as Dict[str, float]
       const knowledgeBase: Record<string, number> = {};
-      if (typeof profilePayload.knowledge_base === 'string') {
-        // Parse comma-separated topics
-        const topics = profilePayload.knowledge_base.split(",").map(t => t.trim().toLowerCase());
+      const knowledgeValue = profileData.knowledge.value;
+      const isNotSpecified = (v: string) =>
+        !v || v === "Not specified" || v === "Not specified yet";
+      if (typeof knowledgeValue === 'string' && !isNotSpecified(knowledgeValue)) {
+        const topics = knowledgeValue.split(",").map(t => t.trim().toLowerCase());
         topics.forEach(topic => {
-          if (topic) knowledgeBase[topic] = 0.3; // Initial familiarity
+          if (topic && !isNotSpecified(topic)) knowledgeBase[topic] = 0.3;
         });
-      } else if (typeof profilePayload.knowledge_base === 'object') {
-        Object.assign(knowledgeBase, profilePayload.knowledge_base);
+      } else if (profile?.knowledge_base && typeof profile.knowledge_base === 'object') {
+        Object.assign(knowledgeBase, profile.knowledge_base);
       }
-      
+
       // Clean weak_points and goals
       const cleanArray = (arr: any): string[] => {
         if (!arr) return [];
@@ -271,14 +260,17 @@ export default function ProfileSummaryPage() {
         if (typeof arr === 'string') return [arr.replace(/_/g, " ")];
         return [];
       };
-      
+
+      // Use original numeric pace from store if available, otherwise default
+      const originalPace = typeof profile?.learning_pace === 'number' ? profile.learning_pace : 0.5;
+
       const savedProfile = {
         student_id: finalStudentId,
         knowledge_base: Object.keys(knowledgeBase).length > 0 ? knowledgeBase : { general: 0.5 },
         cognitive_style: cognitiveStyle as "visual" | "verbal" | "kinesthetic" | "mixed",
-        goals: cleanArray(profilePayload.goals),
-        learning_pace: typeof profilePayload.pace === 'number' ? profilePayload.pace : 0.5,
-        weak_points: cleanArray(profilePayload.weak_points),
+        goals: cleanArray(profileData.goals.tags),
+        learning_pace: originalPace,
+        weak_points: cleanArray(profileData.weakpoints.tags),
         content_preferences: contentPrefs.length > 0 ? contentPrefs : ["interactive"],
         version: 1,
         created_at: new Date().toISOString(),
@@ -302,15 +294,15 @@ export default function ProfileSummaryPage() {
     <div className="px-4 sm:px-6 pb-8 sm:pb-12">
       {/* Phase Header */}
       <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2DD4BF]/10 border border-[#2DD4BF]/20 mb-4">
-          <Sparkles className="w-4 h-4 text-[#2DD4BF]" />
-          <span className="text-sm text-[#2DD4BF] font-medium">Profile Complete</span>
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#6B7F6B]/10 border border-[#6B7F6B]/30 mb-4">
+          <Sparkles className="w-4 h-4 text-[#6B7F6B]" />
+          <span className="text-sm text-[#6B7F6B] font-medium">Profile Complete</span>
         </div>
-        <h1 className="text-2xl md:text-3xl font-semibold text-white mb-2">
-          Phase 03: <span className="text-white/60">Review Your Profile</span>
+        <h1 className="text-2xl md:text-3xl font-serif font-semibold text-[#2a2a2a] mb-2">
+          Phase 03: <span className="text-[#666]">Review Your Profile</span>
         </h1>
-        <p className="text-white/40 max-w-lg mx-auto">
-          Here&apos;s what A3 learned about you. Review and edit anything that doesn&apos;t look right.
+        <p className="text-[#888] max-w-lg mx-auto">
+          Here&apos;s what A³ learned about you. Review and edit anything that doesn&apos;t look right.
         </p>
       </div>
 
@@ -318,20 +310,20 @@ export default function ProfileSummaryPage() {
       <div className="max-w-3xl mx-auto">
         <div
           className={cn(
-            "bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl sm:rounded-3xl p-5 sm:p-8 transition-all duration-700",
+            "bg-white/90 backdrop-blur-xl border border-[#D6CFC2] rounded-2xl sm:rounded-3xl p-5 sm:p-8 transition-all duration-700 shadow-xl shadow-black/5",
             isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           )}
         >
           {/* User Header */}
-          <div className="flex items-center gap-4 mb-8 pb-6 border-b border-white/[0.06]">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2DD4BF] to-[#0d9488] flex items-center justify-center shadow-lg shadow-[#2DD4BF]/20">
+          <div className="flex items-center gap-4 mb-8 pb-6 border-b border-[#E7E2D7]">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#6B7F6B] to-[#8a9ba3] flex items-center justify-center shadow-lg shadow-[#6B7F6B]/20">
               <span className="text-white font-bold text-xl">
                 {(userName || "U")[0].toUpperCase()}
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">{userName || "Learner"}</h2>
-              <p className="text-sm text-white/40">Your personalized learning profile</p>
+              <h2 className="text-xl font-semibold text-[#2a2a2a]">{userName || "Learner"}</h2>
+              <p className="text-sm text-[#888]">Your personalized learning profile</p>
             </div>
           </div>
 
@@ -347,7 +339,7 @@ export default function ProfileSummaryPage() {
                 <div
                   key={key}
                   className={cn(
-                    "p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06] transition-all duration-500",
+                    "p-5 rounded-2xl bg-[#F7F5F0] border border-[#E7E2D7] transition-all duration-500",
                     isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                   )}
                   style={{ transitionDelay: `${i * 100}ms` }}
@@ -358,16 +350,16 @@ export default function ProfileSummaryPage() {
                       <div className={cn("w-9 h-9 rounded-xl bg-gradient-to-br flex items-center justify-center", meta.color)}>
                         <Icon className="w-4 h-4 text-white" />
                       </div>
-                      <span className="text-sm font-medium text-white">{meta.label}</span>
+                      <span className="text-sm font-medium text-[#2a2a2a]">{meta.label}</span>
                     </div>
                     <button
                       onClick={() => setEditingField(isEditing ? null : key)}
-                      className="p-2 rounded-lg hover:bg-white/[0.05] transition-colors"
+                      className="p-2 rounded-lg hover:bg-[#E7E2D7] transition-colors"
                     >
                       {isEditing ? (
-                        <Check className="w-4 h-4 text-[#2DD4BF]" />
+                        <Check className="w-4 h-4 text-[#6B7F6B]" />
                       ) : (
-                        <Edit3 className="w-4 h-4 text-white/30 hover:text-white/60" />
+                        <Edit3 className="w-4 h-4 text-[#999] hover:text-[#666]" />
                       )}
                     </button>
                   </div>
@@ -377,12 +369,12 @@ export default function ProfileSummaryPage() {
                     <textarea
                       value={data.value}
                       onChange={(e) => handleEdit(key, e.target.value)}
-                      className="w-full p-3 rounded-xl bg-white/[0.03] border border-[#2DD4BF]/30 text-sm text-white/80 resize-none focus:outline-none focus:border-[#2DD4BF]/50"
+                      className="w-full p-3 rounded-xl bg-white border border-[#6B7F6B]/30 text-sm text-[#2a2a2a] resize-none focus:outline-none focus:border-[#6B7F6B]/50 focus:ring-2 focus:ring-[#6B7F6B]/20"
                       rows={2}
                       autoFocus
                     />
                   ) : (
-                    <p className="text-sm text-white/60 leading-relaxed mb-3">{data.value}</p>
+                    <p className="text-sm text-[#555] leading-relaxed mb-3">{data.value}</p>
                   )}
 
                   {/* Tags */}
@@ -391,7 +383,7 @@ export default function ProfileSummaryPage() {
                       {data.tags.map((tag, idx) => (
                         <span
                           key={`${tag}-${idx}`}
-                          className="px-2 py-1 rounded-lg bg-white/[0.05] text-[10px] text-white/50 font-medium"
+                          className="px-2 py-1 rounded-lg bg-[#E7E2D7] text-[10px] text-[#666] font-medium"
                         >
                           {tag}
                         </span>
@@ -404,15 +396,15 @@ export default function ProfileSummaryPage() {
           </div>
 
           {/* Action Button */}
-          <div className="mt-8 pt-6 border-t border-white/[0.06]">
+          <div className="mt-8 pt-6 border-t border-[#E7E2D7]">
             <button
               onClick={handleContinue}
               disabled={isSubmitting}
-              className="w-full py-4 rounded-2xl bg-[#2DD4BF] text-black font-semibold hover:bg-[#5EEAD4] transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#2DD4BF]/20"
+              className="w-full py-4 rounded-2xl bg-[#6B7F6B] text-white font-semibold hover:bg-[#5a6d5a] transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#6B7F6B]/20"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                   Building Your Path...
                 </>
               ) : (
@@ -422,7 +414,7 @@ export default function ProfileSummaryPage() {
                 </>
               )}
             </button>
-            <p className="text-center text-xs text-white/30 mt-3">
+            <p className="text-center text-xs text-[#888] mt-3">
               You can always update your profile later in settings
             </p>
           </div>

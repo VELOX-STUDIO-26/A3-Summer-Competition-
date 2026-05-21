@@ -23,6 +23,16 @@ from models.schemas import PathPlanRequest, PathPlanResponse, PathMetrics, PathN
 logger = get_logger(__name__)
 router = APIRouter()
 
+# Module-level cache so the JSON is read from disk only once per process
+_knowledge_graph: Optional[KnowledgeGraph] = None
+
+
+def get_knowledge_graph() -> KnowledgeGraph:
+    global _knowledge_graph
+    if _knowledge_graph is None:
+        _knowledge_graph = KnowledgeGraph()
+    return _knowledge_graph
+
 
 @router.post("/plan", response_model=PathPlanResponse)
 async def plan_path(request: PathPlanRequest):
@@ -90,7 +100,7 @@ async def plan_path(request: PathPlanRequest):
             content_preferences=["video", "text", "diagram"]
         )
 
-    graph = KnowledgeGraph()
+    graph = get_knowledge_graph()
     planner = AdaptivePathPlanner(graph)
 
     path, metrics = planner.plan_path(

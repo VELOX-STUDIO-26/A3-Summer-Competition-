@@ -348,7 +348,11 @@ class TTSClient:
             vol_iflytek = 50
         
         # Map voice name if needed
-        iflytek_voice = voice if voice in IFLYTEK_VOICES else "xiaoyan"
+        if voice in IFLYTEK_VOICES:
+            iflytek_voice = voice
+        else:
+            # Default to English voice for unrecognized voices
+            iflytek_voice = "catherine"
         
         return await self._iflytek_client.synthesize(
             text=text,
@@ -474,7 +478,13 @@ async def batch_synthesize_to_cache(
             logger.error(f"TTS cache failed for slide {slide_idx}: {e}")
             return {"slide_idx": slide_idx, "cache_key": None, "cached": False, "error": str(e)}
 
-    results = await asyncio.gather(*[_gen(item) for item in items])
+    semaphore = asyncio.Semaphore(5)
+
+    async def _gen_limited(item: Dict[str, str]) -> Dict[str, Any]:
+        async with semaphore:
+            return await _gen(item)
+
+    results = await asyncio.gather(*[_gen_limited(item) for item in items])
     return results
 
 

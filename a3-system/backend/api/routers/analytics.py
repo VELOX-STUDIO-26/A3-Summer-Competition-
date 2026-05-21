@@ -24,6 +24,7 @@ from models.database import (
     StudentProfile,
     get_db,
 )
+from analytics.analytics_engine import get_analytics_engine, AnalyticsReport
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -70,13 +71,16 @@ async def get_analytics(
     # Calculate subject breakdown from weak topics
     subject_breakdown = await _calculate_subject_breakdown(attempts, db)
 
-    # Build quiz history
+    # Build quiz history - fetch all quizzes in one query to avoid N+1
+    quiz_ids = [a.quiz_id for a in attempts[:10]]
+    quizzes_result = await db.execute(
+        select(GeneratedQuiz).where(GeneratedQuiz.quiz_id.in_(quiz_ids))
+    ) if quiz_ids else []
+    quizzes_map = {q.quiz_id: q for q in quizzes_result.scalars().all()}
+
     quiz_history = []
     for attempt in attempts[:10]:  # Last 10 quizzes
-        quiz_result = await db.execute(
-            select(GeneratedQuiz).where(GeneratedQuiz.quiz_id == attempt.quiz_id)
-        )
-        quiz = quiz_result.scalar_one_or_none()
+        quiz = quizzes_map.get(attempt.quiz_id)
         quiz_history.append({
             "id": attempt.attempt_id,
             "title": quiz.title if quiz else "Unknown Quiz",
@@ -132,7 +136,7 @@ async def get_progress(
     # Group by date
     progress_data = []
     for i in range(days):
-        date = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+        date = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
         day_attempts = [
             a for a in attempts
             if a.completed_at and a.completed_at.strftime("%Y-%m-%d") == date
@@ -184,7 +188,7 @@ async def get_activity(
 
     activities = []
 
-    # Add quiz activities
+    # Add quiz activities with actual timestamp for sorting
     for attempt in attempts:
         quiz_result = await db.execute(
             select(GeneratedQuiz).where(GeneratedQuiz.quiz_id == attempt.quiz_id)
@@ -197,24 +201,72 @@ async def get_activity(
             "score": score_pct,
             "xp": 100 if attempt.score and attempt.score >= 0.7 else 0,
             "date": _time_ago(attempt.completed_at) if attempt.completed_at else "",
+            "timestamp": attempt.completed_at.isoformat() if attempt.completed_at else "",
         })
 
-    # Add learning events
+    # Add learning events with actual timestamp
     for event in events:
         activities.append({
             "type": event.event_type,
             "title": event.event_data.get("title", "Activity"),
             "xp": event.event_data.get("xp", 0),
             "date": _time_ago(event.created_at) if event.created_at else "",
+            "timestamp": event.created_at.isoformat() if event.created_at else "",
         })
 
-    # Sort by date and limit
+    # Sort by actual timestamp (newest first) and limit
+    activities.sort(key=lambda x: x["timestamp"], reverse=True)
     activities = activities[:limit]
+
+    # Remove internal timestamp field from response
+    for activity in activities:
+        activity.pop("timestamp", None)
 
     return {
         "student_id": student_id,
         "activities": activities,
     }
+
+
+@router.get("/{student_id}/insights")
+async def get_llm_insights(
+    student_id: str,
+    refresh: bool = False,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get LLM-powered insights from behavioral data.
+    
+    Uses cached insights if available (regenerated once per day).
+    Pass refresh=true to force regeneration.
+    
+    This endpoint aggregates all student behavioral signals and uses an LLM
+    to generate personalized, actionable insights including:
+    - Study pattern analysis (night owl vs early bird, session duration)
+    - Performance trends (improving, declining, stable)
+    - Predictive analytics (completion forecast, at-risk detection)
+    - Personalized recommendations
+    - Alerts for concerning patterns
+    
+    Response includes cache metadata:
+    - from_cache: Whether this is cached data
+    - generated_at: When insights were generated
+    - expires_at: When cache will expire
+    - generation_count: How many times insights have been regenerated
+    """
+    logger.info(f"Getting insights for student: {student_id} (refresh={refresh})")
+    
+    try:
+        engine = get_analytics_engine()
+        result = await engine.get_insights(student_id, db, force_refresh=refresh)
+        return result
+    except Exception as e:
+        import traceback
+        logger.error(f"Failed to get insights: {e}\n{traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get insights: {str(e)}",
+        )
 
 
 @router.get("/{student_id}/dashboard")
@@ -339,12 +391,12 @@ async def get_dashboard_summary(
 def _calculate_weekly_progress(attempts: List[QuizAttempt]) -> List[Dict[str, Any]]:
     """Calculate study hours per day for the past week."""
     days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    today = datetime.now().weekday()
+    today = datetime.utcnow().weekday()
 
     progress = []
     for i in range(7):
         day_idx = (today - i) % 7
-        date = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+        date = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
         day_attempts = [
             a for a in attempts
             if a.completed_at and a.completed_at.strftime("%Y-%m-%d") == date

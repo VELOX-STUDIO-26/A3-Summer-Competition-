@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils";
 interface MagneticButtonProps {
   children: React.ReactNode;
   className?: string;
-  onClick?: () => void;
+  onClick?: (e?: React.FormEvent) => void;
   variant?: "primary" | "secondary" | "outline";
+  disabled?: boolean;
 }
 
 export default function MagneticButton({
@@ -16,6 +17,7 @@ export default function MagneticButton({
   className,
   onClick,
   variant = "primary",
+  disabled = false,
 }: MagneticButtonProps) {
   const ref = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -44,11 +46,13 @@ export default function MagneticButton({
       onClick={onClick}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      disabled={disabled}
       animate={{ x: position.x, y: position.y }}
       transition={{ type: "spring", stiffness: 150, damping: 15 }}
       className={cn(
         "px-6 py-3 rounded-full font-medium text-sm transition-colors duration-300 cursor-pointer",
         variantStyles[variant],
+        disabled && "opacity-70 cursor-not-allowed",
         className
       )}
     >

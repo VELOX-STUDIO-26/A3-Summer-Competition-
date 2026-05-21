@@ -220,6 +220,88 @@ async def _generate_title(first_user_msg: str, first_assistant_msg: str) -> str:
     # LLM generates title, falls back to truncation on failure
 ```
 
+## Rolling Context with Summarization
+
+**File:** `backend/core/conversation_manager.py`
+
+The system maintains conversation context using a two-tier approach to prevent token overflow while preserving pedagogical context.
+
+### Two-Tier Context Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  CONTEXT WINDOW                                              │
+│  ┌──────────────────────────────────────────┐               │
+│  │  SUMMARY (compressed)                    │               │
+│  │  "Discussed Docker containers,           │               │
+│  │   Kubernetes pods, networking basics"    │               │
+│  └──────────────────────────────────────────┘               │
+│                                                             │
+│  ┌──────────────────────────────────────────┐               │
+│  │  RECENT TURNS (verbatim, last 6)         │               │
+│  │  - Q: "How do services work?"            │               │
+│  │  - A: "Services abstract pod access..."   │               │
+│  │  - Q: "What's the difference?"            │               │
+│  │  - A: "ClusterIP vs NodePort..."         │               │
+│  └──────────────────────────────────────────┘               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### How It Works
+
+1. **Recent Messages (Full Fidelity)**
+   - Last 6 complete turns (12 messages) kept verbatim
+   - Provides immediate context for the LLM
+   - Stored in memory and database
+
+2. **Summarized History (Compressed)**
+   - Older turns compressed via LLM when threshold exceeded
+   - Key elements preserved: topics, understanding level, misconceptions, goals
+   - Maximum 1500 characters
+
+3. **Trigger Condition**
+   - Summarization occurs when `len(messages) // 2 > 6` turns
+   - Compresses 2 oldest turns at a time
+   - Amortizes LLM calls across conversation
+
+### Implementation
+
+```python
+class ConversationManager:
+    def add_message(self, role, content):
+        self.recent.append(Turn(role, content))
+        self._maybe_summarize()  # Trigger if over threshold
+
+    def _maybe_summarize(self):
+        if len(self.recent) // 2 > 6:
+            # Move 2 oldest turns to summary
+            turns_to_compress = self.recent[:4]
+            self.recent = self.recent[4:]
+            self.summary = self._summarize_chunk(turns_to_compress)
+
+    def get_context(self):
+        # Returns: [summary system msg] + [recent turns]
+        return [
+            {"role": "system", "content": f"Earlier: {self.summary}"},
+            *self.recent
+        ]
+```
+
+### Persistence
+
+- **Summary** stored in `ChatSession.context_summary` (Text)
+- **Recent messages** stored in `ChatMessage` table
+- On session load: restore summary + last 12 messages
+
+### Fallback on Failure
+
+If LLM summarization fails:
+- Appends placeholder: `"[Student discussed more topics.]"`
+- Logs error for monitoring
+- Conversation continues without loss
+
+---
+
 ## Implementation Details
 
 ### Key Files
@@ -266,6 +348,7 @@ async def _generate_title(first_user_msg: str, first_assistant_msg: str) -> str:
 
 - **33 tests** in `backend/tests/test_asr_client.py`
 - **10 tests** in `backend/tests/test_asr_router.py`
+- **25 tests** in `backend/tests/test_conversation_manager.py`
 
 ## Completion Status
 
@@ -285,7 +368,7 @@ async def _generate_title(first_user_msg: str, first_assistant_msg: str) -> str:
 | Auto-titling | ✅ Complete |
 | Stop generation | ✅ Complete |
 | Content moderation | ✅ Complete |
-| Rolling context with summarization | ❌ Not implemented |
+| Rolling context with summarization | ✅ Complete | `core/conversation_manager.py` |
 
 ## Performance
 
@@ -297,7 +380,6 @@ async def _generate_title(first_user_msg: str, first_assistant_msg: str) -> str:
 
 ## Future Enhancements
 
-1. **LLM-powered summarization**: Compress old conversation history
-2. **Voice activity detection**: Auto-start recording
-3. **Real-time collaboration**: Multi-student sessions
-4. **Proactive tutoring**: Trigger based on struggle detection
+1. **Voice activity detection**: Auto-start recording
+2. **Real-time collaboration**: Multi-student sessions
+3. **Proactive tutoring**: Trigger based on struggle detection
