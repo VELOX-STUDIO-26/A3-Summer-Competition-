@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
+import "@fontsource/jetbrains-mono/400.css";
+import "@fontsource/jetbrains-mono/500.css";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const jetbrains = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
-  title: "A3 Learning System",
-  description: "Adaptive learning path planning and personalized resource generation",
+  title: "NOBOGYAN — Your Personal AI Learning Swarm",
+  description: "NOBOGYAN deploys a swarm of 15+ specialized AI agents that profile, plan, tutor, and assess — all working together to build your perfect learning path.",
 };
 
 export default function RootLayout({
@@ -23,11 +21,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <html lang="en" className={`${jetbrains.variable} h-full antialiased`}>
+      <head>
+        {/* Erode - Soft serif for headlines (Fontshare) */}
+        <link href="https://api.fontshare.com/v2/css?f[]=erode@400,500,600,700&display=swap" rel="stylesheet" />
+        {/* Synonym - Geometric sans for body (Fontshare) */}
+        <link href="https://api.fontshare.com/v2/css?f[]=synonym@400,500,600,700&display=swap" rel="stylesheet" />
+      </head>
+      <body
+        className="min-h-full flex flex-col"
+        style={{ fontFamily: "var(--font-sans)" }}
+      >
+        {/* Skip navigation for accessibility */}
+        <a href="#main-content" className="skip-nav">
+          Skip to main content
+        </a>
         {children}
       </body>
     </html>

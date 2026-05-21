@@ -46,6 +46,46 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Sage & Sand Theme Colors */
+  --color-sage-50: #F4F7F2;
+  --color-sage-100: #E3EBDE;
+  --color-sage-200: #C5D6BE;
+  --color-sage-300: #9EBA93;
+  --color-sage-400: #7C9A6B;
+  --color-sage-500: #5E7A4F;
+  --color-sage-600: #49613D;
+  --color-sage-700: #3A4D31;
+
+  --color-sand-50: #FAF8F5;
+  --color-sand-100: #F5F1EB;
+  --color-sand-200: #EDE8E0;
+  --color-sand-300: #E0D9CE;
+  --color-sand-400: #C8BFB0;
+
+  --color-deep-charcoal: #1A1D1F;
+
+  /* Agent Colors */
+  --color-agent-content: #9B59B6;
+  --color-agent-mindmap: #E67E22;
+  --color-agent-quiz: #1ABC9C;
+  --color-agent-media: #E74C3C;
+  --color-agent-code: #34495E;
+  --color-agent-orchestrator: #7C9A6B;
+  --color-agent-tutor: #3498DB;
+  --color-agent-planner: #F39C12;
+  --color-agent-faithful: #2ECC71;
+  --color-agent-moderator: #E74C3C;
+  --color-agent-evaluator: #9B59B6;
+  --color-agent-grader: #1ABC9C;
+  --color-agent-recommender: #E67E22;
+  --color-agent-vision: #8E44AD;
+  --color-agent-voice: #16A085;
+
+  /* Landing page fonts */
+  --font-sans: "Synonym", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Erode", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 :root {
@@ -244,4 +284,205 @@
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Orbit Animation */
+@keyframes orbit {
+  from {
+    transform: rotate(0deg) translateX(var(--orbit-radius, 100px)) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--orbit-radius, 100px)) rotate(-360deg);
+  }
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ═══════════════════════════════════════════
+   LANDING PAGE STYLES (Sage & Sand Theme)
+   ═══════════════════════════════════════════ */
+
+/* Living mesh gradient background */
+.mesh-gradient-landing {
+  position: relative;
+  overflow: hidden;
+}
+
+.mesh-gradient-landing::before,
+.mesh-gradient-landing::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+}
+
+.mesh-gradient-landing::before {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(124,154,107,0.35) 0%, transparent 40%),
+    radial-gradient(circle at 70% 20%, rgba(52,152,219,0.25) 0%, transparent 35%),
+    radial-gradient(circle at 20% 70%, rgba(155,89,182,0.2) 0%, transparent 35%);
+  animation: mesh-float-1 25s ease-in-out infinite;
+}
+
+.mesh-gradient-landing::after {
+  background:
+    radial-gradient(circle at 60% 60%, rgba(26,188,156,0.25) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(230,126,34,0.2) 0%, transparent 35%),
+    radial-gradient(circle at 40% 50%, rgba(124,154,107,0.15) 0%, transparent 30%);
+  animation: mesh-float-2 30s ease-in-out infinite;
+}
+
+@keyframes mesh-float-1 {
+  0%, 100% { transform: translate(0%, 0%) rotate(0deg); }
+  25% { transform: translate(10%, 5%) rotate(3deg); }
+  50% { transform: translate(5%, 10%) rotate(-2deg); }
+  75% { transform: translate(-5%, 5%) rotate(2deg); }
+}
+
+@keyframes mesh-float-2 {
+  0%, 100% { transform: translate(0%, 0%) rotate(0deg); }
+  33% { transform: translate(-8%, 8%) rotate(-3deg); }
+  66% { transform: translate(8%, -5%) rotate(2deg); }
+}
+
+/* Orbit animations */
+.orbit-slow { animation: orbit 20s linear infinite; }
+.orbit-medium { animation: orbit 15s linear infinite; }
+.orbit-fast { animation: orbit 10s linear infinite; }
+
+/* Agent pulse glow */
+@keyframes agent-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--agent-color-rgb), 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(var(--agent-color-rgb), 0); }
+}
+
+.agent-active {
+  animation: agent-pulse 2s infinite;
+}
+
+/* Data packet travel */
+@keyframes packet-travel {
+  0% { offset-distance: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+@keyframes dash-flow {
+  to { stroke-dashoffset: -48; }
+}
+
+@keyframes pulse-flow {
+  0% { stroke-dashoffset: 0; opacity: 0.9; }
+  100% { stroke-dashoffset: -32; opacity: 0.9; }
+}
+
+@keyframes node-breathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
+.glass-dark {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
+.glass-premium {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+
+/* Cursor spotlight for dark sections */
+.cursor-spotlight {
+  position: relative;
+}
+
+.cursor-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    600px circle at var(--mouse-x) var(--mouse-y),
+    rgba(124,154,107,0.1),
+    transparent 40%
+  );
+}
+
+/* Scroll progress bar */
+.scroll-progress {
+  background: linear-gradient(90deg, #7C9A6B, #1ABC9C);
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .mesh-gradient-landing::before,
+  .mesh-gradient-landing::after {
+    animation: none;
+  }
+  .animate-marquee {
+    animation: none;
+  }
+}
+
+/* Skip navigation link */
+.skip-nav {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  padding: 1rem 2rem;
+  background: #7C9A6B;
+  color: #111;
+  font-weight: 600;
+  border-radius: 0 0 0.5rem 0.5rem;
+  z-index: 9999;
+  transition: transform 0.2s ease;
+  text-decoration: none;
+}
+
+.skip-nav:focus {
+  transform: translateX(-50%) translateY(0);
+  outline: 2px solid #3A4D31;
+  outline-offset: 2px;
+}
+
+/* Focus visible styles */
+:focus-visible {
+  outline: 2px solid var(--color-sage-400);
+  outline-offset: 2px;
+}
+
+/* Orbit pulse animation */
+@keyframes orbit-pulse {
+  0%, 100% { opacity: 0.08; }
+  50% { opacity: 0.15; }
 }
