@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useInView } from "../hooks/useInView";
+import { useInView } from "../../hooks/useInView";
 
 interface CountUpProps {
   end: number;
