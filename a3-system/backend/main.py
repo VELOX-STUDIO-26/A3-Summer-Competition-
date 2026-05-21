@@ -276,6 +276,10 @@ app.include_router(adaptation.router, prefix="/api/adapt", tags=["Adaptation"])
 from api.routers import asr
 app.include_router(asr.router, prefix="/api/asr", tags=["ASR"])
 
+# Cohorts Router (Comparative Analytics)
+from api.routers import cohorts
+app.include_router(cohorts.router, tags=["Cohorts"])
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -241,29 +241,73 @@ Post-quiz analysis:
 - Streak tracking
 - Topic progress
 
-### Missing: LLM-Powered Analytics
+### LLM-Powered Analytics ✅ IMPLEMENTED
+
+**File:** `backend/analytics/analytics_engine.py`
+
+**Endpoint:** `GET /api/analytics/{student_id}/insights`
+
+The analytics engine aggregates behavioral data and uses Claude to generate personalized insights:
+
+1. **Behavioral Pattern Analysis** ✅
+   - Study time patterns (night owl vs early bird)
+   - Learning velocity trends
+   - Preferred study hours and days
+   - Session duration analysis
+
+2. **Predictive Analytics** ✅
+   - Completion forecast (estimated days)
+   - At-risk detection (inactivity, declining scores)
+   - Mastery trajectory (improving/stable/declining)
+
+3. **Personalized Recommendations** ✅
+   - Weak topic focus suggestions
+   - Resource type recommendations
+   - Study schedule optimization
+
+4. **Anomaly Detection** ✅
+   - Inactivity alerts
+   - Performance drop warnings
+   - Intervention triggers
+
+**Response Structure:**
+```json
+{
+  "student_id": "s123",
+  "generated_at": "2026-05-20T12:00:00Z",
+  "behavioral_summary": {
+    "study_pattern": {"preferred_hours": [21, 22], "busiest_day": "Wed"},
+    "performance": {"avg_score": 78.5, "trend": "improving"},
+    "engagement": {"preferred_resource": "video", "total_resources": 15}
+  },
+  "insights": [
+    {
+      "category": "pattern",
+      "emoji": "🌙",
+      "title": "Night Owl Pattern",
+      "description": "You study best between 9-11 PM...",
+      "confidence": 0.85,
+      "priority": "medium"
+    }
+  ],
+  "predictions": {
+    "completion_forecast": "Estimated completion in 14 days",
+    "at_risk": false,
+    "mastery_trajectory": "improving"
+  },
+  "recommendations": [...],
+  "alerts": [...]
+}
+```
+
+### Still Missing: Comparative Analytics
 
 The following are **not yet implemented**:
 
-1. **Behavioral Pattern Analysis**
-   - Study time patterns (night owl vs early bird)
-   - Learning velocity trends
-   - Engagement quality scoring
-
-2. **Predictive Analytics**
-   - Completion forecast
-   - At-risk prediction
-   - Mastery trajectory
-
-3. **Comparative Analytics**
+1. **Comparative Analytics**
    - Cohort percentile
    - Peer benchmarking
    - Historical comparisons
-
-4. **Anomaly Detection**
-   - Sudden drop-offs
-   - Unusual patterns
-   - Intervention triggers
 
 ## Implementation Details
 
@@ -334,22 +378,35 @@ completed_at: Timestamp
 
 ## Frontend Integration
 
-### Missing: Student Analytics Dashboard
+### Student Analytics Dashboard ✅ IMPLEMENTED
 
-The following frontend components **do not exist**:
+**File:** `frontend/web/src/app/(dashboard)/analytics/page.tsx`
 
-- ❌ Radar chart for 6 mastery dimensions
-- ❌ Progress trend line chart
-- ❌ Weekly activity heatmap
-- ❌ Weak topics list
-- ❌ Completion forecast
-- ❌ Teacher dashboard
+The dashboard includes:
+
+- ✅ **Radar chart** for topic mastery dimensions (Recharts)
+- ✅ **Progress trend line chart** (14-day study hours)
+- ✅ **Weekly activity bar chart** (Mon-Sun breakdown)
+- ✅ **AI Insights panel** (LLM-generated observations)
+- ✅ **Predictions widget** (completion forecast, at-risk status)
+- ✅ **Recommendations list** (actionable next steps)
+- ✅ **Alerts section** (warnings for concerning patterns)
+- ✅ **Recent activity feed**
+- ✅ **Achievements display**
+- ✅ **Navigation from notebook** (sidebar link)
+
+### Missing: Teacher Dashboard
+
+- ❌ Class roster view
+- ❌ At-risk student flags
+- ❌ Class progress summary
 
 ### Existing Components
 
 - ✅ Quiz taking interface: `frontend/web/src/app/(dashboard)/quiz/`
 - ✅ Quiz results: `frontend/web/src/app/(dashboard)/quiz/[quizId]/results/`
 - ✅ Gate status: `frontend/web/src/components/milestone/GateStatus.tsx`
+- ✅ Analytics dashboard: `frontend/web/src/app/(dashboard)/analytics/page.tsx`
 
 ## Testing
 
@@ -360,7 +417,7 @@ The following frontend components **do not exist**:
 
 ## Completion Status
 
-**Status: ~45% Complete**
+**Status: ~95% Complete**
 
 | Requirement | Status |
 |-------------|--------|
@@ -370,43 +427,57 @@ The following frontend components **do not exist**:
 | Signal collection | ✅ Complete |
 | Analytics endpoints | ✅ Complete |
 | Raw aggregates | ✅ Complete |
-| LLM-powered insights | ❌ Not implemented |
-| Behavioral analysis | ❌ Not implemented |
-| Predictive analytics | ❌ Not implemented |
-| Student dashboard UI | ❌ Not implemented |
+| LLM-powered insights | ✅ Complete |
+| Behavioral analysis | ✅ Complete |
+| Predictive analytics | ✅ Complete |
+| Anomaly detection | ✅ Complete |
+| Student dashboard UI | ✅ Complete |
 | Teacher dashboard | ❌ Not implemented |
-| Anomaly detection | ❌ Not implemented |
+| Comparative analytics | ✅ Complete |
 
 ## Gaps to Address
 
-### Critical (P0)
+### Critical (P0) ✅ DONE
 
-1. **LLM Analytics Engine** (`backend/analytics/analytics_engine.py`)
-   - Aggregate behavioral events
-   - LLM analysis prompt
-   - Return structured insights
+1. **LLM Analytics Engine** ✅ IMPLEMENTED
+   - File: `backend/analytics/analytics_engine.py`
+   - Endpoint: `GET /api/analytics/{student_id}/insights`
+   - Aggregates behavioral events, calls Claude, returns structured insights
 
-2. **Student Analytics Dashboard**
-   - Recharts integration
-   - Radar chart for dimensions
-   - Trend visualization
+### Important (P1) - Partially Done
 
-### Important (P1)
+2. **Student Analytics Dashboard** ✅ IMPLEMENTED
+   - File: `frontend/web/src/app/(dashboard)/analytics/page.tsx`
+   - Recharts integration (Area, Bar, Radar charts)
+   - AI Insights panel with LLM-generated observations
+   - Predictions, recommendations, alerts
+   - Navigation link from notebook sidebar
 
-3. **Teacher Dashboard**
+3. **Teacher Dashboard** ❌ NOT IMPLEMENTED
    - Class roster view
    - At-risk student flags
    - Class progress summary
 
-4. **Predictive Models**
-   - Completion forecasting
-   - At-risk prediction
-   - Mastery trajectory
+4. **Comparative Analytics** ✅ IMPLEMENTED
+   - File: `backend/analytics/comparative_analytics.py`
+   - File: `backend/api/routers/cohorts.py`
+   - Cohort management with auto-enrollment on login/register
+   - Percentile rankings (quiz score, completion, study time)
+   - Peer benchmarking with vs-average comparisons
+   - Anonymized leaderboards with privacy opt-out
+   - Cached statistics (24-hour refresh)
+   - Frontend: "Peer Comparison" card on Analytics page
+
+5. **AI Insights Caching** ✅ IMPLEMENTED
+   - File: `backend/models/database.py` (AnalyticsInsightsCache model)
+   - Insights cached for 24 hours to reduce LLM calls
+   - Auto-regenerates on expiry
+   - Cache metadata displayed on frontend
 
 ## Future Enhancements
 
 1. **Spaced Repetition**: Integrate forgetting curves for quiz scheduling
-2. **Competitive Leaderboards**: Gamification elements
+2. ~~**Competitive Leaderboards**: Gamification elements~~ ✅ Done (anonymized leaderboards)
 3. **Parent Dashboard**: Progress sharing
 4. **Export Reports**: PDF progress reports
 5. **Real-time Alerts**: Push notifications for teachers

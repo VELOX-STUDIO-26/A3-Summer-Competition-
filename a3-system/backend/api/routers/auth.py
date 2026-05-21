@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.logging import get_logger
-from models.database import StudentProfile, UserAccount, get_db
+from models.database import StudentProfile, UserAccount, Cohort, CohortMembership, Course, get_db
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -101,6 +101,73 @@ def _map_registration_to_profile(data: RegisterRequest) -> dict:
     }
 
 
+async def _ensure_default_cohort(db: AsyncSession, course_id: str = "cloud-computing") -> Cohort:
+    """Get or create the default cohort for a course."""
+    # Look for existing active cohort
+    result = await db.execute(
+        select(Cohort).where(
+            Cohort.course_id == course_id,
+            Cohort.is_active == True,
+        ).order_by(Cohort.created_at.desc())
+    )
+    cohort = result.scalar_one_or_none()
+    
+    if cohort:
+        return cohort
+    
+    # Get course name for cohort naming
+    course_result = await db.execute(
+        select(Course).where(Course.course_id == course_id)
+    )
+    course = course_result.scalar_one_or_none()
+    course_name = course.name if course else course_id
+    
+    # Create default cohort
+    cohort = Cohort(
+        name=f"{course_name} - 2026 Cohort",
+        course_id=course_id,
+        description="Default cohort for all students",
+        is_active=True,
+        allow_leaderboard=True,
+        min_members_for_comparison=3,  # Lower threshold for testing
+    )
+    db.add(cohort)
+    await db.flush()  # Get the cohort_id
+    
+    logger.info(f"Created default cohort: {cohort.cohort_id} for course {course_id}")
+    return cohort
+
+
+async def _add_student_to_cohort(db: AsyncSession, student_id: str, cohort: Cohort) -> None:
+    """Add a student to a cohort if not already a member."""
+    # Check if already a member
+    existing = await db.execute(
+        select(CohortMembership).where(
+            CohortMembership.cohort_id == cohort.cohort_id,
+            CohortMembership.student_id == student_id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        return  # Already a member
+    
+    # Get member count for alias
+    count_result = await db.execute(
+        select(CohortMembership).where(CohortMembership.cohort_id == cohort.cohort_id)
+    )
+    member_count = len(count_result.scalars().all())
+    alias = f"Student {chr(65 + (member_count % 26))}"
+    
+    membership = CohortMembership(
+        cohort_id=cohort.cohort_id,
+        student_id=student_id,
+        role="student",
+        show_in_leaderboard=True,
+        anonymous_alias=alias,
+    )
+    db.add(membership)
+    logger.info(f"Added student {student_id} to cohort {cohort.cohort_id}")
+
+
 # ============================================================================
 # Endpoints
 # ============================================================================
@@ -145,6 +212,14 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
         created_at=datetime.utcnow(),
     )
     db.add(user)
+    
+    # Auto-add to default cohort for comparative analytics
+    try:
+        default_cohort = await _ensure_default_cohort(db)
+        await _add_student_to_cohort(db, student_id, default_cohort)
+    except Exception as e:
+        logger.warning(f"Failed to add student to cohort: {e}")
+    
     await db.commit()
 
     logger.info(f"Registered new user: {student_id}")
@@ -190,6 +265,14 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
         )
         db.add(profile)
         await db.commit()
+
+    # Auto-add existing users to cohort on login (for users who registered before this feature)
+    try:
+        default_cohort = await _ensure_default_cohort(db)
+        await _add_student_to_cohort(db, user.student_id, default_cohort)
+        await db.commit()
+    except Exception as e:
+        logger.warning(f"Failed to add student to cohort on login: {e}")
 
     logger.info(f"User logged in: {user.student_id}")
 

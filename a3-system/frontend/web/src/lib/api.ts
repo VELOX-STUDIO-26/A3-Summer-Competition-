@@ -327,6 +327,45 @@ export async function getDashboardSummary(studentId: string) {
   return res.data;
 }
 
+export async function getAnalyticsInsights(studentId: string, refresh: boolean = false) {
+  const res = await api.get(`/api/analytics/${studentId}/insights`, { 
+    params: { refresh },
+    timeout: 60000 
+  });
+  return res.data;
+}
+
+export async function getAnalyticsProgress(studentId: string, days: number = 30) {
+  const res = await api.get(`/api/analytics/${studentId}/progress`, { params: { days } });
+  return res.data;
+}
+
+export async function getAnalyticsActivity(studentId: string, limit: number = 20) {
+  const res = await api.get(`/api/analytics/${studentId}/activity`, { params: { limit } });
+  return res.data;
+}
+
+// Cohorts & Comparative Analytics
+export async function getStudentCohorts(studentId: string) {
+  const res = await api.get(`/api/cohorts/student/${studentId}/memberships`);
+  return res.data;
+}
+
+export async function getCohortStatistics(cohortId: string) {
+  const res = await api.get(`/api/cohorts/${cohortId}/statistics`);
+  return res.data;
+}
+
+export async function getComparativeMetrics(cohortId: string, studentId: string) {
+  const res = await api.get(`/api/cohorts/${cohortId}/students/${studentId}/comparative`);
+  return res.data;
+}
+
+export async function getCohortLeaderboard(cohortId: string, metric: string = "quiz_score", limit: number = 10) {
+  const res = await api.get(`/api/cohorts/${cohortId}/leaderboard`, { params: { metric, limit } });
+  return res.data;
+}
+
 // Quiz
 export async function listQuizzes(studentId: string, filters?: { category?: string; difficulty?: string }) {
   const res = await api.get("/api/quiz", { params: { student_id: studentId, ...filters } });

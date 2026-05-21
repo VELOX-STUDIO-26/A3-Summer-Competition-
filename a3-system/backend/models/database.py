@@ -1315,6 +1315,393 @@ class GeneratedResource(Base):
 
 
 # ============================================================================
+# Analytics Insights Cache
+# ============================================================================
+
+class AnalyticsInsightsCache(Base):
+    """Cached LLM-generated analytics insights for students."""
+
+    __tablename__ = "analytics_insights_cache"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    student_id = Column(
+        String(50),
+        ForeignKey("student_profiles.student_id"),
+        index=True,
+        unique=True,
+        nullable=False
+    )
+
+    # Cached insights data
+    insights_data = Column(
+        JSONB,
+        nullable=False,
+        comment="Full insights response including predictions, recommendations, alerts"
+    )
+
+    behavioral_summary = Column(
+        JSONB,
+        nullable=True,
+        comment="Behavioral data summary used to generate insights"
+    )
+
+    # Cache metadata
+    generated_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False,
+        comment="When insights were generated"
+    )
+
+    expires_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        comment="When cache expires and should be regenerated"
+    )
+
+    generation_count = Column(
+        Integer,
+        default=1,
+        comment="Number of times insights have been regenerated"
+    )
+
+    # Relationship
+    student = relationship("StudentProfile")
+
+
+# ============================================================================
+# Cohort & Comparative Analytics Models
+# ============================================================================
+
+class Cohort(Base):
+    """A cohort/class of students taking a course together."""
+
+    __tablename__ = "cohorts"
+
+    cohort_id = Column(
+        String(50),
+        primary_key=True,
+        default=lambda: f"cohort_{uuid.uuid4().hex[:8]}"
+    )
+
+    name = Column(
+        String(200),
+        nullable=False,
+        comment="Cohort name (e.g., 'Cloud Computing - Spring 2026')"
+    )
+
+    course_id = Column(
+        String(50),
+        ForeignKey("courses.course_id"),
+        nullable=False,
+        index=True
+    )
+
+    description = Column(
+        Text,
+        nullable=True,
+        comment="Optional cohort description"
+    )
+
+    # Cohort settings
+    start_date = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When the cohort officially starts"
+    )
+
+    end_date = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When the cohort officially ends"
+    )
+
+    is_active = Column(
+        Boolean,
+        default=True,
+        comment="Whether cohort is currently active"
+    )
+
+    # Privacy settings
+    allow_leaderboard = Column(
+        Boolean,
+        default=True,
+        comment="Whether to show anonymized leaderboard"
+    )
+
+    min_members_for_comparison = Column(
+        Integer,
+        default=5,
+        comment="Minimum members required to show comparative stats"
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    course = relationship("Course")
+    members = relationship("CohortMembership", back_populates="cohort")
+    statistics = relationship("CohortStatistics", back_populates="cohort")
+
+
+class CohortMembership(Base):
+    """Student membership in a cohort."""
+
+    __tablename__ = "cohort_memberships"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    cohort_id = Column(
+        String(50),
+        ForeignKey("cohorts.cohort_id"),
+        nullable=False,
+        index=True
+    )
+
+    student_id = Column(
+        String(50),
+        ForeignKey("student_profiles.student_id"),
+        nullable=False,
+        index=True
+    )
+
+    role = Column(
+        String(20),
+        default="student",
+        comment="student | ta | instructor"
+    )
+
+    # Privacy preferences
+    show_in_leaderboard = Column(
+        Boolean,
+        default=True,
+        comment="Whether student opts into leaderboard visibility"
+    )
+
+    anonymous_alias = Column(
+        String(50),
+        nullable=True,
+        comment="Anonymous name for leaderboard (e.g., 'Student A')"
+    )
+
+    joined_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    # Relationships
+    cohort = relationship("Cohort", back_populates="members")
+    student = relationship("StudentProfile")
+
+    # Unique constraint: one membership per student per cohort
+    __table_args__ = (
+        {"extend_existing": True},
+    )
+
+
+class CohortStatistics(Base):
+    """Pre-computed statistics for a cohort (cached aggregates)."""
+
+    __tablename__ = "cohort_statistics"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    cohort_id = Column(
+        String(50),
+        ForeignKey("cohorts.cohort_id"),
+        nullable=False,
+        index=True
+    )
+
+    metric_type = Column(
+        String(50),
+        nullable=False,
+        comment="avg_quiz_score | completion_rate | study_hours | learning_velocity"
+    )
+
+    # Aggregate values
+    mean_value = Column(
+        Float,
+        nullable=False,
+        comment="Average value across cohort"
+    )
+
+    median_value = Column(
+        Float,
+        nullable=True,
+        comment="Median value"
+    )
+
+    std_deviation = Column(
+        Float,
+        nullable=True,
+        comment="Standard deviation"
+    )
+
+    min_value = Column(
+        Float,
+        nullable=True
+    )
+
+    max_value = Column(
+        Float,
+        nullable=True
+    )
+
+    # Percentile distribution
+    percentiles = Column(
+        JSONB,
+        default=dict,
+        comment="Percentile values: {p10, p25, p50, p75, p90}"
+    )
+
+    # Sample info
+    sample_size = Column(
+        Integer,
+        nullable=False,
+        comment="Number of students included in calculation"
+    )
+
+    # Cache metadata
+    calculated_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    expires_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        comment="When this statistic should be recalculated"
+    )
+
+    # Relationship
+    cohort = relationship("Cohort", back_populates="statistics")
+
+    # Unique constraint: one stat per metric per cohort
+    __table_args__ = (
+        {"extend_existing": True},
+    )
+
+
+class StudentComparativeMetrics(Base):
+    """Individual student's comparative metrics within their cohort."""
+
+    __tablename__ = "student_comparative_metrics"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    student_id = Column(
+        String(50),
+        ForeignKey("student_profiles.student_id"),
+        nullable=False,
+        index=True
+    )
+
+    cohort_id = Column(
+        String(50),
+        ForeignKey("cohorts.cohort_id"),
+        nullable=False,
+        index=True
+    )
+
+    # Comparative metrics
+    quiz_score_percentile = Column(
+        Float,
+        nullable=True,
+        comment="Student's percentile rank for quiz scores (0-100)"
+    )
+
+    completion_percentile = Column(
+        Float,
+        nullable=True,
+        comment="Student's percentile rank for completion rate"
+    )
+
+    study_hours_percentile = Column(
+        Float,
+        nullable=True,
+        comment="Student's percentile rank for study time"
+    )
+
+    velocity_percentile = Column(
+        Float,
+        nullable=True,
+        comment="Student's percentile rank for learning velocity"
+    )
+
+    # Comparison to average
+    quiz_score_vs_avg = Column(
+        Float,
+        nullable=True,
+        comment="Difference from cohort average (positive = above avg)"
+    )
+
+    completion_vs_avg = Column(
+        Float,
+        nullable=True
+    )
+
+    study_hours_vs_avg = Column(
+        Float,
+        nullable=True
+    )
+
+    # Rank
+    overall_rank = Column(
+        Integer,
+        nullable=True,
+        comment="Overall rank in cohort (1 = top)"
+    )
+
+    total_in_cohort = Column(
+        Integer,
+        nullable=True,
+        comment="Total students in cohort for context"
+    )
+
+    # Cache metadata
+    calculated_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    expires_at = Column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+
+    # Relationships
+    student = relationship("StudentProfile")
+    cohort = relationship("Cohort")
+
+
+# ============================================================================
 # Database Connection
 # ============================================================================
 
