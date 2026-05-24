@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
 import SwarmCanvas from "@/app/components/landing/SwarmCanvas";
 
 export default function AuthLayout({
@@ -36,7 +37,7 @@ export default function AuthLayout({
       
       <div className="w-full max-w-5xl lg:min-h-[620px] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row relative z-10 border border-white/[0.08]">
         {/* Left Side - Swarm Animation (hidden on mobile) */}
-        <div className="hidden lg:block lg:w-1/2 relative bg-gradient-to-br from-deep-charcoal via-[#1a1d1f] to-deep-charcoal">
+        <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-deep-charcoal via-[#1a1d1f] to-deep-charcoal min-h-[620px]">
           {/* Swarm Canvas */}
           <SwarmCanvas particleCount={50} dark={true} />
           
@@ -44,9 +45,11 @@ export default function AuthLayout({
           <div className="absolute inset-0 flex flex-col items-center justify-center p-12 z-10">
             {/* Logo */}
             <div className="flex items-center gap-3 mb-8">
-              <img 
+              <Image 
                 src="/nobogyan-logo.png" 
                 alt="NOBOGYAN" 
+                width={48}
+                height={48}
                 className="w-12 h-12 invert"
               />
               <span className="font-serif font-bold text-2xl text-white">

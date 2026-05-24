@@ -23,7 +23,7 @@ import {
   Lightbulb,
   Lock,
   RefreshCw,
-  Sparkles,
+  MessageCircle,
   Target,
   XCircle,
 } from "lucide-react";
@@ -171,7 +171,7 @@ export function QuizResults({
         <Card className="bg-[#F7F5F0] border-[#D6CFC2]">
           <CardContent className="p-6">
             <p className="text-lg text-[#2a2a2a]">
-              <Sparkles className="w-5 h-5 inline mr-2 text-amber-500" />
+              <MessageCircle className="w-5 h-5 inline mr-2 text-amber-500" />
               {result.student_message.message}
             </p>
           </CardContent>

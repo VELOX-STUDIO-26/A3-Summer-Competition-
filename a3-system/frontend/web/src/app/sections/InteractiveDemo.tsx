@@ -2,34 +2,32 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Sparkles, Zap, Download, CheckCircle } from "lucide-react";
+import { Send, Lightbulb, Zap, Download, CheckCircle, Container, Rocket, Network, Target, BookOpen, GitBranch, HelpCircle, Video, Code2, Bot } from "lucide-react";
 import ScrollReveal from "../components/landing/ScrollReveal";
 
 const quickPrompts = [
-  { icon: "🏛️", label: "Map the Roman Empire", prompt: "Create a learning path for understanding the rise and fall of the Roman Empire" },
-  { icon: "⚛️", label: "Quantum via Python", prompt: "Explain quantum computing basics using Python code examples" },
-  { icon: "💼", label: "Executive Micro-MBA", prompt: "Design a 6-week micro-MBA curriculum for busy executives" },
+  { icon: Network, label: "Master K8s Networking", prompt: "Create a learning path for Kubernetes networking and service mesh", color: "#3498DB" },
+  { icon: Container, label: "Docker Deployment", prompt: "Build a complete Docker deployment lifecycle from dev to production", color: "#1ABC9C" },
+  { icon: Rocket, label: "CI/CD Pipelines", prompt: "Design automated CI/CD pipelines with GitHub Actions", color: "#9B59B6" },
 ];
 
 const agentSequence = [
-  { id: "orchestrator", name: "Orchestrator", color: "#7C9A6B", duration: 800, status: "Delegating tasks...", icon: "🎯" },
-  { id: "planner", name: "Path Planner", color: "#F39C12", duration: 1200, status: "Calculating prerequisites...", icon: "🗺️" },
-  { id: "scholar", name: "Scholar", color: "#9B59B6", duration: 1000, status: "Compiling curriculum...", icon: "📚" },
-  { id: "mapper", name: "Mapper", color: "#E67E22", duration: 800, status: "Building knowledge graph...", icon: "🔗" },
-  { id: "sage", name: "Sage", color: "#1ABC9C", duration: 900, status: "Generating assessments...", icon: "❓" },
-  { id: "faithful", name: "Faithful Checker", color: "#2ECC71", duration: 600, status: "Verifying accuracy...", icon: "✅" },
+  { id: "orchestrator", name: "Orchestrator", color: "#7C9A6B", duration: 800, status: "Coordinating agents...", icon: Target },
+  { id: "content", name: "Content Agent", color: "#9B59B6", duration: 1000, status: "Generating notes...", icon: BookOpen },
+  { id: "mindmap", name: "Mind Map Agent", color: "#E67E22", duration: 800, status: "Building knowledge graph...", icon: GitBranch },
+  { id: "quiz", name: "Quiz Agent", color: "#1ABC9C", duration: 900, status: "Creating assessments...", icon: HelpCircle },
+  { id: "media", name: "Media Agent", color: "#E74C3C", duration: 700, status: "Preparing video script...", icon: Video },
+  { id: "code", name: "Code Agent", color: "#34495E", duration: 600, status: "Generating exercises...", icon: Code2 },
 ];
 
-// Floating agents for idle state
+// Floating agents for idle state (6 agents matching spec)
 const floatingAgents = [
-  { id: 1, icon: "🎯", color: "#7C9A6B", name: "Orchestrator", x: 20, y: 25, delay: 0 },
-  { id: 2, icon: "📚", color: "#9B59B6", name: "Scholar", x: 75, y: 20, delay: 0.5 },
-  { id: 3, icon: "🗺️", color: "#F39C12", name: "Planner", x: 15, y: 70, delay: 1 },
-  { id: 4, icon: "🔗", color: "#E67E22", name: "Mapper", x: 80, y: 65, delay: 1.5 },
-  { id: 5, icon: "❓", color: "#1ABC9C", name: "Sage", x: 50, y: 15, delay: 0.3 },
-  { id: 6, icon: "✅", color: "#2ECC71", name: "Checker", x: 45, y: 75, delay: 0.8 },
-  { id: 7, icon: "🎬", color: "#E74C3C", name: "Director", x: 85, y: 40, delay: 1.2 },
-  { id: 8, icon: "💻", color: "#34495E", name: "Architect", x: 10, y: 45, delay: 0.6 },
+  { id: 1, icon: Target, color: "#7C9A6B", name: "Orchestrator", x: 50, y: 12, delay: 0 },
+  { id: 2, icon: BookOpen, color: "#9B59B6", name: "Content Agent", x: 18, y: 35, delay: 0.3 },
+  { id: 3, icon: GitBranch, color: "#E67E22", name: "Mind Map Agent", x: 82, y: 35, delay: 0.5 },
+  { id: 4, icon: HelpCircle, color: "#1ABC9C", name: "Quiz Agent", x: 15, y: 70, delay: 0.8 },
+  { id: 5, icon: Video, color: "#E74C3C", name: "Media Agent", x: 85, y: 70, delay: 1.0 },
+  { id: 6, icon: Code2, color: "#34495E", name: "Code Agent", x: 50, y: 85, delay: 1.2 },
 ];
 
 export default function InteractiveDemo() {
@@ -106,7 +104,7 @@ export default function InteractiveDemo() {
             Simulate the Swarm
           </h2>
           <p className="mt-2 sm:mt-4 text-sm sm:text-base lg:text-lg text-deep-charcoal/60 max-w-xl mx-auto">
-            Watch 15+ agents map a topic in real-time.
+            Watch 6 autonomous agents map a topic in real-time.
           </p>
         </ScrollReveal>
 
@@ -132,7 +130,7 @@ export default function InteractiveDemo() {
                   <button
                     onClick={() => input && startSimulation(input)}
                     disabled={isSimulating || !input.trim()}
-                    className="w-11 h-11 rounded-xl bg-sage-400 text-[#111111] flex items-center justify-center hover:bg-sage-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-11 h-11 rounded-xl bg-sage-400 text-white flex items-center justify-center hover:bg-sage-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="w-4 h-4" />
                   </button>
@@ -158,8 +156,11 @@ export default function InteractiveDemo() {
                       whileTap={{ scale: 0.98 }}
                       className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl bg-white/70 hover:bg-white text-left transition-all border border-sand-200 hover:border-sage-300 hover:shadow-md group disabled:opacity-50"
                     >
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-sand-100 group-hover:bg-sage-400/10 flex items-center justify-center text-base sm:text-xl transition-colors shrink-0">
-                        {prompt.icon}
+                      <div 
+                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-colors shrink-0"
+                        style={{ backgroundColor: `${prompt.color}15` }}
+                      >
+                        <prompt.icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: prompt.color }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <span className="text-xs sm:text-sm font-semibold text-deep-charcoal group-hover:text-sage-600 transition-colors block truncate">
@@ -185,8 +186,8 @@ export default function InteractiveDemo() {
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="flex items-center justify-center gap-2">
-                      <span className="text-lg group-hover:scale-110 transition-transform">🤖</span>
-                      <div className="text-2xl font-mono font-bold text-sage-500">15+</div>
+                      <Bot className="w-5 h-5 text-sage-500 group-hover:scale-110 transition-transform" />
+                      <div className="text-2xl font-mono font-bold text-sage-500">6</div>
                     </div>
                     <div className="text-[10px] font-mono text-deep-charcoal/40 uppercase mt-1">Agents</div>
                   </motion.div>
@@ -195,7 +196,7 @@ export default function InteractiveDemo() {
                     whileHover={{ scale: 1.02 }}
                   >
                     <div className="flex items-center justify-center gap-2">
-                      <span className="text-lg group-hover:scale-110 transition-transform">⚡</span>
+                      <Zap className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" />
                       <div className="text-2xl font-mono font-bold text-sage-500">~4s</div>
                     </div>
                     <div className="text-[10px] font-mono text-deep-charcoal/40 uppercase mt-1">Gen Time</div>
@@ -252,7 +253,7 @@ export default function InteractiveDemo() {
                           className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-white flex items-center justify-center shadow-xl"
                           style={{ boxShadow: "0 0 40px rgba(124,154,107,0.3)" }}
                         >
-                          <img src="/nobogyan-logo.png" alt="NOBOGYAN" className="w-10 h-10 sm:w-14 sm:h-14" />
+                          <img src="/nobogyan-logo.png" alt="NOBOGYAN" className="w-10 h-10 sm:w-14 sm:h-14 object-contain" />
                         </motion.div>
                         <motion.div
                           animate={{ opacity: [0.3, 0.6, 0.3] }}
@@ -261,8 +262,8 @@ export default function InteractiveDemo() {
                         />
                       </div>
 
-                      {/* Floating Agent Nodes - fewer on mobile */}
-                      {floatingAgents.slice(0, 4).map((agent) => (
+                      {/* Floating Agent Nodes - all 6 agents */}
+                      {floatingAgents.map((agent) => (
                         <motion.div
                           key={agent.id}
                           className="absolute group cursor-pointer hidden sm:block"
@@ -280,10 +281,10 @@ export default function InteractiveDemo() {
                           }}
                         >
                           <div 
-                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center text-base sm:text-lg shadow-lg transition-transform group-hover:scale-110"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110"
                             style={{ backgroundColor: agent.color }}
                           >
-                            {agent.icon}
+                            <agent.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                           </div>
                           {/* Connection line to center */}
                           <svg 
@@ -341,7 +342,7 @@ export default function InteractiveDemo() {
                           transition={{ duration: 2, repeat: Infinity }}
                           className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/60 border border-sage-300/30 shadow-sm"
                         >
-                          <Sparkles className="w-3 sm:w-4 h-3 sm:h-4 text-sage-500" />
+                          <Lightbulb className="w-3 sm:w-4 h-3 sm:h-4 text-sage-500" />
                           <span className="text-[10px] sm:text-xs font-medium text-deep-charcoal/60">
                             Tap a topic to activate
                           </span>
@@ -379,10 +380,13 @@ export default function InteractiveDemo() {
                           <motion.div
                             animate={{ scale: [1, 1.1, 1] }}
                             transition={{ duration: 1, repeat: Infinity }}
-                            className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl shadow-lg"
+                            className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
                             style={{ backgroundColor: agentSequence[currentAgent].color }}
                           >
-                            {agentSequence[currentAgent].icon}
+                            {(() => {
+                              const Icon = agentSequence[currentAgent].icon;
+                              return <Icon className="w-7 h-7 text-white" />;
+                            })()}
                           </motion.div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
@@ -427,10 +431,13 @@ export default function InteractiveDemo() {
                                 className="flex items-center gap-3 p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
                               >
                                 <div 
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
+                                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                                   style={{ backgroundColor: agent?.color || "#7C9A6B" }}
                                 >
-                                  {agent?.icon || "🎯"}
+                                  {(() => {
+                                    const Icon = agent?.icon || Target;
+                                    return <Icon className="w-4 h-4 text-white" />;
+                                  })()}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
@@ -524,7 +531,7 @@ export default function InteractiveDemo() {
                           key={i}
                           className="absolute w-2 h-2 rounded-full"
                           style={{ 
-                            backgroundColor: ["#7C9A6B", "#F39C12", "#9B59B6", "#E67E22", "#1ABC9C", "#2ECC71", "#3498DB", "#E74C3C"][i],
+                            backgroundColor: ["#7C9A6B", "#D4A03A", "#9B59B6", "#E67E22", "#1ABC9C", "#4AAA6B", "#3498DB", "#E74C3E"][i],
                             left: `${20 + i * 10}%`,
                             top: "30%"
                           }}

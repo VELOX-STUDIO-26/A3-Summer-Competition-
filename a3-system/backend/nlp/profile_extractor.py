@@ -56,70 +56,42 @@ DIMENSION_SCHEMA = {
     },
 }
 
-PROFILE_EXTRACTION_PROMPT = """You are an expert learner profiling assistant for an adaptive learning system.
+PROFILE_EXTRACTION_PROMPT = """You are a learner profiling assistant. Extract profile dimensions from the student's message.
 
-Your task is to analyze the student's message and extract profile dimensions with DETAILED, HUMAN-READABLE values.
+DIMENSIONS:
+1. knowledge_base: Dict of topic → mastery score (0.0-1.0)
+   - "comfortable with X" → 0.7-0.9, "basic knowledge" → 0.4-0.6, "learning X" → 0.1-0.3
+   
+2. cognitive_style: One of "visual" | "verbal" | "kinesthetic" | "mixed"
+   - videos/diagrams → visual, reading/docs → verbal, hands-on/practice → kinesthetic
+   
+3. weak_points: List of topics they struggle with
+   - "I struggle with X", "X is confusing", "never understood X"
+   
+4. goals: List of learning objectives with context
+   - "I want to learn X for Y", "Get certified in X", "Build projects with X"
+   
+5. learning_pace: Float 0.0 (slow/thorough) to 1.0 (fast/intensive)
+   - "take my time" → 0.2-0.3, "few hours/week" → 0.4-0.5, "intensive" → 0.7-0.9
+   
+6. content_preferences: List from [video, text, interactive, code, audio, diagram]
 
-Extractable dimensions:
+RULES:
+- Only extract what is explicitly stated or strongly implied
+- Set confidence (0.0-1.0) based on how explicit the statement was
+- Include evidence_quote from the original message
+- "I want to learn X" = GOAL, not knowledge_base
+- "I struggle with X" = weak_point
+- IMPORTANT: Always extract at least ONE dimension if ANY relevant info is present
+- If message has truly no extractable info (e.g., just "hi"), return empty extractions array
 
-1. **knowledge_base**: A dictionary of topics they know with mastery levels (0.0-1.0)
-   - Extract SPECIFIC topics, not generic ones
-   - Example: {"python": 0.8, "data_structures": 0.7, "algorithms": 0.3}
-   - If they say "comfortable with X" → high mastery (0.7-0.9)
-   - If they say "basic knowledge of X" → medium mastery (0.4-0.6)
-   - If they say "never touched X" → 0.0 (don't include, but note in weak_points)
-
-2. **cognitive_style**: How they prefer to learn
-   - Use descriptive values: "visual", "verbal", "kinesthetic", "mixed"
-   - If they mention videos/diagrams → "visual"
-   - If they mention reading/articles → "verbal"
-   - If they mention hands-on/practice → "kinesthetic"
-
-3. **weak_points**: List of SPECIFIC topics they struggle with
-   - Extract ALL mentioned struggles, not just one
-   - Use human-readable names: "Dynamic programming", "Graph traversal", "Linux commands"
-   - NOT snake_case like "dynamic_programming"
-
-4. **goals**: List of SPECIFIC goals they want to achieve
-   - Use human-readable descriptions: "Learn AWS for internship", "Get cloud certified"
-   - Include context if mentioned (timeline, reason)
-
-5. **learning_pace**: Float 0.0-1.0 based on their study habits
-   - "1-2 hours a day" + "take my time" → 0.2-0.3 (slow/thorough)
-   - "few hours a week" → 0.4-0.5 (moderate)
-   - "intensive study" or "fast learner" → 0.7-0.9 (fast-paced)
-
-6. **content_preferences**: List of preferred formats
-   - Extract ALL mentioned preferences: ["videos", "diagrams", "interactive"]
-   - Use human-readable: "videos", "diagrams", "reading", "hands-on practice"
-
-IMPORTANT RULES:
-- Extract MULTIPLE items for list fields (weak_points, goals, content_preferences)
-- Use HUMAN-READABLE values, not snake_case
-- For knowledge_base, include specific topics with mastery scores
-- If they say "I want to learn X", that's a GOAL, not knowledge_base
-- If they say "I struggle with X", that's a WEAK_POINT
-- Confidence should reflect how explicit the statement was
-
-CRITICAL: You MUST respond with ONLY a JSON object. No explanations, no markdown, no text before or after. Just the raw JSON starting with { and ending with }
-
-Return ONLY this JSON structure:
+Return ONLY valid JSON (no markdown, no explanation):
 {
-    "extractions": [
-        {
-            "dimension": "knowledge_base",
-            "value": {"python": 0.8, "data_structures": 0.7, "arrays": 0.7, "linked_lists": 0.7},
-            "confidence": 0.9,
-            "evidence_quote": "I'm pretty comfortable with Python and basic data structures like arrays and linked lists"
-        },
-        {
-            "dimension": "weak_points",
-            "value": ["Dynamic programming", "Graph traversal", "Linux commands"],
-            "confidence": 0.9,
-            "evidence_quote": "I really struggle with algorithms — especially dynamic programming and graph traversal... Linux commands also confuse me"
-        }
-    ],
-    "analysis": "Student has 2 years CS background, strong in Python/data structures, struggles with algorithms and Linux, wants to learn AWS for internship, prefers visual learning at a slow pace"
+  "extractions": [
+    {"dimension": "knowledge_base", "value": {"Python": 0.8, "Docker": 0.3}, "confidence": 0.9, "evidence_quote": "I'm comfortable with Python, learning Docker"},
+    {"dimension": "goals", "value": ["Get AWS certified", "Build cloud projects"], "confidence": 0.85, "evidence_quote": "I want to get AWS certified and build some projects"}
+  ],
+  "analysis": "Brief 1-sentence summary of what was learned about the student"
 }"""
 
 
@@ -161,10 +133,35 @@ class ExtractionResult:
 
 class ProfileExtractor:
     """Extracts learner profile dimensions from chat messages using LLM."""
+    
+    # Problem 2 Fix: Simple cache for similar extractions
+    _extraction_cache: Dict[str, ExtractionResult] = {}
+    _cache_max_size: int = 100
 
     def __init__(self, llm=None):
         self.llm = llm or llm_client
         self.extraction_history: List[ExtractionResult] = []
+    
+    def _get_cache_key(self, message: str) -> str:
+        """Generate a cache key from message (normalized)."""
+        # Normalize: lowercase, remove extra spaces, take first 200 chars
+        normalized = " ".join(message.lower().split())[:200]
+        return normalized
+    
+    def _check_cache(self, message: str) -> Optional[ExtractionResult]:
+        """Check if we have a cached extraction for similar message."""
+        key = self._get_cache_key(message)
+        return self._extraction_cache.get(key)
+    
+    def _add_to_cache(self, message: str, result: ExtractionResult):
+        """Add extraction result to cache."""
+        if len(self._extraction_cache) >= self._cache_max_size:
+            # Remove oldest entry (simple FIFO)
+            oldest_key = next(iter(self._extraction_cache))
+            del self._extraction_cache[oldest_key]
+        
+        key = self._get_cache_key(message)
+        self._extraction_cache[key] = result
 
     async def extract_from_message(
         self,
@@ -181,6 +178,103 @@ class ProfileExtractor:
         Returns:
             ExtractionResult with extractions and analysis
         """
+        # Problem 2 Fix: Check cache first
+        cached = self._check_cache(message)
+        if cached:
+            logger.info(f"Cache hit for message: {message[:50]}...")
+            self.extraction_history.append(cached)
+            return cached
+        
+        # Problem 1 Fix: Chunk long messages (>300 chars)
+        if len(message) > 300:
+            result = await self._extract_from_chunks(message, conversation_history)
+        else:
+            result = await self._extract_single(message, conversation_history)
+        
+        # Cache the result if it has extractions
+        if result.extractions:
+            self._add_to_cache(message, result)
+        
+        return result
+    
+    async def _extract_from_chunks(
+        self,
+        message: str,
+        conversation_history: Optional[List[Dict[str, str]]] = None
+    ) -> ExtractionResult:
+        """Extract from long messages by processing in chunks."""
+        # Split by sentences
+        import re
+        sentences = re.split(r'(?<=[.!?])\s+', message)
+        
+        # Group into chunks of ~150 chars
+        chunks = []
+        current_chunk = ""
+        for sentence in sentences:
+            if len(current_chunk) + len(sentence) < 200:
+                current_chunk += " " + sentence if current_chunk else sentence
+            else:
+                if current_chunk:
+                    chunks.append(current_chunk.strip())
+                current_chunk = sentence
+        if current_chunk:
+            chunks.append(current_chunk.strip())
+        
+        # If only one chunk, process normally
+        if len(chunks) <= 1:
+            return await self._extract_single(message, conversation_history)
+        
+        logger.info(f"Processing long message in {len(chunks)} chunks")
+        
+        # Extract from each chunk and merge
+        all_extractions = []
+        all_analyses = []
+        
+        for i, chunk in enumerate(chunks):
+            result = await self._extract_single(chunk, conversation_history)
+            all_extractions.extend(result.extractions)
+            if result.analysis:
+                all_analyses.append(result.analysis)
+        
+        # Merge extractions (deduplicate by dimension, keep highest confidence)
+        merged = self._merge_extractions(all_extractions)
+        
+        return ExtractionResult(
+            extractions=merged,
+            analysis=" | ".join(all_analyses) if all_analyses else "",
+            raw_response=f"Chunked extraction from {len(chunks)} parts"
+        )
+    
+    def _merge_extractions(self, extractions: List[ProfileExtraction]) -> List[ProfileExtraction]:
+        """Merge multiple extractions, keeping highest confidence per dimension."""
+        by_dimension: Dict[str, ProfileExtraction] = {}
+        
+        for ext in extractions:
+            if ext.dimension not in by_dimension:
+                by_dimension[ext.dimension] = ext
+            else:
+                existing = by_dimension[ext.dimension]
+                if ext.confidence > existing.confidence:
+                    by_dimension[ext.dimension] = ext
+                elif ext.dimension in ("weak_points", "goals", "content_preferences"):
+                    # For list types, merge values
+                    if isinstance(existing.value, list) and isinstance(ext.value, list):
+                        merged_list = list(set(existing.value + ext.value))
+                        existing.value = merged_list
+                elif ext.dimension == "knowledge_base":
+                    # For dict types, merge keys
+                    if isinstance(existing.value, dict) and isinstance(ext.value, dict):
+                        existing.value.update(ext.value)
+        
+        return list(by_dimension.values())
+
+    async def _extract_single(
+        self,
+        message: str,
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        is_retry: bool = False
+    ) -> ExtractionResult:
+        """Extract from a single message (or chunk)."""
         # Build messages for LLM
         messages = [
             {"role": "system", "content": PROFILE_EXTRACTION_PROMPT},
@@ -224,6 +318,11 @@ class ProfileExtractor:
             # Validate and normalize extractions
             result.extractions = self._validate_extractions(result.extractions)
 
+            # Problem 1 Fix: Retry if extraction is empty but message has content
+            if not result.extractions and len(message) > 20 and not is_retry:
+                logger.info("Empty extraction, retrying with simplified prompt...")
+                return await self._retry_extraction(message, conversation_history)
+
             # Store in history
             self.extraction_history.append(result)
 
@@ -241,6 +340,42 @@ class ProfileExtractor:
                 analysis=f"Extraction failed: {str(e)}",
                 raw_response=""
             )
+    
+    async def _retry_extraction(
+        self,
+        message: str,
+        conversation_history: Optional[List[Dict[str, str]]] = None
+    ) -> ExtractionResult:
+        """Retry extraction with a simpler, more direct prompt."""
+        simple_prompt = """Extract ANY learning profile info from this message. Return JSON:
+{"extractions": [{"dimension": "goals|knowledge_base|weak_points|cognitive_style|learning_pace|content_preferences", "value": ..., "confidence": 0.0-1.0, "evidence_quote": "..."}], "analysis": "..."}
+If nothing extractable, return {"extractions": [], "analysis": "No profile info found"}"""
+        
+        messages = [
+            {"role": "system", "content": simple_prompt},
+            {"role": "user", "content": message}
+        ]
+        
+        try:
+            response = await self.llm.generate(
+                messages=messages,
+                temperature=0.2,
+                max_tokens=800
+            )
+            
+            raw_content = self._safe_extract_content(response)
+            if not raw_content:
+                return ExtractionResult(extractions=[], analysis="Retry failed")
+            
+            result = self._parse_extraction_response(raw_content)
+            result.extractions = self._validate_extractions(result.extractions)
+            
+            logger.info(f"Retry extracted {len(result.extractions)} dimensions")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Retry extraction failed: {e}")
+            return ExtractionResult(extractions=[], analysis=f"Retry failed: {e}")
 
     def _safe_extract_content(self, response: Any) -> Optional[str]:
         """Safely extract content from LLM response dict.
@@ -373,10 +508,11 @@ class ProfileExtractor:
 
         elif value_type == "list":
             if isinstance(value, list):
-                return [str(v).lower().replace(" ", "_") for v in value]
+                # Keep human-readable format, just clean whitespace
+                return [str(v).strip() for v in value if str(v).strip()]
             elif isinstance(value, str):
                 parts = [p.strip() for p in value.split(",") if p.strip()]
-                return [p.lower().replace(" ", "_") for p in parts]
+                return parts
             return []
 
         elif value_type == "str":

@@ -1,6 +1,6 @@
 "use client";
 
-import { BrainCircuit, X, Sparkles } from "lucide-react";
+import { BrainCircuit, X, Zap } from "lucide-react";
 
 interface QuizConfigModalProps {
   isOpen: boolean;
@@ -111,7 +111,7 @@ export default function QuizConfigModal({
             onClick={onGenerate}
             className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-400 to-yellow-400 text-white font-bold text-xs shadow-md shadow-orange-400/25 hover:shadow-orange-400/40 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Zap className="w-3.5 h-3.5" />
             Generate {questionCount} Questions · {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
           </button>
         </div>

@@ -21,8 +21,8 @@ interface SwarmCanvasProps {
 }
 
 const AGENT_COLORS = [
-  "#9B59B6", "#E67E22", "#1ABC9C", "#E74C3C", "#34495E",
-  "#7C9A6B", "#3498DB", "#F39C12", "#2ECC71", "#8E44AD", "#16A085",
+  "#8E6BA8", "#D4854A", "#3AA89A", "#C75B5B", "#4A5D6E",
+  "#7C9A6B", "#4A90B8", "#D4A03A", "#4AAA6B", "#8E6BA8", "#3AA89A",
 ];
 
 export default function SwarmCanvas({
@@ -33,6 +33,8 @@ export default function SwarmCanvas({
 }: SwarmCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: -1000, y: -1000 });
+  const animationRef = useRef<number | null>(null);
+  const particlesRef = useRef<Particle[]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,15 +42,15 @@ export default function SwarmCanvas({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animationId: number;
-    let particles: Particle[] = [];
+    let isRunning = true;
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     const isInExclusionZone = (x: number, y: number) => {
@@ -69,9 +71,10 @@ export default function SwarmCanvas({
 
     const initParticles = () => {
       const rect = canvas.getBoundingClientRect();
-      particles = [];
+      if (rect.width === 0 || rect.height === 0) return;
+      particlesRef.current = [];
       let attempts = 0;
-      while (particles.length < particleCount && attempts < particleCount * 10) {
+      while (particlesRef.current.length < particleCount && attempts < particleCount * 10) {
         attempts++;
         const x = Math.random() * rect.width;
         const y = Math.random() * rect.height;
@@ -79,11 +82,11 @@ export default function SwarmCanvas({
         // Skip particles in exclusion zone
         if (isInExclusionZone(x, y)) continue;
 
-        particles.push({
+        particlesRef.current.push({
           x,
           y,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
+          vx: (Math.random() - 0.5) * 1.5,
+          vy: (Math.random() - 0.5) * 1.5,
           radius: Math.random() * 2 + 2,
           color: AGENT_COLORS[Math.floor(Math.random() * AGENT_COLORS.length)],
           pulse: Math.random() * Math.PI * 2,
@@ -93,8 +96,14 @@ export default function SwarmCanvas({
     };
 
     const animate = () => {
+      if (!isRunning) return;
       const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
       ctx.clearRect(0, 0, rect.width, rect.height);
+      const particles = particlesRef.current;
 
       // Update and draw particles
       for (let i = 0; i < particles.length; i++) {
@@ -131,9 +140,16 @@ export default function SwarmCanvas({
           p.vy += (dy / dist) * force * 0.5;
         }
 
-        // Dampen velocity
-        p.vx *= 0.99;
-        p.vy *= 0.99;
+        // Dampen velocity (keep minimum speed)
+        const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        if (speed > 0.3) {
+          p.vx *= 0.995;
+          p.vy *= 0.995;
+        } else if (speed < 0.2) {
+          // Add small random velocity to keep particles moving
+          p.vx += (Math.random() - 0.5) * 0.1;
+          p.vy += (Math.random() - 0.5) * 0.1;
+        }
 
         // Pulse
         p.pulse += 0.02 * p.pulseDir;
@@ -182,7 +198,7 @@ export default function SwarmCanvas({
         }
       }
 
-      animationId = requestAnimationFrame(animate);
+      animationRef.current = requestAnimationFrame(animate);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -206,7 +222,10 @@ export default function SwarmCanvas({
     canvas.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      cancelAnimationFrame(animationId);
+      isRunning = false;
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
       window.removeEventListener("resize", resize);
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("mouseleave", handleMouseLeave);

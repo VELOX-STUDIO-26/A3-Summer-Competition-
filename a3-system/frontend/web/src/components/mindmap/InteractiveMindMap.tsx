@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useRef, useEffect, useId } from "react";
-import { ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
+import { ChevronRight, ChevronLeft, Brain } from "lucide-react";
 import { useMindMapTracking } from "@/hooks/useTracking";
 import { useAppStore } from "@/lib/store";
 
@@ -679,7 +679,7 @@ export default function InteractiveMindMap({ nodes, edges, topic, isGenerating =
                     {/* Root badge */}
                     {isRoot && (
                       <div className="flex items-center justify-center gap-1 mt-1">
-                        <Sparkles className="w-3 h-3 text-[#8a9ba3]" />
+                        <Brain className="w-3 h-3 text-[#8a9ba3]" />
                         <span className="text-[8px] uppercase tracking-widest text-[#8a9ba3] font-medium">Central Concept</span>
                       </div>
                     )}

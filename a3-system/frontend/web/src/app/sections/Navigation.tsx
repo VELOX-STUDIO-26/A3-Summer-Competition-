@@ -69,7 +69,7 @@ export default function Navigation() {
           {/* Divider */}
           <div className="hidden md:block w-px h-6 bg-sand-200" />
 
-          {/* CTA - Join Waitlist */}
+          {/* Auth Buttons */}
           <div className="flex items-center gap-2">
             <motion.a
               href="#waitlist"
@@ -77,8 +77,7 @@ export default function Navigation() {
               whileTap={{ scale: 0.98 }}
               className="hidden sm:inline-flex items-center gap-2 px-5 py-2 rounded-full font-semibold text-sm bg-sage-400 text-white hover:bg-sage-500 transition-colors shadow-sm"
             >
-              <span>Join Waitlist</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-white/60 animate-pulse" />
+              Join Waitlist
             </motion.a>
             
             {/* Mobile menu button */}
@@ -125,8 +124,7 @@ export default function Navigation() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-sage-400 hover:bg-sage-500 rounded-xl transition-all duration-200"
                 >
-                  <span>Join Waitlist</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/60 animate-pulse" />
+                  Join Waitlist
                 </a>
               </div>
             </div>

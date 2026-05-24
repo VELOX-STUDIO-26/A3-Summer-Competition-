@@ -95,7 +95,7 @@ const plans: {
       { text: "API access", tooltip: "Integrate NOBOGYAN into your LMS or workflow" },
       { text: "Dedicated support", tooltip: "Named account manager" },
     ],
-    cta: "Contact Us",
+    cta: "Join Waitlist",
     popular: false,
   },
 ];
@@ -132,8 +132,6 @@ function FeatureTooltip({ text, children }: { text?: string; children: React.Rea
 }
 
 export default function Pricing() {
-  const [isYearly, setIsYearly] = useState(true);
-
   return (
     <section id="pricing" className="py-16 md:py-24 lg:py-32 bg-sand-100">
       <div className="max-w-7xl mx-auto px-6">
@@ -142,7 +140,7 @@ export default function Pricing() {
             className="text-[11px] font-mono font-medium tracking-[0.15em] text-sage-500 uppercase"
             style={{ fontFamily: "var(--font-mono)" }}
           >
-            Pricing
+            Coming Soon
           </span>
           <h2
             className="mt-4 text-4xl md:text-5xl font-serif font-semibold text-deep-charcoal"
@@ -151,52 +149,14 @@ export default function Pricing() {
             Access the Swarm
           </h2>
           <p className="mt-3 text-sm text-deep-charcoal/50">
-            Early access pricing — lock in these rates by joining the waitlist
+            Pricing coming soon — join the waitlist to get early access and exclusive launch pricing
           </p>
         </ScrollReveal>
 
-        {/* Billing toggle */}
-        <ScrollReveal delay={0.1} className="flex justify-center mb-8 sm:mb-12 px-4">
-          <div className="inline-flex items-center gap-2 sm:gap-4 p-1 sm:p-1.5 rounded-full bg-white border border-sand-200 shadow-sm">
-            <button
-              onClick={() => setIsYearly(false)}
-              className={`px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
-                !isYearly
-                  ? "bg-sage-400 text-white shadow-md"
-                  : "text-deep-charcoal/60 hover:text-deep-charcoal"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setIsYearly(true)}
-              className={`px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 relative ${
-                isYearly
-                  ? "bg-sage-400 text-white shadow-md"
-                  : "text-deep-charcoal/60 hover:text-deep-charcoal"
-              }`}
-            >
-              Yearly
-              {isYearly && (
-                <motion.span
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="absolute -top-2 -right-2 px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full shadow-sm"
-                >
-                  -25%
-                </motion.span>
-              )}
-            </button>
-          </div>
-        </ScrollReveal>
-
+        
         {/* Mobile: Stacked cards with Pro highlighted */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto items-stretch">
           {plans.map((plan, i) => {
-            const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
-            const displayPrice = price === 0 ? "$0" : `$${price}`;
-            const savings = plan.monthlyPrice > 0 ? Math.round((1 - plan.yearlyPrice / plan.monthlyPrice) * 100) : 0;
-
             return (
               <ScrollReveal key={plan.name} delay={i * 0.1}>
                 <div
@@ -242,47 +202,36 @@ export default function Pricing() {
                       {plan.name}
                     </h3>
 
-                    {/* Price with animation on toggle */}
+                    {/* Coming Soon badge */}
                     <div className="mt-3 flex flex-wrap items-baseline gap-2">
-                      <AnimatePresence mode="wait">
-                        <motion.span
-                          key={`${plan.name}-${isYearly}`}
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          className={`text-3xl sm:text-4xl font-serif font-bold tracking-tight ${
-                            plan.popular ? "text-white" : "text-deep-charcoal"
-                          }`}
-                          style={{ fontFamily: "var(--font-serif)" }}
-                        >
-                          {displayPrice}
-                        </motion.span>
-                      </AnimatePresence>
                       <span
-                        className={`text-sm font-medium ${
-                          plan.popular ? "text-white/50" : "text-deep-charcoal/40"
+                        className={`text-2xl sm:text-3xl font-serif font-bold tracking-tight ${
+                          plan.popular ? "text-white" : "text-deep-charcoal"
                         }`}
+                        style={{ fontFamily: "var(--font-serif)" }}
                       >
-                        {plan.period}
+                        Coming Soon
                       </span>
-                      {/* Savings badge for yearly */}
-                      {isYearly && savings > 0 && (
+                      {plan.name === "Free" && (
+                        <span
+                          className={`text-sm font-medium ${
+                            plan.popular ? "text-white/50" : "text-deep-charcoal/40"
+                          }`}
+                        >
+                          (always free)
+                        </span>
+                      )}
+                      {/* Early bird badge */}
+                      {plan.popular && (
                         <motion.span
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="ml-2 px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-bold rounded-full"
+                          className="ml-2 px-2 py-0.5 bg-sage-400/20 text-sage-300 text-[10px] font-bold rounded-full"
                         >
-                          Save {savings}%
+                          Early Bird
                         </motion.span>
                       )}
                     </div>
-
-                    {/* Yearly total */}
-                    {isYearly && price > 0 && (
-                      <p className={`mt-1 text-xs ${plan.popular ? "text-white/40" : "text-deep-charcoal/40"}`}>
-                        ${price * 12}/year billed annually
-                      </p>
-                    )}
 
                     <p
                       className={`mt-3 text-sm ${

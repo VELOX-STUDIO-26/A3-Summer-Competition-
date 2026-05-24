@@ -10,6 +10,7 @@ import {
   getAnalyticsActivity,
   getStudentCohorts,
   getComparativeMetrics,
+  deleteAccount,
 } from "@/lib/api";
 import {
   AreaChart,
@@ -48,6 +49,7 @@ import {
   Users,
   Trophy,
   BarChart3,
+  Trash2,
 } from "lucide-react";
 
 // Sage & Sand color palette
@@ -143,7 +145,7 @@ interface Activity {
 
 export default function AnalyticsPage() {
   const router = useRouter();
-  const { studentId, userName } = useAppStore();
+  const { studentId, userName, logout } = useAppStore();
 
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [insights, setInsights] = useState<InsightsData | null>(null);
@@ -161,6 +163,8 @@ export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch all analytics data
   useEffect(() => {
@@ -242,6 +246,25 @@ export default function AnalyticsPage() {
     }
   };
 
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    if (!studentId) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteAccount(studentId);
+      // Clear local state and redirect to login
+      logout();
+      router.push("/login");
+    } catch (err) {
+      console.error("Failed to delete account:", err);
+      setError("Failed to delete account. Please try again.");
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   useEffect(() => {
     if (studentId && !isLoading) {
       fetchInsights(false);
@@ -305,6 +328,60 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md mx-4 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#2a2a2a]">Delete Account?</h3>
+                <p className="text-sm text-[#666]">This action cannot be undone</p>
+              </div>
+            </div>
+            
+            <p className="text-sm text-[#555] mb-6">
+              This will permanently delete your account and all associated data including:
+            </p>
+            <ul className="text-sm text-[#666] mb-6 space-y-1 ml-4">
+              <li>• Your learning profile</li>
+              <li>• All quiz attempts and scores</li>
+              <li>• All tutor chat sessions</li>
+              <li>• All learning progress</li>
+            </ul>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-[#D6CFC2] text-[#666] hover:bg-[#F7F5F0] transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-medium hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete Forever
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Background gradients */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#6B7F6B]/5 rounded-full blur-[128px]" />
@@ -338,6 +415,15 @@ export default function AnalyticsPage() {
               </div>
               <span className="text-sm font-bold text-orange-700">{streak.current} day streak</span>
             </div>
+
+            {/* Delete Account Button */}
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02]"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="text-sm font-medium">Delete Account</span>
+            </button>
           </div>
         </div>
 
@@ -812,7 +898,7 @@ function PercentileBar({
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-medium text-[#555]">{label}</span>
         <div className="flex items-center gap-2">
-          {vsAvg !== undefined && (
+          {vsAvg != null && (
             <span className={`text-xs font-medium ${vsAvg >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
               {vsAvg >= 0 ? "+" : ""}{vsAvg.toFixed(1)}%
             </span>

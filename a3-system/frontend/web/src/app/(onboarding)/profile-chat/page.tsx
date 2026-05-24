@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Database, Layers, Target, Zap, Clock, Settings } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { startChat, sendMessage } from "@/lib/api";
@@ -63,9 +64,11 @@ export default function ProfileChatPage() {
   // Initialize chat session
   useEffect(() => {
     const initSession = async () => {
+      // Don't initialize if no studentId (layout will redirect to login)
+      if (!studentId) return;
+      
       try {
-        const id = studentId || `guest-${Date.now()}`;
-        const data = await startChat(id);
+        const data = await startChat(studentId);
         setSessionId(data.session_id);
         setMessages([{
           id: crypto.randomUUID(),
@@ -83,7 +86,7 @@ export default function ProfileChatPage() {
         setMessages([{
           id: crypto.randomUUID(),
           role: "ai",
-          content: `Welcome, ${userName || "there"}! I'm A3. To build your personalized path, tell me a bit about your goals and how you prefer to learn.`,
+          content: `Welcome, ${userName || "there"}! I'm your NOBOGYAN learning assistant. To build your personalized path, tell me a bit about your goals and how you prefer to learn.`,
         }]);
       } finally {
         setIsInitializing(false);
@@ -252,8 +255,8 @@ export default function ProfileChatPage() {
   if (isInitializing) {
     return (
       <div className="min-h-[calc(100vh-6rem)] flex flex-col items-center justify-center">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#6B7F6B] to-[#8a9ba3] flex items-center justify-center shadow-lg shadow-[#6B7F6B]/30 animate-pulse">
-          <span className="text-white font-bold text-2xl">A³</span>
+        <div className="w-16 h-16 rounded-full bg-white shadow-lg shadow-[#6B7F6B]/30 animate-pulse flex items-center justify-center">
+          <Image src="/nobogyan-logo.png" alt="NOBOGYAN" width={48} height={48} className="w-12 h-12" />
         </div>
         <p className="mt-4 text-[#666]">Initializing your session...</p>
       </div>
@@ -283,8 +286,8 @@ export default function ProfileChatPage() {
           <div className="relative">
             {/* AI Avatar */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#6B7F6B] to-[#8a9ba3] flex items-center justify-center shadow-lg shadow-[#6B7F6B]/30">
-                <span className="text-white font-bold text-2xl">A³</span>
+              <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg shadow-[#6B7F6B]/30">
+                <Image src="/nobogyan-logo.png" alt="NOBOGYAN" width={48} height={48} className="w-12 h-12" />
               </div>
             </div>
 
@@ -302,8 +305,8 @@ export default function ProfileChatPage() {
                 {messages.map((msg) => (
                   <div key={msg.id} className={cn("flex gap-3", msg.role === "user" && "flex-row-reverse")}>
                     {msg.role === "ai" && (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6B7F6B] to-[#8a9ba3] flex items-center justify-center shrink-0">
-                        <span className="text-white font-bold text-sm">A³</span>
+                      <div className="w-8 h-8 rounded-full bg-white border border-[#D6CFC2] flex items-center justify-center shrink-0">
+                        <Image src="/nobogyan-logo.png" alt="NOBOGYAN" width={24} height={24} className="w-6 h-6" />
                       </div>
                     )}
                     <div
@@ -321,8 +324,8 @@ export default function ProfileChatPage() {
                 
                 {isTyping && (
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6B7F6B] to-[#8a9ba3] flex items-center justify-center shrink-0">
-                      <span className="text-white font-bold text-sm">A³</span>
+                    <div className="w-8 h-8 rounded-full bg-white border border-[#D6CFC2] flex items-center justify-center shrink-0">
+                      <Image src="/nobogyan-logo.png" alt="NOBOGYAN" width={24} height={24} className="w-6 h-6" />
                     </div>
                     <div className="p-4 rounded-2xl bg-[#F7F5F0] border border-[#E7E2D7]">
                       <div className="flex gap-1">
@@ -343,7 +346,7 @@ export default function ProfileChatPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  placeholder="Tell A³ your learning story..."
+                  placeholder="Tell us your learning story..."
                   className="w-full px-5 py-4 pr-14 rounded-xl bg-[#F7F5F0] border border-[#D6CFC2] text-[#2a2a2a] placeholder-[#999] focus:outline-none focus:border-[#6B7F6B]/50 focus:ring-2 focus:ring-[#6B7F6B]/20 transition-all"
                 />
                 <button

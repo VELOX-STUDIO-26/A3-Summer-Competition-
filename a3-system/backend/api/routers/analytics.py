@@ -30,6 +30,249 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+@router.get("/test-health")
+async def test_analytics_health():
+    """Simple health check for analytics router."""
+    return {"status": "ok", "router": "analytics"}
+
+
+# ============================================================================
+# Path Rating Endpoints (defined before /{student_id} to avoid conflicts)
+# ============================================================================
+
+from pydantic import BaseModel, Field
+from services.analytics_service import AnalyticsService
+import uuid as uuid_module
+
+
+class SubmitRatingRequest(BaseModel):
+    """Request to submit a path rating."""
+    overall_rating: int = Field(..., ge=1, le=5, description="1-5 star rating")
+    content_quality: Optional[int] = Field(None, ge=1, le=5)
+    difficulty_appropriateness: Optional[int] = Field(None, ge=1, le=5)
+    structure_clarity: Optional[int] = Field(None, ge=1, le=5)
+    feedback_text: Optional[str] = Field(None, max_length=1000)
+    would_recommend: Optional[bool] = None
+
+
+class RatingResponse(BaseModel):
+    """Response after submitting a rating."""
+    success: bool
+    message: str
+    rating_id: str
+
+
+class StartSessionRequest(BaseModel):
+    """Request to start a learning session."""
+    graph_id: str
+    subtopic_id: Optional[str] = None
+    device_type: Optional[str] = Field(None, pattern="^(desktop|mobile|tablet)$")
+
+
+class EndSessionRequest(BaseModel):
+    """Request to end a learning session."""
+    resources_viewed: int = 0
+    interactions_count: int = 0
+    quiz_attempts: int = 0
+
+
+class SessionResponse(BaseModel):
+    """Response with session info."""
+    session_id: str
+    started_at: str
+    duration_seconds: Optional[int] = None
+
+
+@router.get("/paths/top-rated")
+async def get_top_rated_paths(
+    subject: Optional[str] = None,
+    min_ratings: int = 3,
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get top-rated learning paths."""
+    try:
+        service = AnalyticsService(db)
+        return await service.get_top_rated_paths(
+            subject_normalized=subject,
+            min_ratings=min_ratings,
+            limit=limit,
+        )
+    except Exception as e:
+        logger.error(f"Failed to get top-rated paths: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get top-rated paths"
+        )
+
+
+@router.post("/paths/{graph_id}/rate", response_model=RatingResponse)
+async def submit_path_rating(
+    graph_id: str,
+    request: SubmitRatingRequest,
+    student_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Submit or update a rating for a learning path."""
+    try:
+        service = AnalyticsService(db)
+        rating = await service.submit_rating(
+            graph_id=uuid_module.UUID(graph_id),
+            student_id=student_id,
+            overall_rating=request.overall_rating,
+            content_quality=request.content_quality,
+            difficulty_appropriateness=request.difficulty_appropriateness,
+            structure_clarity=request.structure_clarity,
+            feedback_text=request.feedback_text,
+            would_recommend=request.would_recommend,
+        )
+        return RatingResponse(
+            success=True,
+            message="Rating submitted successfully",
+            rating_id=str(rating.id),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to submit rating: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to submit rating"
+        )
+
+
+@router.get("/paths/{graph_id}/ratings")
+async def get_path_ratings(
+    graph_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get ratings summary and reviews for a learning path."""
+    try:
+        service = AnalyticsService(db)
+        return await service.get_path_ratings(uuid_module.UUID(graph_id))
+    except Exception as e:
+        logger.error(f"Failed to get ratings: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get ratings"
+        )
+
+
+@router.get("/paths/{graph_id}/analytics")
+async def get_path_analytics(
+    graph_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get computed analytics for a learning path."""
+    try:
+        service = AnalyticsService(db)
+        analytics = await service.compute_path_analytics(uuid_module.UUID(graph_id))
+        return {
+            "graph_id": str(analytics.graph_id),
+            "total_students": analytics.total_students,
+            "active_students": analytics.active_students,
+            "completion_rate": analytics.completion_rate,
+            "avg_completion_percentage": analytics.avg_completion_percentage,
+            "dropout_rate": analytics.dropout_rate,
+            "avg_session_duration_minutes": analytics.avg_session_duration_minutes,
+            "total_learning_hours": analytics.total_learning_hours,
+            "avg_quiz_score": analytics.avg_quiz_score,
+            "avg_first_attempt_pass_rate": analytics.avg_first_attempt_pass_rate,
+            "bypass_rate": analytics.bypass_rate,
+            "quality_score": analytics.quality_score,
+            "last_calculated_at": analytics.last_calculated_at.isoformat() if analytics.last_calculated_at else None,
+        }
+    except Exception as e:
+        logger.error(f"Failed to get path analytics: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get path analytics: {str(e)}"
+        )
+
+
+@router.post("/sessions/start", response_model=SessionResponse)
+async def start_learning_session(
+    request: StartSessionRequest,
+    student_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Start a new learning session."""
+    try:
+        service = AnalyticsService(db)
+        session = await service.start_session(
+            student_id=student_id,
+            graph_id=uuid_module.UUID(request.graph_id),
+            subtopic_id=uuid_module.UUID(request.subtopic_id) if request.subtopic_id else None,
+            device_type=request.device_type,
+        )
+        return SessionResponse(
+            session_id=str(session.id),
+            started_at=session.started_at.isoformat(),
+        )
+    except Exception as e:
+        logger.error(f"Failed to start session: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to start session"
+        )
+
+
+@router.post("/sessions/{session_id}/end", response_model=SessionResponse)
+async def end_learning_session(
+    session_id: str,
+    request: EndSessionRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """End a learning session and record metrics."""
+    try:
+        service = AnalyticsService(db)
+        session = await service.end_session(
+            session_id=uuid_module.UUID(session_id),
+            resources_viewed=request.resources_viewed,
+            interactions_count=request.interactions_count,
+            quiz_attempts=request.quiz_attempts,
+        )
+        return SessionResponse(
+            session_id=str(session.id),
+            started_at=session.started_at.isoformat(),
+            duration_seconds=session.duration_seconds,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to end session: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to end session: {str(e)}"
+        )
+
+
+@router.post("/sessions/{session_id}/activity")
+async def record_session_activity(
+    session_id: str,
+    activity_type: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Record an activity within a session."""
+    try:
+        service = AnalyticsService(db)
+        await service.record_activity(
+            session_id=uuid_module.UUID(session_id),
+            activity_type=activity_type,
+        )
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"Failed to record activity: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to record activity"
+        )
+
+
+# ============================================================================
+# Student Analytics Endpoints
+# ============================================================================
+
 @router.get("/{student_id}")
 async def get_analytics(
     student_id: str,
@@ -37,82 +280,88 @@ async def get_analytics(
 ):
     """Get comprehensive analytics for a student from real database data."""
     logger.info(f"Fetching real analytics for student: {student_id}")
-
-    # Get completed quiz attempts
-    attempts_result = await db.execute(
-        select(QuizAttempt).where(
-            QuizAttempt.student_id == student_id,
-            QuizAttempt.score.is_not(None),
-        ).order_by(QuizAttempt.completed_at.desc())
-    )
-    attempts = attempts_result.scalars().all()
-
-    # Get generated quizzes count
-    quiz_count_result = await db.execute(
-        select(func.count()).select_from(GeneratedQuiz).where(
-            GeneratedQuiz.student_id == student_id,
-            GeneratedQuiz.is_active == True,
+    
+    try:
+        # Get completed quiz attempts
+        attempts_result = await db.execute(
+            select(QuizAttempt).where(
+                QuizAttempt.student_id == student_id,
+                QuizAttempt.score.is_not(None),
+            ).order_by(QuizAttempt.completed_at.desc())
         )
-    )
-    total_quizzes = quiz_count_result.scalar()
+        attempts = attempts_result.scalars().all()
 
-    # Calculate overview metrics
-    completed_quizzes = len(attempts)
-    total_study_time = sum(a.time_spent_seconds or 0 for a in attempts) // 60  # minutes
-    avg_score = (
-        round(sum(a.score * 100 for a in attempts) / completed_quizzes, 1)
-        if completed_quizzes > 0
-        else 0
-    )
+        # Get generated quizzes count
+        quiz_count_result = await db.execute(
+            select(func.count()).select_from(GeneratedQuiz).where(
+                GeneratedQuiz.student_id == student_id,
+                GeneratedQuiz.is_active == True,
+            )
+        )
+        total_quizzes = quiz_count_result.scalar()
 
-    # Calculate weekly progress from attempts
-    weekly_progress = _calculate_weekly_progress(attempts)
+        # Calculate overview metrics
+        completed_quizzes = len(attempts)
+        total_study_time = sum(a.time_spent_seconds or 0 for a in attempts) // 60  # minutes
+        avg_score = (
+            round(sum(a.score * 100 for a in attempts) / completed_quizzes, 1)
+            if completed_quizzes > 0
+            else 0
+        )
 
-    # Calculate subject breakdown from weak topics
-    subject_breakdown = await _calculate_subject_breakdown(attempts, db)
+        # Calculate weekly progress from attempts
+        weekly_progress = _calculate_weekly_progress(attempts)
 
-    # Build quiz history - fetch all quizzes in one query to avoid N+1
-    quiz_ids = [a.quiz_id for a in attempts[:10]]
-    quizzes_result = await db.execute(
-        select(GeneratedQuiz).where(GeneratedQuiz.quiz_id.in_(quiz_ids))
-    ) if quiz_ids else []
-    quizzes_map = {q.quiz_id: q for q in quizzes_result.scalars().all()}
+        # Calculate subject breakdown from weak topics
+        subject_breakdown = await _calculate_subject_breakdown(attempts, db)
 
-    quiz_history = []
-    for attempt in attempts[:10]:  # Last 10 quizzes
-        quiz = quizzes_map.get(attempt.quiz_id)
-        quiz_history.append({
-            "id": attempt.attempt_id,
-            "title": quiz.title if quiz else "Unknown Quiz",
-            "score": round(attempt.score * 100, 1) if attempt.score else 0,
-            "date": attempt.completed_at.strftime("%Y-%m-%d") if attempt.completed_at else "",
-            "maxScore": 100,
-        })
+        # Build quiz history - fetch all quizzes in one query to avoid N+1
+        quiz_ids = [a.quiz_id for a in attempts[:10]]
+        quizzes_map = {}
+        if quiz_ids:
+            quizzes_result = await db.execute(
+                select(GeneratedQuiz).where(GeneratedQuiz.quiz_id.in_(quiz_ids))
+            )
+            quizzes_map = {q.quiz_id: q for q in quizzes_result.scalars().all()}
 
-    # Calculate streak
-    streak = _calculate_streak(attempts)
+        quiz_history = []
+        for attempt in attempts[:10]:  # Last 10 quizzes
+            quiz = quizzes_map.get(attempt.quiz_id)
+            quiz_history.append({
+                "id": attempt.attempt_id,
+                "title": quiz.title if quiz else "Unknown Quiz",
+                "score": round(attempt.score * 100, 1) if attempt.score else 0,
+                "date": attempt.completed_at.strftime("%Y-%m-%d") if attempt.completed_at else "",
+                "maxScore": 100,
+            })
 
-    # Generate achievements from real data
-    achievements = _generate_achievements(attempts)
+        # Calculate streak
+        streak = _calculate_streak(attempts)
 
-    return {
-        "student_id": student_id,
-        "overview": {
-            "totalStudyTime": total_study_time,
-            "studyTimeChange": 0,  # Would need historical comparison
-            "modulesCompleted": completed_quizzes,
-            "modulesChange": 0,
-            "quizzesTaken": completed_quizzes,
-            "quizzesChange": 0,
-            "averageScore": avg_score,
-            "scoreChange": 0,
-        },
-        "weeklyProgress": weekly_progress,
-        "subjectBreakdown": subject_breakdown,
-        "quizHistory": quiz_history,
-        "streak": streak,
-        "achievements": achievements,
-    }
+        # Generate achievements from real data
+        achievements = _generate_achievements(attempts)
+
+        return {
+            "student_id": student_id,
+            "overview": {
+                "totalStudyTime": total_study_time,
+                "studyTimeChange": 0,  # Would need historical comparison
+                "modulesCompleted": completed_quizzes,
+                "modulesChange": 0,
+                "quizzesTaken": completed_quizzes,
+                "quizzesChange": 0,
+                "averageScore": avg_score,
+                "scoreChange": 0,
+            },
+            "weeklyProgress": weekly_progress,
+            "subjectBreakdown": subject_breakdown,
+            "quizHistory": quiz_history,
+            "streak": streak,
+            "achievements": achievements,
+        }
+    except Exception as e:
+        logger.error(f"Error fetching analytics for {student_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{student_id}/progress")

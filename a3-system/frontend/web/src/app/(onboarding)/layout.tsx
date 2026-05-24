@@ -1,8 +1,9 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import SwarmCanvas from "@/app/components/landing/SwarmCanvas";
+import { useAppStore } from "@/lib/store";
 
 export default function OnboardingLayout({
   children,
@@ -10,13 +11,36 @@ export default function OnboardingLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { studentId, isHydrated } = useAppStore();
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (isHydrated && !studentId) {
+      router.replace("/login");
+    }
+  }, [studentId, isHydrated, router]);
 
   useEffect(() => {
     setIsAnimating(true);
     const timer = setTimeout(() => setIsAnimating(false), 400);
     return () => clearTimeout(timer);
   }, [pathname]);
+
+  // Show loading while hydrating or if not authenticated
+  if (!isHydrated || !studentId) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-white shadow-lg animate-pulse flex items-center justify-center">
+            <img src="/nobogyan-logo.png" alt="NOBOGYAN" className="w-10 h-10" />
+          </div>
+          <p className="text-[#666] text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] relative overflow-hidden">

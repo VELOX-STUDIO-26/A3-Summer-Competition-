@@ -287,14 +287,14 @@ export default function ProfileSummaryPage() {
     }
 
     await new Promise((r) => setTimeout(r, 500));
-    router.push("/notebook");
+    router.push("/new-path");
   };
 
   return (
     <div className="px-4 sm:px-6 pb-8 sm:pb-12">
       {/* Phase Header */}
       <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#6B7F6B]/10 border border-[#6B7F6B]/30 mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 backdrop-blur-md border border-white/50 shadow-lg shadow-black/5 mb-4">
           <Sparkles className="w-4 h-4 text-[#6B7F6B]" />
           <span className="text-sm text-[#6B7F6B] font-medium">Profile Complete</span>
         </div>
@@ -310,18 +310,19 @@ export default function ProfileSummaryPage() {
       <div className="max-w-3xl mx-auto">
         <div
           className={cn(
-            "bg-white/90 backdrop-blur-xl border border-[#D6CFC2] rounded-2xl sm:rounded-3xl p-5 sm:p-8 transition-all duration-700 shadow-xl shadow-black/5",
+            "bg-white/60 backdrop-blur-2xl border border-white/40 rounded-2xl sm:rounded-3xl p-5 sm:p-8 transition-all duration-700 shadow-2xl shadow-black/10",
+            "ring-1 ring-white/50",
             isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           )}
         >
           {/* User Header */}
-          <div className="flex items-center gap-4 mb-8 pb-6 border-b border-[#E7E2D7]">
+          <div className="flex flex-col items-center gap-3 mb-8 pb-6 border-b border-[#E7E2D7]">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#6B7F6B] to-[#8a9ba3] flex items-center justify-center shadow-lg shadow-[#6B7F6B]/20">
               <span className="text-white font-bold text-xl">
                 {(userName || "U")[0].toUpperCase()}
               </span>
             </div>
-            <div>
+            <div className="text-center">
               <h2 className="text-xl font-semibold text-[#2a2a2a]">{userName || "Learner"}</h2>
               <p className="text-sm text-[#888]">Your personalized learning profile</p>
             </div>
@@ -339,7 +340,7 @@ export default function ProfileSummaryPage() {
                 <div
                   key={key}
                   className={cn(
-                    "p-5 rounded-2xl bg-[#F7F5F0] border border-[#E7E2D7] transition-all duration-500",
+                    "p-5 rounded-2xl bg-white/50 backdrop-blur-lg border border-white/60 transition-all duration-500 hover:bg-white/70 hover:shadow-lg hover:shadow-black/5",
                     isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                   )}
                   style={{ transitionDelay: `${i * 100}ms` }}
@@ -383,7 +384,7 @@ export default function ProfileSummaryPage() {
                       {data.tags.map((tag, idx) => (
                         <span
                           key={`${tag}-${idx}`}
-                          className="px-2 py-1 rounded-lg bg-[#E7E2D7] text-[10px] text-[#666] font-medium"
+                          className="px-2 py-1 rounded-lg bg-white/70 backdrop-blur-sm border border-white/50 text-[10px] text-[#555] font-medium shadow-sm"
                         >
                           {tag}
                         </span>
@@ -400,7 +401,7 @@ export default function ProfileSummaryPage() {
             <button
               onClick={handleContinue}
               disabled={isSubmitting}
-              className="w-full py-4 rounded-2xl bg-[#6B7F6B] text-white font-semibold hover:bg-[#5a6d5a] transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#6B7F6B]/20"
+              className="w-full py-4 rounded-2xl bg-[#6B7F6B]/90 backdrop-blur-sm text-white font-semibold hover:bg-[#5a6d5a] transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-xl shadow-[#6B7F6B]/30 hover:shadow-2xl hover:shadow-[#6B7F6B]/40 hover:-translate-y-0.5"
             >
               {isSubmitting ? (
                 <>
@@ -409,7 +410,7 @@ export default function ProfileSummaryPage() {
                 </>
               ) : (
                 <>
-                  Continue to Notebook
+                  Craft Your Learning Path
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}

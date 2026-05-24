@@ -44,6 +44,13 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class GoogleLoginRequest(BaseModel):
+    email: str = Field(..., min_length=3)
+    name: str = Field(..., min_length=1)
+    firebase_uid: str = Field(..., min_length=1)
+    photo_url: Optional[str] = None
+
+
 class AuthResponse(BaseModel):
     student_id: str
     email: str
@@ -284,6 +291,109 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     )
 
 
+@router.post("/google", response_model=AuthResponse)
+async def google_login(payload: GoogleLoginRequest, db: AsyncSession = Depends(get_db)):
+    """Authenticate or register a user via Google OAuth."""
+    logger.info(f"Google login attempt for email: {payload.email}")
+
+    # Check if user already exists
+    result = await db.execute(
+        select(UserAccount).where(UserAccount.email == payload.email.lower())
+    )
+    user = result.scalar_one_or_none()
+
+    if user:
+        # Existing user - just log them in
+        profile = await db.get(StudentProfile, user.student_id)
+        if not profile:
+            profile = StudentProfile(
+                student_id=user.student_id,
+                knowledge_base={},
+                cognitive_style="mixed",
+                weak_points=[],
+                goals=[],
+                learning_pace=0.5,
+                content_preferences=["video", "text", "diagram"],
+                version=1,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+            db.add(profile)
+            await db.commit()
+        
+        # Update name if provided and different
+        if payload.name and user.name != payload.name:
+            user.name = payload.name
+            await db.commit()
+        
+        # Auto-add to cohort on login
+        try:
+            default_cohort = await _ensure_default_cohort(db)
+            await _add_student_to_cohort(db, user.student_id, default_cohort)
+            await db.commit()
+        except Exception as e:
+            logger.warning(f"Failed to add student to cohort on Google login: {e}")
+
+        logger.info(f"Google user logged in: {user.student_id}")
+        return AuthResponse(
+            student_id=user.student_id,
+            email=user.email,
+            name=user.name,
+            profile=profile.to_dict(),
+        )
+    
+    # New user - create account
+    student_id = _derive_student_id(payload.email)
+    
+    # Check if profile already exists (orphaned from previous account deletion)
+    existing_profile = await db.get(StudentProfile, student_id)
+    if existing_profile:
+        profile = existing_profile
+        logger.info(f"Reusing existing profile for student: {student_id}")
+    else:
+        # Create new profile
+        profile = StudentProfile(
+            student_id=student_id,
+            knowledge_base={},
+            cognitive_style="mixed",
+            weak_points=[],
+            goals=[],
+            learning_pace=0.5,
+            content_preferences=["video", "text", "diagram"],
+            version=1,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        db.add(profile)
+    
+    # Create user account (no password for OAuth users)
+    user = UserAccount(
+        email=payload.email.lower(),
+        password_hash=f"google:{payload.firebase_uid}",  # Mark as Google auth
+        student_id=student_id,
+        name=payload.name,
+        created_at=datetime.utcnow(),
+    )
+    db.add(user)
+    
+    # Auto-add to default cohort
+    try:
+        default_cohort = await _ensure_default_cohort(db)
+        await _add_student_to_cohort(db, student_id, default_cohort)
+    except Exception as e:
+        logger.warning(f"Failed to add student to cohort: {e}")
+    
+    await db.commit()
+    
+    logger.info(f"Registered new Google user: {student_id}")
+    return AuthResponse(
+        student_id=student_id,
+        email=user.email,
+        name=user.name,
+        profile=profile.to_dict(),
+    )
+
+
 @router.get("/me")
 async def get_me(student_id: str, db: AsyncSession = Depends(get_db)):
     """Get current user info by student_id."""
@@ -306,3 +416,168 @@ async def get_me(student_id: str, db: AsyncSession = Depends(get_db)):
         "name": user.name,
         "profile": profile.to_dict() if profile else None,
     }
+
+
+@router.delete("/account/{student_id}", status_code=status.HTTP_200_OK)
+async def delete_account(student_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Delete a user account and all associated data.
+    
+    This permanently removes:
+    - User account
+    - Student profile
+    - All quiz attempts
+    - All generated quizzes
+    - All learning events
+    - All tutor sessions
+    - All cohort memberships
+    """
+    from models.database import (
+        QuizAttempt, GeneratedQuiz, LearningEvent, 
+        ChatSession, ChatMessage, LearningPath,
+        QuizResult, ResourceEvent, GateCalculation, QuizEvaluation,
+        MilestoneProgress, GeneratedResource, AnalyticsInsightsCache,
+        StudentComparativeMetrics, GenerationQuota, GraphRating,
+        PathPreview, StudentSubtopicProgress, ResourceGenerationQueue
+    )
+    
+    # Check if user exists
+    result = await db.execute(
+        select(UserAccount).where(UserAccount.student_id == student_id)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    try:
+        # Delete ALL tables with FK to student_profiles in dependency order
+        
+        # Chat messages (depends on chat sessions)
+        await db.execute(
+            ChatMessage.__table__.delete().where(
+                ChatMessage.session_id.in_(
+                    select(ChatSession.session_id).where(ChatSession.student_id == student_id)
+                )
+            )
+        )
+        
+        # Chat sessions
+        await db.execute(
+            ChatSession.__table__.delete().where(ChatSession.student_id == student_id)
+        )
+        
+        # Quiz attempts
+        await db.execute(
+            QuizAttempt.__table__.delete().where(QuizAttempt.student_id == student_id)
+        )
+        
+        # Generated quizzes
+        await db.execute(
+            GeneratedQuiz.__table__.delete().where(GeneratedQuiz.student_id == student_id)
+        )
+        
+        # Quiz results
+        await db.execute(
+            QuizResult.__table__.delete().where(QuizResult.student_id == student_id)
+        )
+        
+        # Learning events
+        await db.execute(
+            LearningEvent.__table__.delete().where(LearningEvent.student_id == student_id)
+        )
+        
+        # Resource events
+        await db.execute(
+            ResourceEvent.__table__.delete().where(ResourceEvent.student_id == student_id)
+        )
+        
+        # Gate calculations
+        await db.execute(
+            GateCalculation.__table__.delete().where(GateCalculation.student_id == student_id)
+        )
+        
+        # Quiz evaluations
+        await db.execute(
+            QuizEvaluation.__table__.delete().where(QuizEvaluation.student_id == student_id)
+        )
+        
+        # Milestone progress
+        await db.execute(
+            MilestoneProgress.__table__.delete().where(MilestoneProgress.student_id == student_id)
+        )
+        
+        # Generated resources
+        await db.execute(
+            GeneratedResource.__table__.delete().where(GeneratedResource.student_id == student_id)
+        )
+        
+        # Analytics insights cache
+        await db.execute(
+            AnalyticsInsightsCache.__table__.delete().where(AnalyticsInsightsCache.student_id == student_id)
+        )
+        
+        # Learning paths
+        await db.execute(
+            LearningPath.__table__.delete().where(LearningPath.student_id == student_id)
+        )
+        
+        # Cohort memberships
+        await db.execute(
+            CohortMembership.__table__.delete().where(CohortMembership.student_id == student_id)
+        )
+        
+        # Student comparative metrics
+        await db.execute(
+            StudentComparativeMetrics.__table__.delete().where(StudentComparativeMetrics.student_id == student_id)
+        )
+        
+        # Generation quotas
+        await db.execute(
+            GenerationQuota.__table__.delete().where(GenerationQuota.student_id == student_id)
+        )
+        
+        # Graph ratings
+        await db.execute(
+            GraphRating.__table__.delete().where(GraphRating.student_id == student_id)
+        )
+        
+        # Path previews
+        await db.execute(
+            PathPreview.__table__.delete().where(PathPreview.student_id == student_id)
+        )
+        
+        # Student subtopic progress
+        await db.execute(
+            StudentSubtopicProgress.__table__.delete().where(StudentSubtopicProgress.student_id == student_id)
+        )
+        
+        # Resource generation queue
+        await db.execute(
+            ResourceGenerationQueue.__table__.delete().where(ResourceGenerationQueue.student_id == student_id)
+        )
+        
+        # User account (has FK to student_profile) - delete and flush immediately
+        await db.delete(user)
+        await db.flush()  # Execute the delete before removing the profile
+        
+        # Student profile LAST
+        profile = await db.get(StudentProfile, student_id)
+        if profile:
+            await db.delete(profile)
+        
+        await db.commit()
+        
+        logger.info(f"Deleted account and all data for student: {student_id}")
+        return {"message": "Account deleted successfully", "student_id": student_id}
+        
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error deleting account for {student_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete account: {str(e)}",
+        )

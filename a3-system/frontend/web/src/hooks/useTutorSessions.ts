@@ -67,6 +67,14 @@ export function useTutorSessions(studentId: string | null) {
     try {
       const data = await listTutorSessions(studentId);
       setSessions(data);
+      
+      // Validate stored activeSessionId exists in the loaded sessions
+      const storedSessionId = localStorage.getItem(`tutor_active_session:${studentId}`);
+      if (storedSessionId && !data.some(s => s.session_id === storedSessionId)) {
+        console.warn("Stored session ID not found in sessions list, clearing:", storedSessionId);
+        localStorage.removeItem(`tutor_active_session:${studentId}`);
+        setActiveSessionIdState(null);
+      }
     } catch (e) {
       console.error("Failed to load tutor sessions:", e);
     }
@@ -107,12 +115,19 @@ export function useTutorSessions(studentId: string | null) {
       console.log("[loadSession] Mapped messages:", mappedMsgs.map(m => ({ role: m.role, contentLength: m.content?.length || 0, contentPreview: m.content?.substring(0, 50) })));
       setMessages(mappedMsgs);
       setActiveSessionId(sessionId);
-    } catch (e) {
-      console.error("Failed to load session messages:", e);
+    } catch (e: any) {
+      // If session not found (404), clear the stale session ID
+      if (e?.response?.status === 404) {
+        console.warn("Session not found, clearing stale session ID:", sessionId);
+        setActiveSessionId(null);
+        setMessages([]);
+      } else {
+        console.error("Failed to load session messages:", e);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setActiveSessionId]);
 
   // Flush accumulated stream text to React state (throttled by RAF).
   const flushStream = useCallback(() => {

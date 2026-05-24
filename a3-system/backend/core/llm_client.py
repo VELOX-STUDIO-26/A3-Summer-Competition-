@@ -671,7 +671,7 @@ class OpenRouterClient:
         max_tokens: int = 2000
     ) -> AsyncGenerator[str, None]:
         """
-        Stream text completion tokens.
+        Stream text completion tokens with retry logic for rate limits.
 
         Args:
             messages: List of message dicts
@@ -692,27 +692,72 @@ class OpenRouterClient:
             "stream": True
         }
 
-        async with httpx.AsyncClient(timeout=180.0) as client:
-            async with client.stream(
-                "POST",
-                f"{self.base_url}/chat/completions",
-                headers=self.headers,
-                json=payload
-            ) as response:
-                response.raise_for_status()
-                async for line in response.aiter_lines():
-                    if line.startswith("data: "):
-                        data = line[6:]
-                        if data == "[DONE]":
-                            break
-                        try:
-                            chunk = json.loads(data)
-                            if "choices" in chunk and len(chunk["choices"]) > 0:
-                                delta = chunk["choices"][0].get("delta", {})
-                                if "content" in delta:
-                                    yield delta["content"]
-                        except json.JSONDecodeError:
-                            continue
+        # Retry logic for rate limits (429) and server errors (5xx)
+        max_retries = 3
+        last_exc = None
+        
+        for key_idx, key in enumerate(self.api_keys or [None]):
+            if not key:
+                break
+            
+            headers = self._headers_for(key)
+            key_label = f"key[{key_idx}]"
+            
+            for attempt in range(max_retries):
+                try:
+                    async with httpx.AsyncClient(timeout=180.0) as client:
+                        async with client.stream(
+                            "POST",
+                            f"{self.base_url}/chat/completions",
+                            headers=headers,
+                            json=payload
+                        ) as response:
+                            if response.status_code == 429 or response.status_code >= 500:
+                                retry_after = response.headers.get("retry-after")
+                                wait_s = float(retry_after) if retry_after else (2 ** attempt) * 2
+                                logger.warning(
+                                    f"OpenRouter stream {response.status_code} on {key_label} "
+                                    f"(attempt {attempt + 1}/{max_retries}), "
+                                    f"retrying in {wait_s:.1f}s"
+                                )
+                                await asyncio.sleep(min(wait_s, 30.0))
+                                continue
+                            
+                            response.raise_for_status()
+                            
+                            async for line in response.aiter_lines():
+                                if line.startswith("data: "):
+                                    data = line[6:]
+                                    if data == "[DONE]":
+                                        return
+                                    try:
+                                        chunk = json.loads(data)
+                                        if "choices" in chunk and len(chunk["choices"]) > 0:
+                                            delta = chunk["choices"][0].get("delta", {})
+                                            if "content" in delta:
+                                                yield delta["content"]
+                                    except json.JSONDecodeError:
+                                        continue
+                            return  # Successfully completed
+                            
+                except (httpx.TimeoutException, httpx.ConnectError) as e:
+                    wait_s = (2 ** attempt) * 2
+                    logger.warning(
+                        f"OpenRouter stream network error on {key_label} "
+                        f"(attempt {attempt + 1}/{max_retries}): {e}, "
+                        f"retrying in {wait_s}s"
+                    )
+                    last_exc = e
+                    await asyncio.sleep(wait_s)
+                    continue
+            
+            # All retries exhausted for this key, try next key
+            logger.warning(f"OpenRouter stream: exhausted retries for {key_label}, trying next key")
+        
+        # All keys exhausted
+        if last_exc:
+            raise last_exc
+        raise RuntimeError("OpenRouter stream: all API keys exhausted")
 
     async def get_embeddings(
         self,

@@ -24,6 +24,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     create_engine,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
@@ -1699,6 +1700,1376 @@ class StudentComparativeMetrics(Base):
     # Relationships
     student = relationship("StudentProfile")
     cohort = relationship("Cohort")
+
+
+# ============================================================================
+# Dynamic Knowledge Graph Models (v2.0)
+# ============================================================================
+
+class DynamicKnowledgeGraph(Base):
+    """LLM-generated knowledge graph for any subject."""
+
+    __tablename__ = "dynamic_knowledge_graphs"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    # Identity
+    subject = Column(
+        String(255),
+        nullable=False,
+        comment="Subject name (e.g., 'Machine Learning')"
+    )
+
+    subject_normalized = Column(
+        String(255),
+        nullable=False,
+        index=True,
+        comment="Normalized subject for search (e.g., 'machine_learning')"
+    )
+
+    # Categorization
+    tags = Column(
+        JSONB,
+        default=list,
+        comment="Tags for categorization ['ML', 'AI', 'data science']"
+    )
+
+    goals = Column(
+        JSONB,
+        default=list,
+        comment="Learning goals this graph supports"
+    )
+
+    difficulty_level = Column(
+        String(50),
+        default="intermediate",
+        comment="beginner | intermediate | advanced"
+    )
+
+    estimated_duration_weeks = Column(
+        Integer,
+        default=8,
+        comment="Estimated weeks to complete"
+    )
+
+    # The Graph Structure
+    nodes = Column(
+        JSONB,
+        nullable=False,
+        comment="List of knowledge nodes with prerequisites, difficulty, etc."
+    )
+
+    edges = Column(
+        JSONB,
+        default=list,
+        comment="Explicit edges if needed (usually derived from prerequisites)"
+    )
+
+    # Source & Status
+    source = Column(
+        String(50),
+        default="llm_generated",
+        comment="llm_generated | curated | user_modified"
+    )
+
+    status = Column(
+        String(50),
+        default="draft",
+        index=True,
+        comment="draft | user_verified | popular | curated"
+    )
+
+    # Quality Signals
+    times_used = Column(
+        Integer,
+        default=0,
+        comment="How many students used this graph"
+    )
+
+    times_accepted = Column(
+        Integer,
+        default=0,
+        comment="How many clicked 'Looks Good'"
+    )
+
+    acceptance_rate = Column(
+        Float,
+        default=0.0,
+        comment="times_accepted / times_shown"
+    )
+
+    avg_completion_rate = Column(
+        Float,
+        default=0.0,
+        comment="Average path completion rate"
+    )
+
+    avg_rating = Column(
+        Float,
+        default=0.0,
+        comment="Average user rating (1-5)"
+    )
+
+    # Social Proof
+    verified_by_count = Column(
+        Integer,
+        default=0,
+        comment="Number of users who verified this graph"
+    )
+
+    first_verified_by = Column(
+        String(50),
+        nullable=True,
+        comment="student_id of first verifier"
+    )
+
+    # Versioning
+    version = Column(
+        Integer,
+        default=1,
+        comment="Version number (increments on edit)"
+    )
+
+    parent_graph_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("dynamic_knowledge_graphs.id"),
+        nullable=True,
+        comment="Parent graph if forked"
+    )
+
+    created_by = Column(
+        String(50),
+        nullable=True,
+        comment="student_id or 'system'"
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    ratings = relationship("GraphRating", back_populates="graph")
+
+
+class GenerationQuota(Base):
+    """Tracks generation quota per student per subject."""
+
+    __tablename__ = "generation_quotas"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    student_id = Column(
+        String(50),
+        ForeignKey("student_profiles.student_id"),
+        nullable=False,
+        index=True
+    )
+
+    subject_normalized = Column(
+        String(255),
+        nullable=False,
+        index=True,
+        comment="Normalized subject name"
+    )
+
+    generations_used = Column(
+        Integer,
+        default=0,
+        comment="Number of generations used (max 3 for free users)"
+    )
+
+    last_generation_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Timestamp of last generation"
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    # Unique constraint: one quota record per student per subject
+    __table_args__ = (
+        {"extend_existing": True},
+    )
+
+    # Relationship
+    student = relationship("StudentProfile")
+
+
+class GraphRating(Base):
+    """User ratings for knowledge graphs."""
+
+    __tablename__ = "graph_ratings"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    graph_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("dynamic_knowledge_graphs.id"),
+        nullable=False,
+        index=True
+    )
+
+    student_id = Column(
+        String(50),
+        ForeignKey("student_profiles.student_id"),
+        nullable=False,
+        index=True
+    )
+
+    rating = Column(
+        Integer,
+        nullable=False,
+        comment="Rating 1-5"
+    )
+
+    feedback = Column(
+        Text,
+        nullable=True,
+        comment="Optional feedback text"
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    # Relationships
+    graph = relationship("DynamicKnowledgeGraph", back_populates="ratings")
+    student = relationship("StudentProfile")
+
+
+class PathPreview(Base):
+    """Stores path previews before user acceptance."""
+
+    __tablename__ = "path_previews"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    student_id = Column(
+        String(50),
+        ForeignKey("student_profiles.student_id"),
+        nullable=False,
+        index=True
+    )
+
+    graph_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("dynamic_knowledge_graphs.id"),
+        nullable=False
+    )
+
+    # The generated path
+    path_sequence = Column(
+        JSONB,
+        nullable=False,
+        comment="Ordered list of node IDs"
+    )
+
+    path_details = Column(
+        JSONB,
+        default=dict,
+        comment="Full path details with node info"
+    )
+
+    # User edits (before acceptance)
+    user_edits = Column(
+        JSONB,
+        default=list,
+        comment="List of user edits applied"
+    )
+
+    # Status
+    status = Column(
+        String(20),
+        default="pending",
+        comment="pending | accepted | rejected | expired"
+    )
+
+    # Timestamps
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    expires_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        comment="Preview expires after 24 hours"
+    )
+
+    accepted_at = Column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
+    # Relationships
+    student = relationship("StudentProfile")
+    graph = relationship("DynamicKnowledgeGraph")
+
+
+# ============================================================================
+# Hierarchical Knowledge Graph Models (v2.1)
+# ============================================================================
+
+class HierarchicalKnowledgeGraph(Base):
+    """
+    Hierarchical knowledge graph with main topics and subtopics.
+    
+    Structure:
+    - Main Topics (5-12): Major milestones
+    - Subtopics (3-8 per main): Learnable units
+    """
+
+    __tablename__ = "hierarchical_knowledge_graphs"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    # Identity
+    subject = Column(
+        String(255),
+        nullable=False,
+        comment="Subject name (e.g., 'Machine Learning')"
+    )
+
+    subject_normalized = Column(
+        String(255),
+        nullable=False,
+        index=True,
+        comment="Normalized subject for search"
+    )
+
+    # Categorization
+    tags = Column(
+        JSONB,
+        default=list,
+        comment="Tags for categorization"
+    )
+
+    goals = Column(
+        JSONB,
+        default=list,
+        comment="Learning goals this graph supports"
+    )
+
+    difficulty_level = Column(
+        String(50),
+        default="intermediate",
+        comment="beginner | intermediate | advanced"
+    )
+
+    estimated_duration_weeks = Column(
+        Integer,
+        default=8,
+        comment="Estimated weeks to complete"
+    )
+
+    # Statistics
+    main_topic_count = Column(
+        Integer,
+        default=0,
+        comment="Number of main topics (5-12)"
+    )
+
+    total_subtopic_count = Column(
+        Integer,
+        default=0,
+        comment="Total learnable units (15-60)"
+    )
+
+    total_estimated_minutes = Column(
+        Integer,
+        default=0,
+        comment="Sum of all subtopic times"
+    )
+
+    # Quality Signals
+    times_used = Column(Integer, default=0)
+    times_accepted = Column(Integer, default=0)
+    acceptance_rate = Column(Float, default=0.0)
+    avg_completion_rate = Column(Float, default=0.0)
+    avg_rating = Column(Float, default=0.0)
+    verified_by_count = Column(Integer, default=0)
+    first_verified_by = Column(
+        String(50),
+        nullable=True,
+        comment="student_id of first verifier"
+    )
+
+    # Source & Status
+    source = Column(
+        String(50),
+        default="llm_generated",
+        comment="llm_generated | curated | user_modified"
+    )
+
+    status = Column(
+        String(50),
+        default="draft",
+        index=True,
+        comment="draft | user_verified | popular | curated"
+    )
+
+    # Versioning
+    version = Column(Integer, default=1)
+
+    created_by = Column(
+        String(50),
+        nullable=True,
+        comment="student_id or 'system'"
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    main_topics = relationship(
+        "MainTopic",
+        back_populates="graph",
+        cascade="all, delete-orphan",
+        order_by="MainTopic.order_index"
+    )
+
+
+class MainTopic(Base):
+    """
+    A main topic (milestone) in the hierarchical knowledge graph.
+    Contains 3-8 subtopics.
+    """
+
+    __tablename__ = "main_topics"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    graph_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("hierarchical_knowledge_graphs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    # Identity
+    node_id = Column(
+        String(100),
+        nullable=False,
+        comment="Unique ID within graph (e.g., 'python_fundamentals')"
+    )
+
+    title = Column(
+        String(255),
+        nullable=False,
+        comment="Display title (e.g., 'Python Fundamentals')"
+    )
+
+    description = Column(
+        Text,
+        nullable=True,
+        comment="Brief description of the main topic"
+    )
+
+    # Ordering
+    order_index = Column(
+        Integer,
+        nullable=False,
+        default=0,
+        comment="Position in learning path (0-indexed)"
+    )
+
+    # Metrics (aggregated from subtopics)
+    difficulty = Column(
+        Float,
+        default=0.5,
+        comment="Average difficulty of subtopics (0.0-1.0)"
+    )
+
+    estimated_minutes = Column(
+        Integer,
+        default=0,
+        comment="Sum of subtopic estimated times"
+    )
+
+    subtopic_count = Column(
+        Integer,
+        default=0,
+        comment="Number of subtopics (3-8)"
+    )
+
+    # Prerequisites
+    prerequisites = Column(
+        JSONB,
+        default=list,
+        comment="List of main topic node_ids that must come before"
+    )
+
+    # Tags
+    topic_tags = Column(
+        JSONB,
+        default=list,
+        comment="Tags for this main topic"
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    # Relationships
+    graph = relationship("HierarchicalKnowledgeGraph", back_populates="main_topics")
+    subtopics = relationship(
+        "Subtopic",
+        back_populates="main_topic",
+        cascade="all, delete-orphan",
+        order_by="Subtopic.order_index"
+    )
+
+
+class Subtopic(Base):
+    """
+    A subtopic (learnable unit) within a main topic.
+    This is where resources are generated and learning happens.
+    """
+
+    __tablename__ = "subtopics"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    main_topic_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("main_topics.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    # Identity
+    node_id = Column(
+        String(100),
+        nullable=False,
+        comment="Unique ID within graph (e.g., 'python_functions')"
+    )
+
+    title = Column(
+        String(255),
+        nullable=False,
+        comment="Display title (e.g., 'Functions & Lambdas')"
+    )
+
+    description = Column(
+        Text,
+        nullable=True,
+        comment="Brief description of the subtopic"
+    )
+
+    # Ordering
+    order_index = Column(
+        Integer,
+        nullable=False,
+        default=0,
+        comment="Position within main topic (0-indexed)"
+    )
+
+    # Learning metrics
+    difficulty = Column(
+        Float,
+        default=0.5,
+        comment="Difficulty level (0.0-1.0)"
+    )
+
+    estimated_minutes = Column(
+        Integer,
+        default=30,
+        comment="Estimated time to complete (15-60 minutes)"
+    )
+
+    # Content guidance
+    learning_points = Column(
+        JSONB,
+        default=list,
+        comment="Key concepts to cover in resources"
+    )
+
+    topic_tags = Column(
+        JSONB,
+        default=list,
+        comment="Tags for this subtopic"
+    )
+
+    content_types = Column(
+        JSONB,
+        default=list,
+        comment="Recommended content types ['text', 'video', 'code']"
+    )
+
+    # Prerequisites within the same main topic
+    prerequisites = Column(
+        JSONB,
+        default=list,
+        comment="List of subtopic node_ids that must come before"
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    # Relationships
+    main_topic = relationship("MainTopic", back_populates="subtopics")
+
+
+class CachedResource(Base):
+    """
+    Cached generated resources for subtopics.
+    Enables reuse across students with similar profiles.
+    """
+
+    __tablename__ = "cached_resources"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    # Cache key components
+    subtopic_id = Column(
+        String(100),
+        nullable=False,
+        index=True,
+        comment="Subtopic node_id"
+    )
+
+    cache_key = Column(
+        String(255),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="Composite key: subtopic_id:difficulty:cognitive_style"
+    )
+
+    # The cached resources
+    resources = Column(
+        JSONB,
+        nullable=False,
+        comment="Generated resources (content, quiz, mindmap, etc.)"
+    )
+
+    generation_config = Column(
+        JSONB,
+        default=dict,
+        comment="Config used to generate (difficulty, examples, etc.)"
+    )
+
+    # Usage tracking
+    use_count = Column(
+        Integer,
+        default=0,
+        comment="Number of times this cache was used"
+    )
+
+    last_used_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Last time this cache was accessed"
+    )
+
+    # Timestamps
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+
+class ResourceGenerationQueue(Base):
+    """
+    Queue for background resource generation.
+    Enables pre-fetching of upcoming subtopic resources.
+    """
+
+    __tablename__ = "resource_generation_queue"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    subtopic_id = Column(
+        String(100),
+        nullable=False,
+        index=True,
+        comment="Subtopic node_id to generate resources for"
+    )
+
+    student_id = Column(
+        String(50),
+        ForeignKey("student_profiles.student_id"),
+        nullable=False,
+        index=True
+    )
+
+    # Generation config
+    config = Column(
+        JSONB,
+        default=dict,
+        comment="Generation config (difficulty, examples, etc.)"
+    )
+
+    priority = Column(
+        Integer,
+        default=2,
+        index=True,
+        comment="1=current (blocking), 2=next (background), 3=prefetch"
+    )
+
+    # Status tracking
+    status = Column(
+        String(20),
+        default="pending",
+        index=True,
+        comment="pending | generating | complete | failed"
+    )
+
+    error_message = Column(
+        Text,
+        nullable=True,
+        comment="Error message if failed"
+    )
+
+    # Result
+    result_cache_key = Column(
+        String(255),
+        nullable=True,
+        comment="Cache key of generated resources"
+    )
+
+    # Timestamps
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    started_at = Column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
+    completed_at = Column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
+    # Relationship
+    student = relationship("StudentProfile")
+
+
+class StudentSubtopicProgress(Base):
+    """
+    Tracks student progress through subtopics.
+    """
+
+    __tablename__ = "student_subtopic_progress"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    student_id = Column(
+        String(50),
+        ForeignKey("student_profiles.student_id"),
+        nullable=False,
+        index=True
+    )
+
+    graph_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("hierarchical_knowledge_graphs.id"),
+        nullable=False,
+        index=True
+    )
+
+    main_topic_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("main_topics.id"),
+        nullable=False,
+        index=True
+    )
+
+    subtopic_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("subtopics.id"),
+        nullable=False,
+        index=True
+    )
+
+    # Status
+    status = Column(
+        String(20),
+        default="locked",
+        comment="locked | unlocked | in_progress | completed | skipped"
+    )
+
+    # Resource engagement
+    gate_score = Column(
+        Float,
+        default=0.0,
+        comment="Resource completion score (0.0-1.0)"
+    )
+
+    resources_loaded_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When resources were generated/loaded"
+    )
+
+    # Quiz results
+    quiz_unlocked = Column(
+        Boolean,
+        default=False,
+        comment="Whether quiz is unlocked (gate_score >= 0.8 or bypass)"
+    )
+
+    quiz_score = Column(
+        Float,
+        nullable=True,
+        comment="Final quiz score (0.0-1.0)"
+    )
+
+    quiz_passed = Column(
+        Boolean,
+        default=False,
+        comment="Whether quiz was passed (score >= 0.6, or >= 0.85 for bypass)"
+    )
+
+    bypass_mode = Column(
+        Boolean,
+        default=False,
+        comment="Whether student bypassed resources"
+    )
+
+    # Timestamps
+    started_at = Column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
+    completed_at = Column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # Unique constraint
+    __table_args__ = (
+        UniqueConstraint('student_id', 'subtopic_id', name='uq_student_subtopic'),
+    )
+
+    # Relationships
+    student = relationship("StudentProfile")
+
+
+# ============================================================================
+# Path Rating & Analytics Models
+# ============================================================================
+
+class PathRating(Base):
+    """
+    Student ratings for learning paths.
+    Used to identify high-quality paths for reuse.
+    """
+
+    __tablename__ = "path_ratings"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    graph_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("hierarchical_knowledge_graphs.id"),
+        nullable=False,
+        index=True
+    )
+
+    student_id = Column(
+        String(50),
+        ForeignKey("student_profiles.student_id"),
+        nullable=False,
+        index=True
+    )
+
+    # Rating details
+    overall_rating = Column(
+        Integer,
+        nullable=False,
+        comment="1-5 star rating"
+    )
+
+    # Specific aspects (optional)
+    content_quality = Column(
+        Integer,
+        nullable=True,
+        comment="1-5 rating for content quality"
+    )
+
+    difficulty_appropriateness = Column(
+        Integer,
+        nullable=True,
+        comment="1-5 rating for difficulty match"
+    )
+
+    structure_clarity = Column(
+        Integer,
+        nullable=True,
+        comment="1-5 rating for logical structure"
+    )
+
+    # Feedback
+    feedback_text = Column(
+        Text,
+        nullable=True,
+        comment="Optional written feedback"
+    )
+
+    would_recommend = Column(
+        Boolean,
+        nullable=True,
+        comment="Would recommend to others"
+    )
+
+    # Context
+    completion_percentage = Column(
+        Float,
+        default=0.0,
+        comment="How much of path was completed when rated"
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    # Unique constraint - one rating per student per graph
+    __table_args__ = (
+        UniqueConstraint('student_id', 'graph_id', name='uq_student_graph_rating'),
+    )
+
+    # Relationships
+    graph = relationship("HierarchicalKnowledgeGraph")
+    student = relationship("StudentProfile")
+
+
+class LearningSession(Base):
+    """
+    Tracks individual learning sessions for analytics.
+    A session is a continuous period of learning activity.
+    """
+
+    __tablename__ = "learning_sessions"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    student_id = Column(
+        String(50),
+        ForeignKey("student_profiles.student_id"),
+        nullable=False,
+        index=True
+    )
+
+    graph_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("hierarchical_knowledge_graphs.id"),
+        nullable=False,
+        index=True
+    )
+
+    subtopic_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("subtopics.id"),
+        nullable=True,
+        index=True
+    )
+
+    # Session timing
+    started_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    ended_at = Column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
+    duration_seconds = Column(
+        Integer,
+        default=0,
+        comment="Total active time in seconds"
+    )
+
+    # Activity metrics
+    resources_viewed = Column(
+        Integer,
+        default=0,
+        comment="Number of resources viewed"
+    )
+
+    interactions_count = Column(
+        Integer,
+        default=0,
+        comment="Number of interactions (clicks, scrolls, etc.)"
+    )
+
+    quiz_attempts = Column(
+        Integer,
+        default=0,
+        comment="Number of quiz attempts in this session"
+    )
+
+    # Engagement quality
+    focus_score = Column(
+        Float,
+        default=1.0,
+        comment="Estimated focus (0-1) based on activity patterns"
+    )
+
+    # Device/context
+    device_type = Column(
+        String(20),
+        nullable=True,
+        comment="desktop | mobile | tablet"
+    )
+
+    # Relationships
+    student = relationship("StudentProfile")
+    graph = relationship("HierarchicalKnowledgeGraph")
+
+
+class PathAnalytics(Base):
+    """
+    Aggregated analytics for each learning path.
+    Updated periodically based on student progress data.
+    """
+
+    __tablename__ = "path_analytics"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    graph_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("hierarchical_knowledge_graphs.id"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    # Usage metrics
+    total_students = Column(
+        Integer,
+        default=0,
+        comment="Total students who started this path"
+    )
+
+    active_students = Column(
+        Integer,
+        default=0,
+        comment="Students active in last 7 days"
+    )
+
+    # Completion metrics
+    completion_rate = Column(
+        Float,
+        default=0.0,
+        comment="Percentage of students who completed (0-1)"
+    )
+
+    avg_completion_percentage = Column(
+        Float,
+        default=0.0,
+        comment="Average progress percentage"
+    )
+
+    dropout_rate = Column(
+        Float,
+        default=0.0,
+        comment="Percentage who stopped before 20% completion"
+    )
+
+    # Time metrics
+    avg_time_to_complete_hours = Column(
+        Float,
+        nullable=True,
+        comment="Average hours to complete entire path"
+    )
+
+    avg_session_duration_minutes = Column(
+        Float,
+        default=0.0,
+        comment="Average learning session length"
+    )
+
+    total_learning_hours = Column(
+        Float,
+        default=0.0,
+        comment="Sum of all student learning time"
+    )
+
+    # Performance metrics
+    avg_quiz_score = Column(
+        Float,
+        default=0.0,
+        comment="Average quiz score across all subtopics"
+    )
+
+    avg_first_attempt_pass_rate = Column(
+        Float,
+        default=0.0,
+        comment="Percentage passing quizzes on first try"
+    )
+
+    # Difficulty analysis
+    hardest_subtopic_id = Column(
+        UUID(as_uuid=True),
+        nullable=True,
+        comment="Subtopic with lowest pass rate"
+    )
+
+    easiest_subtopic_id = Column(
+        UUID(as_uuid=True),
+        nullable=True,
+        comment="Subtopic with highest pass rate"
+    )
+
+    avg_attempts_per_subtopic = Column(
+        Float,
+        default=1.0,
+        comment="Average quiz attempts needed"
+    )
+
+    # Engagement metrics
+    avg_resources_per_subtopic = Column(
+        Float,
+        default=0.0,
+        comment="Average resources viewed per subtopic"
+    )
+
+    bypass_rate = Column(
+        Float,
+        default=0.0,
+        comment="Percentage of subtopics bypassed"
+    )
+
+    # Quality score (computed)
+    quality_score = Column(
+        Float,
+        default=0.0,
+        comment="Computed quality score (0-100) based on all metrics"
+    )
+
+    # Timestamps
+    last_calculated_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    # Relationships
+    graph = relationship("HierarchicalKnowledgeGraph")
+
+
+class SubtopicAnalytics(Base):
+    """
+    Per-subtopic analytics for identifying problem areas.
+    """
+
+    __tablename__ = "subtopic_analytics"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    subtopic_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("subtopics.id"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    graph_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("hierarchical_knowledge_graphs.id"),
+        nullable=False,
+        index=True
+    )
+
+    # Attempt metrics
+    total_attempts = Column(
+        Integer,
+        default=0
+    )
+
+    total_completions = Column(
+        Integer,
+        default=0
+    )
+
+    pass_rate = Column(
+        Float,
+        default=0.0,
+        comment="Percentage passing on any attempt"
+    )
+
+    first_attempt_pass_rate = Column(
+        Float,
+        default=0.0,
+        comment="Percentage passing on first attempt"
+    )
+
+    avg_attempts_to_pass = Column(
+        Float,
+        default=1.0
+    )
+
+    # Score metrics
+    avg_quiz_score = Column(
+        Float,
+        default=0.0
+    )
+
+    score_std_dev = Column(
+        Float,
+        default=0.0,
+        comment="Score standard deviation"
+    )
+
+    # Time metrics
+    avg_time_spent_minutes = Column(
+        Float,
+        default=0.0
+    )
+
+    median_time_spent_minutes = Column(
+        Float,
+        default=0.0
+    )
+
+    # Engagement
+    avg_resources_viewed = Column(
+        Float,
+        default=0.0
+    )
+
+    bypass_rate = Column(
+        Float,
+        default=0.0
+    )
+
+    # Difficulty assessment
+    computed_difficulty = Column(
+        Float,
+        default=0.5,
+        comment="Difficulty based on actual performance (0-1)"
+    )
+
+    difficulty_mismatch = Column(
+        Float,
+        default=0.0,
+        comment="Difference between stated and computed difficulty"
+    )
+
+    # Flags
+    needs_review = Column(
+        Boolean,
+        default=False,
+        comment="Flagged for content review"
+    )
+
+    review_reason = Column(
+        String(255),
+        nullable=True
+    )
+
+    last_calculated_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    # Relationships
+    subtopic = relationship("Subtopic")
+    graph = relationship("HierarchicalKnowledgeGraph")
 
 
 # ============================================================================

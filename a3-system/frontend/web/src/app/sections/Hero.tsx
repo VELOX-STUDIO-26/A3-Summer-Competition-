@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import MagneticButton from "../components/landing/MagneticButton";
 import LiveStats from "../components/landing/LiveStats";
 import SwarmCanvas from "../components/landing/SwarmCanvas";
-import OrbitalSystem from "../components/landing/OrbitalSystem";
+import ProductShowcase from "../components/landing/ProductShowcase";
 import { addToWaitlist } from "@/lib/firebase";
 import Confetti from "../components/landing/Confetti";
 
@@ -78,48 +78,7 @@ export default function Hero() {
         <div className="grid lg:grid-cols-2 gap-4 lg:gap-12 items-center flex-1 py-4 sm:py-6">
           {/* Left side - Content */}
           <div className="space-y-4 sm:space-y-5 max-w-xl">
-            {/* Mobile mini orbital - top right corner */}
-            <div className="flex items-start justify-between">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
-                <span className="inline-block px-3 py-1 rounded-full bg-sage-400/10 text-sage-600 text-[10px] font-semibold tracking-wider border border-sage-400/20">
-                  15+ AI AGENTS • ONE LEARNING EXPERIENCE
-                </span>
-              </motion.div>
-              
-              {/* Mini orbital for mobile */}
-              <motion.div 
-                className="lg:hidden relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-              >
-                <div className="absolute inset-0 rounded-full bg-white/60 backdrop-blur-sm border border-white/40 shadow-lg" />
-                <div className="absolute inset-2 rounded-full border border-dashed border-sage-300/50 animate-spin" style={{ animationDuration: '20s' }} />
-                <div className="absolute inset-4 rounded-full border border-dotted border-sage-300/30 animate-spin" style={{ animationDuration: '15s', animationDirection: 'reverse' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-sage-400 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold shadow-md">
-                  N
-                </div>
-                {/* Mini orbiting dots */}
-                <motion.div 
-                  className="absolute w-3 h-3 rounded-full bg-blue-400 shadow-sm"
-                  style={{ top: '10%', left: '50%', marginLeft: '-6px' }}
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                />
-                <motion.div 
-                  className="absolute w-2.5 h-2.5 rounded-full bg-orange-400 shadow-sm"
-                  style={{ bottom: '15%', right: '10%' }}
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                />
-              </motion.div>
-            </div>
-
-            <motion.h1
+<motion.h1
               className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-deep-charcoal"
               style={{
                 fontFamily: "var(--font-serif)",
@@ -130,9 +89,9 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              15 AI Agents.
+              Stop Studying Harder.
               <br />
-              <span className="text-sage-500">One Goal: Your Success.</span>
+              <span className="text-sage-500">Start Learning Smarter.</span>
             </motion.h1>
 
             <motion.p
@@ -141,9 +100,9 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 1.2 }}
             >
-              NOBOGYAN deploys a swarm of specialized agents that profile, plan,
-              tutor, and assess — all working together to build your perfect
-              learning path.
+              NOBOGYAN analyzes your exact knowledge gaps, builds a custom curriculum 
+              instantly, and guides you with an interactive, multimodal AI tutor 
+              that adapts to your pace and style.
             </motion.p>
 
             {/* Waitlist CTA */}
@@ -249,47 +208,65 @@ export default function Hero() {
 
             {/* Social proof & trust indicators */}
             <motion.div
-              className="flex flex-col gap-2 pt-2"
+              className="flex flex-col gap-3 pt-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 1.6 }}
             >
-              {/* Avatars stack */}
+              {/* Realistic avatars stack with FOMO stats */}
               <div className="flex items-center">
                 <div className="flex -space-x-2">
-                  {["#9B59B6", "#3498DB", "#E67E22", "#1ABC9C", "#E74C3C"].map((color, i) => (
-                    <div
+                  {[
+                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face",
+                  ].map((src, i) => (
+                    <img
                       key={i}
-                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white flex items-center justify-center text-white text-[8px] sm:text-[9px] font-bold shadow-sm"
-                      style={{ backgroundColor: color, zIndex: 5 - i }}
-                    >
-                      {["S", "M", "A", "P", "D"][i]}
-                    </div>
+                      src={src}
+                      alt={`Early adopter ${i + 1}`}
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white object-cover shadow-sm"
+                      style={{ zIndex: 5 - i }}
+                    />
                   ))}
+                  <div 
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white bg-sage-400 flex items-center justify-center text-white text-[9px] font-bold shadow-sm"
+                    style={{ zIndex: 0 }}
+                  >
+                    +2K
+                  </div>
                 </div>
-                <div className="ml-2">
-                  <p className="text-xs font-semibold text-deep-charcoal">2,500+ on waitlist</p>
-                  <p className="text-[10px] text-deep-charcoal/50">Be first to experience the swarm</p>
+                <div className="ml-3">
+                  <p className="text-xs font-semibold text-deep-charcoal">2,500+ Early Adopters</p>
+                  <p className="text-[10px] text-deep-charcoal/70">
+                    <span className="text-sage-600 font-semibold">500 beta slots</span> • 15,000+ paths generated
+                  </p>
                 </div>
               </div>
 
-              {/* Trust badges */}
-              <div className="flex flex-wrap items-center gap-2 text-[10px] text-deep-charcoal/50">
-                <span className="flex items-center gap-1">
-                  <svg className="w-3 h-3 text-sage-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              {/* Trust badges with closed beta angle */}
+              <div className="flex flex-wrap items-center gap-2 text-[10px]">
+                <span className="flex items-center gap-1.5 bg-sage-400/10 text-sage-700 px-2.5 py-1 rounded-full font-medium border border-sage-400/20">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
-                  Launching Summer 2026
+                  Closed Beta • Summer 2026
                 </span>
-                <span className="w-1 h-1 rounded-full bg-deep-charcoal/30 hidden sm:block" />
-                <span>Early access for waitlist</span>
+                <span className="flex items-center gap-1 text-deep-charcoal/70 font-medium">
+                  <svg className="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                  Early access priority
+                </span>
               </div>
             </motion.div>
           </div>
 
-          {/* Right side - Swarm visualization with glass container */}
+          {/* Right side - Magic Trick UI: User Input → Product Output */}
           <motion.div
-            className="relative h-[420px] lg:h-[480px] hidden lg:block"
+            className="relative h-[420px] lg:h-[520px] hidden lg:block"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.5 }}
@@ -310,20 +287,8 @@ export default function Hero() {
               />
 
               {/* Inner content with breathing room */}
-              <div className="relative h-full p-8">
-                {/* Header label */}
-                <div className="absolute top-8 left-8 right-8 flex items-center justify-between">
-                  <span className="text-xs font-mono font-medium text-deep-charcoal/40 tracking-wider uppercase">Agent Swarm Active</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                    <span className="text-xs font-mono text-deep-charcoal/40">LIVE</span>
-                  </div>
-                </div>
-
-                {/* Orbital system */}
-                <div className="h-full pt-10">
-                  <OrbitalSystem />
-                </div>
+              <div className="relative h-full p-6">
+                <ProductShowcase />
               </div>
             </div>
           </motion.div>

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppStore } from "@/lib/store";
-import { getLearningPath, generateResources, getRemedialResources, markResourceConsumed, analyzeImage } from "@/lib/api";
+import { getLearningPath, generateResources, getRemedialResources, markResourceConsumed, analyzeImage, getHierarchicalGraph } from "@/lib/api";
 import { useGateStatus } from "@/hooks/useTracking";
 import { useVoiceStream } from "@/hooks/useVoiceStream";
 import { useTutorSessions } from "@/hooks/useTutorSessions";
@@ -16,6 +16,7 @@ import {
   QuizConfigModal,
   ResourcePreview,
 } from "@/components/notebook";
+import { RatingPrompt } from "@/app/components/PathRating";
 
 interface Message {
   role: "user" | "assistant";
@@ -36,6 +37,8 @@ interface PathNode {
   id: string;
   title: string;
   status: "completed" | "current" | "locked";
+  isSubtopic?: boolean;
+  parentId?: string; // For subtopics, reference to parent main topic
 }
 
 interface GeneratedResource {
@@ -60,7 +63,12 @@ const DEFAULT_PATH: PathNode[] = [
 
 export default function NotebookPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { profile, userName, studentId, logout } = useAppStore();
+
+  // Hierarchical graph ID from URL (for rating)
+  const graphId = searchParams.get("graph");
+  const [graphSubject, setGraphSubject] = useState<string>("");
 
   // Learning path state
   const [learningPath, setLearningPath] = useState<PathNode[]>(DEFAULT_PATH);
@@ -97,6 +105,7 @@ export default function NotebookPage() {
   // Mobile responsive state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
+  const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
 
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
@@ -170,14 +179,87 @@ export default function NotebookPage() {
     }
   }, [studentId]);
 
-  // Fetch learning path
+  // Fetch learning path - either from hierarchical graph or legacy milestones
   useEffect(() => {
     async function fetchPath() {
       if (!studentId) {
         setIsLoadingPath(false);
         return;
       }
+      
       try {
+        // If we have a hierarchical graph ID, load from that
+        if (graphId) {
+          const graph = await getHierarchicalGraph(graphId);
+          if (graph?.main_topics && graph.main_topics.length > 0) {
+            // Convert hierarchical graph to path nodes
+            // Progress through subtopics one by one within each main topic
+            const convertedPath: PathNode[] = [];
+            let isFirstMainTopic = true;
+            let foundCurrentSubtopic = false;
+            let currentSubtopicTitle = "";
+            
+            for (const mainTopic of graph.main_topics) {
+              const hasSubtopics = mainTopic.subtopics && mainTopic.subtopics.length > 0;
+              
+              // Determine main topic status based on its subtopics
+              let mainTopicStatus: "completed" | "current" | "locked" = "locked";
+              if (isFirstMainTopic) {
+                mainTopicStatus = "current"; // First main topic is in progress
+              }
+              
+              // Add main topic as a header node
+              convertedPath.push({
+                id: mainTopic.id,
+                title: mainTopic.title,
+                status: mainTopicStatus,
+                isSubtopic: false,
+                parentId: undefined,
+              });
+              
+              // Add subtopics - first subtopic of first main topic is current
+              if (hasSubtopics) {
+                for (let i = 0; i < mainTopic.subtopics.length; i++) {
+                  const subtopic = mainTopic.subtopics[i];
+                  let subtopicStatus: "completed" | "current" | "locked" = "locked";
+                  
+                  // First subtopic of first main topic is current
+                  if (isFirstMainTopic && i === 0 && !foundCurrentSubtopic) {
+                    subtopicStatus = "current";
+                    foundCurrentSubtopic = true;
+                    currentSubtopicTitle = subtopic.title;
+                  }
+                  
+                  convertedPath.push({
+                    id: subtopic.id,
+                    title: subtopic.title,
+                    status: subtopicStatus,
+                    isSubtopic: true,
+                    parentId: mainTopic.id,
+                  });
+                }
+              }
+              
+              isFirstMainTopic = false;
+            }
+            
+            setLearningPath(convertedPath);
+            setTotalEstimatedMinutes(graph.total_estimated_minutes || 180);
+            setGraphSubject(graph.subject);
+            
+            // Set current topic to the current SUBTOPIC (for resource generation)
+            if (currentSubtopicTitle) {
+              setCurrentTopic(currentSubtopicTitle);
+            } else if (graph.main_topics[0]) {
+              // Fallback if no subtopics
+              setCurrentTopic(graph.main_topics[0].title);
+            }
+            setIsLoadingPath(false);
+            return;
+          }
+        }
+        
+        // Fallback to legacy milestone-based path
         const pathData = await getLearningPath(studentId);
         if (pathData.path.length > 0) {
           const convertedPath: PathNode[] = pathData.path.map((node) => ({
@@ -199,7 +281,7 @@ export default function NotebookPage() {
       }
     }
     fetchPath();
-  }, [studentId]);
+  }, [studentId, graphId]);
 
   // Fetch remedial resources
   useEffect(() => {
@@ -439,6 +521,19 @@ export default function NotebookPage() {
     await sendMessageToTutor(msg);
   };
 
+  // Handle text selection from resources - directly sends to AI tutor
+  const handleSendToChat = useCallback(async (selectedText: string, question?: string) => {
+    const message = question || `I have a question about: "${selectedText}"`;
+    
+    // Close right panel on mobile to show chat
+    if (window.innerWidth < 1024) {
+      setIsRightPanelOpen(false);
+    }
+    
+    // Directly send to tutor (no need for user to click send)
+    await sendMessageToTutor(message);
+  }, [sendMessageToTutor]);
+
   const handleStopStream = () => {
     stopStream();
     setIsLoading(false);
@@ -567,11 +662,11 @@ export default function NotebookPage() {
   const activeResource = generatedResources.find((r) => r.id === selectedResource) || remedialResources.find((r) => r.id === selectedResource);
 
   return (
-    <div className="h-screen flex bg-[#F7F5F0] text-[#2a2a2a] overflow-hidden relative">
+    <div className="h-screen flex bg-[#F7F5F0] text-[#2a2a2a] overflow-hidden relative isolate">
       {/* Subtle Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#E7E2D7]/50 via-[#F7F5F0] to-[#C9D2D6]/30" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#B8C3C9]/20 rounded-full blur-[128px]" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#D6CFC2]/30 rounded-full blur-[128px]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#E7E2D7]/50 via-[#F7F5F0] to-[#C9D2D6]/30 -z-10" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#B8C3C9]/20 rounded-full blur-[128px] -z-10" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#D6CFC2]/30 rounded-full blur-[128px] -z-10" />
 
       {/* Mobile Backdrop */}
       {(isMobileMenuOpen || isRightPanelOpen) && (
@@ -598,6 +693,8 @@ export default function NotebookPage() {
         onLogout={handleLogout}
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
+        isCollapsed={isLeftPanelCollapsed}
+        onToggleCollapse={() => setIsLeftPanelCollapsed(!isLeftPanelCollapsed)}
       />
 
       {/* Tutor Session Sidebar */}
@@ -647,6 +744,19 @@ export default function NotebookPage() {
         isAnalyzingImage={isAnalyzingImage}
         onOpenLeftPanel={() => setIsMobileMenuOpen(true)}
         onOpenRightPanel={() => setIsRightPanelOpen(true)}
+        ratingPrompt={
+          graphId && studentId && graphSubject ? (
+            <RatingPrompt
+              graphId={graphId}
+              studentId={studentId}
+              pathSubject={graphSubject}
+              completionPercentage={Math.round(
+                (learningPath.filter((n) => n.status === "completed").length / learningPath.length) * 100
+              )}
+            />
+          ) : null
+        }
+        onSendToChat={handleSendToChat}
       />
 
       {/* Right Panel - Agents & Resources */}
@@ -678,6 +788,7 @@ export default function NotebookPage() {
               learningPath={learningPath}
               isGenerating={isGenerating}
               onMindMapNodeClick={handleMindMapNodeClick}
+              onSendToChat={handleSendToChat}
               quizState={quizState}
             />
           ) : null

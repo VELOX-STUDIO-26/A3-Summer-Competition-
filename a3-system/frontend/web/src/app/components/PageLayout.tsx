@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -13,6 +13,12 @@ interface PageLayoutProps {
 }
 
 export default function PageLayout({ children, title, subtitle, lastUpdated }: PageLayoutProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-sand-50 to-white">
       {/* Navigation */}
@@ -25,7 +31,8 @@ export default function PageLayout({ children, title, subtitle, lastUpdated }: P
             >
               <ArrowLeft className="w-4 h-4 text-deep-charcoal/60" />
             </motion.div>
-            <Image 
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
               src="/nobogyan-logo.png" 
               alt="NOBOGYAN" 
               width={32} 
@@ -78,7 +85,8 @@ export default function PageLayout({ children, title, subtitle, lastUpdated }: P
       <footer className="border-t border-sand-200 py-8">
         <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Image 
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
               src="/nobogyan-logo.png" 
               alt="NOBOGYAN" 
               width={24} 
@@ -86,7 +94,7 @@ export default function PageLayout({ children, title, subtitle, lastUpdated }: P
               className="w-6 h-6"
             />
             <span className="text-sm text-deep-charcoal/50">
-              © {new Date().getFullYear()} NOBOGYAN. All rights reserved.
+              © {isMounted ? new Date().getFullYear() : "2026"} NOBOGYAN. All rights reserved.
             </span>
           </div>
           <div className="flex items-center gap-6">

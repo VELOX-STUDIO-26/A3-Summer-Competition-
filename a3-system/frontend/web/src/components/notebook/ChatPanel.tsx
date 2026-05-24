@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import MermaidRenderer from "@/components/MermaidRenderer";
 import ImageUpload from "@/components/tutor/ImageUpload";
 import { FaithfulnessBadge } from "@/components/FaithfulnessBadge";
+import TextSelectionPopup from "./TextSelectionPopup";
 import {
   Send,
   Mic,
@@ -20,8 +21,9 @@ import {
   Menu,
   PanelRight,
   MessageSquare,
-  Sparkles,
+  GraduationCap,
 } from "lucide-react";
+import Image from "next/image";
 
 interface Message {
   role: "user" | "assistant";
@@ -67,6 +69,10 @@ interface ChatPanelProps {
   // Mobile
   onOpenLeftPanel: () => void;
   onOpenRightPanel: () => void;
+  // Rating prompt
+  ratingPrompt?: React.ReactNode;
+  // Text selection to ask AI
+  onSendToChat?: (selectedText: string, question?: string) => void;
 }
 
 export default function ChatPanel({
@@ -90,8 +96,11 @@ export default function ChatPanel({
   isAnalyzingImage,
   onOpenLeftPanel,
   onOpenRightPanel,
+  ratingPrompt,
+  onSendToChat,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -120,8 +129,8 @@ export default function ChatPanel({
           <Menu className="w-6 h-6" />
         </button>
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[#B8C3C9]" />
-          <span className="font-semibold text-[#2a2a2a]">A3 Learning</span>
+          <GraduationCap className="w-5 h-5 text-[#B8C3C9]" />
+          <span className="font-semibold text-[#2a2a2a]">NOBOGYAN</span>
         </div>
         <button
           onClick={onOpenRightPanel}
@@ -136,15 +145,15 @@ export default function ChatPanel({
       <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#D6CFC2] flex items-center justify-between bg-[#F7F5F0]/80 backdrop-blur-xl">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <div className="relative shrink-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#B8C3C9] to-[#8a9ba3] flex items-center justify-center shadow-md shadow-[#B8C3C9]/30">
-              <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white flex items-center justify-center shadow-md shadow-[#B8C3C9]/30 border border-[#D6CFC2]">
+              <Image src="/nobogyan-logo.png" alt="NOBOGYAN" width={36} height={36} className="w-7 h-7 sm:w-9 sm:h-9" />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#8a9ba3] border-2 border-[#F7F5F0] flex items-center justify-center">
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#6B7F6B] border-2 border-[#F7F5F0] flex items-center justify-center">
               <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white animate-pulse" />
             </div>
           </div>
           <div className="min-w-0">
-            <h2 className="font-semibold text-[#2a2a2a] text-base sm:text-lg">A3 AI Tutor</h2>
+            <h2 className="font-semibold text-[#2a2a2a] text-base sm:text-lg">NOBOGYAN Tutor</h2>
             <div className="flex items-center gap-1 sm:gap-2">
               <span className="text-xs sm:text-sm text-[#666]">Teaching:</span>
               <span className="text-xs sm:text-sm text-[#4a5568] font-medium truncate">
@@ -163,7 +172,18 @@ export default function ChatPanel({
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4 max-w-3xl mx-auto">
+        <div 
+          ref={messagesContainerRef}
+          className="relative space-y-4 max-w-3xl mx-auto"
+        >
+          {/* Text Selection Popup for chat messages */}
+          {onSendToChat && (
+            <TextSelectionPopup
+              containerRef={messagesContainerRef}
+              onSendToChat={onSendToChat}
+            />
+          )}
+
           {/* Loading indicator when switching sessions */}
           {isLoadingSessions && (
             <div className="flex items-center justify-center py-12">
@@ -192,6 +212,13 @@ export default function ChatPanel({
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
+
+      {/* Rating Prompt */}
+      {ratingPrompt && (
+        <div className="px-4 max-w-3xl mx-auto">
+          {ratingPrompt}
+        </div>
+      )}
 
       {/* Input */}
       <div className="p-2 sm:p-4 border-t border-[#D6CFC2] bg-[#F7F5F0]/80 backdrop-blur-xl">
@@ -398,8 +425,90 @@ function MessageBubble({ message }: { message: Message }) {
             );
           }
 
-          // Enhanced markdown rendering
-          let html = part
+          // Parse and render markdown tables
+          const renderMarkdownWithTables = (text: string): string => {
+            // Split by lines to find table blocks
+            const lines = text.split('\n');
+            const result: string[] = [];
+            let tableLines: string[] = [];
+            let inTable = false;
+
+            for (let j = 0; j < lines.length; j++) {
+              const line = lines[j];
+              const isTableRow = line.trim().startsWith('|') && line.trim().endsWith('|');
+              const isSeparator = /^\|[\s\-:|]+\|$/.test(line.trim());
+
+              if (isTableRow || isSeparator) {
+                if (!inTable) inTable = true;
+                tableLines.push(line);
+              } else {
+                if (inTable && tableLines.length > 0) {
+                  // Convert table lines to HTML
+                  result.push(convertTableToHtml(tableLines));
+                  tableLines = [];
+                  inTable = false;
+                }
+                result.push(line);
+              }
+            }
+
+            // Handle table at end of text
+            if (tableLines.length > 0) {
+              result.push(convertTableToHtml(tableLines));
+            }
+
+            return result.join('\n');
+          };
+
+          const convertTableToHtml = (tableLines: string[]): string => {
+            if (tableLines.length < 2) return tableLines.join('\n');
+
+            const rows = tableLines.map(line => 
+              line.split('|').slice(1, -1).map(cell => cell.trim())
+            );
+
+            // Find separator row (contains only -, :, |, spaces)
+            const sepIdx = rows.findIndex(row => 
+              row.every(cell => /^[\s\-:]+$/.test(cell) || cell === '')
+            );
+
+            const headerRows = sepIdx > 0 ? rows.slice(0, sepIdx) : [rows[0]];
+            const bodyRows = sepIdx > 0 ? rows.slice(sepIdx + 1) : rows.slice(1);
+
+            let html = '<div class="overflow-x-auto my-3"><table class="min-w-full border-collapse text-sm">';
+            
+            // Header
+            html += '<thead class="bg-[#E7E2D7]">';
+            for (const row of headerRows) {
+              html += '<tr>';
+              for (const cell of row) {
+                html += `<th class="border border-[#D6CFC2] px-3 py-2 text-left font-semibold text-[#4a5568]">${cell}</th>`;
+              }
+              html += '</tr>';
+            }
+            html += '</thead>';
+
+            // Body
+            html += '<tbody>';
+            for (let r = 0; r < bodyRows.length; r++) {
+              const row = bodyRows[r];
+              const bgClass = r % 2 === 0 ? 'bg-white' : 'bg-[#F7F5F0]';
+              html += `<tr class="${bgClass}">`;
+              for (const cell of row) {
+                html += `<td class="border border-[#D6CFC2] px-3 py-2 text-[#444]">${cell}</td>`;
+              }
+              html += '</tr>';
+            }
+            html += '</tbody></table></div>';
+
+            return html;
+          };
+
+          // First convert tables, then apply other markdown
+          let html = renderMarkdownWithTables(part);
+          
+          // Enhanced markdown rendering (skip table HTML)
+          html = html
             .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold text-[#4a5568] mt-3 mb-1">$1</h3>')
             .replace(/^## (.+)$/gm, '<h2 class="text-lg font-semibold text-[#4a5568] mt-4 mb-2">$1</h2>')
             .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold text-[#4a5568] mt-4 mb-2">$1</h1>')
@@ -408,9 +517,17 @@ function MessageBubble({ message }: { message: Message }) {
             .replace(/\*(.*?)\*/g, '<em class="text-[#555]">$1</em>')
             .replace(/`([^`]+)`/g, '<code class="bg-[#E7E2D7] text-[#4a5568] px-1.5 py-0.5 rounded text-xs font-mono">$1</code>')
             .replace(/^[-•]\s+(.+)$/gm, '<li class="flex items-start gap-2 py-0.5 leading-snug"><span class="text-[#8a9ba3] mt-1">•</span><span class="text-[#444]">$1</span></li>')
-            .replace(/^(\d+)\.\s+(.+)$/gm, '<li class="flex items-start gap-2 py-0.5 leading-snug"><span class="text-[#8a9ba3] font-semibold min-w-[1.2rem]">$1.</span><span class="text-[#444]">$2</span></li>')
-            .replace(/\n\n/g, '</p><p class="mt-2">')
-            .replace(/\n/g, "<br/>");
+            .replace(/^(\d+)\.\s+(.+)$/gm, '<li class="flex items-start gap-2 py-0.5 leading-snug"><span class="text-[#8a9ba3] font-semibold min-w-[1.2rem]">$1.</span><span class="text-[#444]">$2</span></li>');
+
+          // Handle paragraphs and line breaks (but not inside table HTML)
+          if (!html.includes('<table')) {
+            html = html
+              .replace(/\n\n/g, '</p><p class="mt-2">')
+              .replace(/\n/g, "<br/>");
+          } else {
+            // For content with tables, be more careful with line breaks
+            html = html.replace(/\n\n(?![^<]*<\/table>)/g, '</p><p class="mt-2">');
+          }
 
           if (html.includes("<li")) {
             html = html.replace(/((?:<li[\s\S]*?<\/li>\s*)+)/g, '<ul class="space-y-0 my-1">$&</ul>');
@@ -431,13 +548,13 @@ function MessageBubble({ message }: { message: Message }) {
         className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
           message.role === "user"
             ? "bg-[#D6CFC2]"
-            : "bg-[#B8C3C9] shadow-md shadow-[#B8C3C9]/30"
+            : "bg-white border border-[#D6CFC2] shadow-sm"
         }`}
       >
         {message.role === "user" ? (
           <User className="w-4 h-4 text-[#555]" />
         ) : (
-          <Bot className="w-4 h-4 text-white" />
+          <Image src="/nobogyan-logo.png" alt="NOBOGYAN" width={24} height={24} className="w-5 h-5" />
         )}
       </div>
       <div

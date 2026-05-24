@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Sparkles } from "lucide-react";
+import { Send, Bot, User, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const suggestedQuestions = [
@@ -89,9 +89,9 @@ export function InteractiveDemo() {
           <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#7C9A6B]/20 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-[#7C9A6B]" />
+                <GraduationCap className="w-4 h-4 text-[#7C9A6B]" />
               </div>
-              <span className="text-sm font-medium text-white">A3 Swarm</span>
+              <span className="text-sm font-medium text-white">NOBOGYAN Swarm</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">

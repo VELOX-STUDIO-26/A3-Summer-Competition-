@@ -1,11 +1,14 @@
 "use client";
 
+import { useMemo, useRef } from "react";
 import InteractiveMindMap from "@/components/mindmap/InteractiveMindMap";
 import CodeExercise from "@/components/code/CodeExercise";
 import LecturePlayer from "@/components/video/LecturePlayer";
 import { FaithfulnessBadge } from "@/components/FaithfulnessBadge";
 import QuizRenderer from "./QuizRenderer";
 import { renderMarkdown } from "@/lib/markdown";
+import MermaidRenderer from "@/components/MermaidRenderer";
+import TextSelectionPopup from "./TextSelectionPopup";
 
 interface GeneratedResource {
   id: string;
@@ -24,6 +27,7 @@ interface ResourcePreviewProps {
   learningPath: { id: string; title: string; status: string }[];
   isGenerating: boolean;
   onMindMapNodeClick?: (nodeLabel: string) => void;
+  onSendToChat?: (selectedText: string, question?: string) => void;
   // Quiz state
   quizState: {
     answers: Record<string, number>;
@@ -45,10 +49,12 @@ export default function ResourcePreview({
   learningPath,
   isGenerating,
   onMindMapNodeClick,
+  onSendToChat,
   quizState,
 }: ResourcePreviewProps) {
   const resType = resource.type;
   const res = resource.data;
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Collect completed topic titles for Refresher tooltips
   const completedTopics = learningPath
@@ -62,7 +68,18 @@ export default function ResourcePreview({
 
   return (
     <div className="flex-1 overflow-auto min-h-0 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
-      <div className={`flex flex-col h-full bg-[#e9e4da] ${resType === "mindmap" ? "p-0" : "p-5"}`}>
+      <div 
+        ref={contentRef}
+        className={`relative flex flex-col h-full bg-[#e9e4da] ${resType === "mindmap" ? "p-0" : "p-5"}`}
+      >
+        {/* Text Selection Popup */}
+        {onSendToChat && (
+          <TextSelectionPopup
+            containerRef={contentRef}
+            onSendToChat={onSendToChat}
+          />
+        )}
+
         {/* Header bar */}
         <div className={`flex items-center gap-2.5 ${resType === "mindmap" ? "px-5 pt-5 pb-3" : "mb-4"}`}>
           <div
@@ -107,10 +124,9 @@ export default function ResourcePreview({
         {/* Notes */}
         {resType === "notes" &&
           (rawContent ? (
-            <div
-              className="study-notes max-w-none pb-8"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(rawContent, completedTopics) }}
-            />
+            <div className="pb-8">
+              <MarkdownWithMermaid content={rawContent} completedTopics={completedTopics} />
+            </div>
           ) : (
             <EmptyState message="Notes generation returned empty content." />
           ))}
@@ -125,10 +141,7 @@ export default function ResourcePreview({
               quizState={quizState}
             />
           ) : rawContent ? (
-            <div
-              className="study-notes max-w-none"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(rawContent, completedTopics) }}
-            />
+            <MarkdownWithMermaid content={rawContent} completedTopics={completedTopics} />
           ) : (
             <EmptyState message="Quiz content is loading or unavailable…" />
           ))}
@@ -138,10 +151,7 @@ export default function ResourcePreview({
           (res?.problem ? (
             <CodeExercise data={res} topic={resource.topic} />
           ) : rawContent ? (
-            <div
-              className="study-notes max-w-none"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(rawContent, completedTopics) }}
-            />
+            <MarkdownWithMermaid content={rawContent} completedTopics={completedTopics} />
           ) : (
             <EmptyState message="Code content is loading or unavailable…" />
           ))}
@@ -174,10 +184,7 @@ export default function ResourcePreview({
               />
             </div>
           ) : rawContent ? (
-            <div
-              className="study-notes max-w-none"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(rawContent, completedTopics) }}
-            />
+            <MarkdownWithMermaid content={rawContent} completedTopics={completedTopics} />
           ) : (
             <EmptyState message="Mind map content is loading or unavailable…" />
           ))}
@@ -189,10 +196,7 @@ export default function ResourcePreview({
               <LecturePlayer data={res} topic={resource.topic} />
             </div>
           ) : rawContent ? (
-            <div
-              className="study-notes max-w-none"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(rawContent, completedTopics) }}
-            />
+            <MarkdownWithMermaid content={rawContent} completedTopics={completedTopics} />
           ) : (
             <EmptyState message="Lecture slides are loading or unavailable…" />
           ))}
@@ -210,6 +214,71 @@ function EmptyState({ message }: { message: string }) {
         regenerating from the resources panel.
       </p>
     </div>
+  );
+}
+
+// Component to render markdown content with Mermaid diagram support
+function MarkdownWithMermaid({ 
+  content, 
+  completedTopics 
+}: { 
+  content: string; 
+  completedTopics: string[];
+}) {
+  // Parse content to extract mermaid blocks and regular markdown
+  const parts = useMemo(() => {
+    const result: Array<{ type: 'markdown' | 'mermaid'; content: string }> = [];
+    
+    // Split by mermaid code blocks
+    const mermaidRegex = /```mermaid\n([\s\S]*?)```/gi;
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = mermaidRegex.exec(content)) !== null) {
+      // Add markdown before this mermaid block
+      if (match.index > lastIndex) {
+        const markdownContent = content.slice(lastIndex, match.index);
+        if (markdownContent.trim()) {
+          result.push({ type: 'markdown', content: markdownContent });
+        }
+      }
+      
+      // Add the mermaid block
+      result.push({ type: 'mermaid', content: match[1].trim() });
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining markdown after last mermaid block
+    if (lastIndex < content.length) {
+      const remainingContent = content.slice(lastIndex);
+      if (remainingContent.trim()) {
+        result.push({ type: 'markdown', content: remainingContent });
+      }
+    }
+    
+    // If no mermaid blocks found, return entire content as markdown
+    if (result.length === 0) {
+      result.push({ type: 'markdown', content });
+    }
+    
+    return result;
+  }, [content]);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.type === 'mermaid') {
+          return <MermaidRenderer key={index} chart={part.content} />;
+        }
+        return (
+          <div
+            key={index}
+            className="study-notes max-w-none"
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(part.content, completedTopics) }}
+          />
+        );
+      })}
+    </>
   );
 }
 

@@ -179,12 +179,18 @@ class ProfilingSession:
         """Get profiling progress."""
         total_questions = len(PROFILING_QUESTIONS) - 1  # Exclude 'complete' message
         current = min(self.current_question_index, total_questions)
+        
+        # Problem 3 Fix: Show CUMULATIVE dimensions (all dimensions with confidence > 0)
+        cumulative_dimensions = [
+            dim for dim, conf in self.profile_builder.confidence_scores.items()
+            if conf > 0
+        ]
 
         return {
             "current_question": current,
             "total_questions": total_questions,
             "percentage": (current / total_questions * 100) if total_questions > 0 else 100,
-            "dimensions_found": self.profile_builder.get_profile_summary()["dimensions_found"],
+            "dimensions_found": cumulative_dimensions,
             "confidence_scores": self.profile_builder.confidence_scores,
             "is_complete": self.is_complete(),
         }
@@ -230,11 +236,11 @@ class SessionManager:
         
         from core.llm_client import llm_client
         
-        system_prompt = """You are A3, a friendly and intelligent learning assistant. 
+        system_prompt = """You are NOBOGYAN, a friendly and intelligent learning assistant. 
 You're starting a conversation with a new student to understand their learning profile.
 
 Generate a warm, welcoming first message that:
-- Introduces yourself briefly as A3
+- Introduces yourself briefly as the NOBOGYAN learning assistant
 - Explains you want to create a personalized learning path for them
 - Asks an open-ended question to get them talking about their learning goals or interests
 - Is conversational and encouraging, not robotic
@@ -256,14 +262,14 @@ Do NOT list all the things you want to know. Just ask ONE natural opening questi
             # Check if it's a mock response
             if response.get("mock"):
                 logger.warning("First question got mock response, using fallback")
-                return "Hi! I'm A3, your learning assistant. I'd love to help you create a personalized learning path. What topics are you interested in learning about?"
+                return "Hi! I'm your NOBOGYAN learning assistant. I'd love to help you create a personalized learning path. What topics are you interested in learning about?"
 
             content = _safe_extract_llm_content(response)
             logger.info(f"First question generated: {content[:50]}...")
             return content
         except Exception as e:
             logger.error(f"Failed to generate first question: {e}")
-            return "Hi! I'm A3, your learning assistant. I'd love to help you create a personalized learning path. What topics are you interested in learning about?"
+            return "Hi! I'm your NOBOGYAN learning assistant. I'd love to help you create a personalized learning path. What topics are you interested in learning about?"
 
     def get_session(self, session_id: str) -> Optional[ProfilingSession]:
         """Get a session by ID."""
@@ -347,13 +353,16 @@ Do NOT list all the things you want to know. Just ask ONE natural opening questi
             try:
                 gap_tags = await gap_detector.detect_weak_points(message)
                 if gap_tags:
-                    extraction_result.extractions.append(ProfileExtraction(
-                        dimension="weak_points",
-                        value=gap_tags,
-                        confidence=0.6,
-                        evidence_quote="Detected via embedding similarity vs expert corpus",
-                    ))
-                    logger.info(f"GapDetector flagged weak points: {gap_tags}")
+                    # Normalize gap tags to human-readable format
+                    normalized_gaps = [str(tag).strip() for tag in gap_tags if str(tag).strip()]
+                    if normalized_gaps:
+                        extraction_result.extractions.append(ProfileExtraction(
+                            dimension="weak_points",
+                            value=normalized_gaps,
+                            confidence=0.6,
+                            evidence_quote="Detected via embedding similarity vs expert corpus",
+                        ))
+                        logger.info(f"GapDetector flagged weak points: {normalized_gaps}")
             except Exception as e:
                 logger.debug(f"Gap detection skipped: {e}")
 
@@ -413,7 +422,7 @@ Do NOT list all the things you want to know. Just ask ONE natural opening questi
         logger.info(f"Conversation history has {len(conversation_history)} messages")
         
         # Build the system prompt
-        system_prompt = """You are A3, a friendly and intelligent learning assistant helping to understand a student's learning profile.
+        system_prompt = """You are NOBOGYAN, a friendly and intelligent learning assistant helping to understand a student's learning profile.
 
 Your goal is to have a natural conversation to learn about the student across these 6 dimensions:
 1. knowledge_base - What topics/skills they already know (e.g., Python, cloud computing, data science)

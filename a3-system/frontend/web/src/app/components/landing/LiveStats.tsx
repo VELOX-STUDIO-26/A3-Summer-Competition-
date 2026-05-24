@@ -2,23 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, Route, Workflow } from "lucide-react";
+import { Users, Ticket, TrendingUp } from "lucide-react";
 
 export default function LiveStats() {
   const [stats, setStats] = useState({
-    learners: 3334,
-    paths: 15292,
-    collaborations: 89412,
+    waitlist: 2547,
+    betaSlots: 500,
+    pathsGenerated: 15234,
   });
 
   useEffect(() => {
     const interval = setInterval(() => {
       setStats((prev) => ({
-        learners: prev.learners + Math.floor(Math.random() * 5),
-        paths: prev.paths + Math.floor(Math.random() * 10),
-        collaborations: prev.collaborations + Math.floor(Math.random() * 20),
+        waitlist: prev.waitlist + Math.floor(Math.random() * 3),
+        betaSlots: prev.betaSlots,
+        pathsGenerated: prev.pathsGenerated + Math.floor(Math.random() * 8),
       }));
-    }, 3000);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, []);
@@ -26,18 +26,21 @@ export default function LiveStats() {
   const statItems = [
     {
       icon: Users,
-      value: stats.learners.toLocaleString(),
-      label: "learners online",
+      value: stats.waitlist.toLocaleString() + "+",
+      label: "on waitlist",
+      highlight: false,
     },
     {
-      icon: Route,
-      value: stats.paths.toLocaleString(),
-      label: "paths today",
+      icon: Ticket,
+      value: stats.betaSlots.toString(),
+      label: "beta slots left",
+      highlight: true,
     },
     {
-      icon: Workflow,
-      value: stats.collaborations.toLocaleString(),
-      label: "collaborations",
+      icon: TrendingUp,
+      value: stats.pathsGenerated.toLocaleString() + "+",
+      label: "paths generated",
+      highlight: false,
     },
   ];
 
@@ -53,11 +56,17 @@ export default function LiveStats() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-8">
           {statItems.map((stat, i) => (
             <div key={stat.label} className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-sage-400/10 flex items-center justify-center shrink-0">
-                <stat.icon className="w-3.5 h-3.5 text-sage-500" />
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                stat.highlight ? "bg-amber-400/20" : "bg-sage-400/10"
+              }`}>
+                <stat.icon className={`w-3.5 h-3.5 ${
+                  stat.highlight ? "text-amber-500" : "text-sage-500"
+                }`} />
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-sm sm:text-base font-semibold text-deep-charcoal tabular-nums">
+                <span className={`text-sm sm:text-base font-semibold tabular-nums ${
+                  stat.highlight ? "text-amber-600" : "text-deep-charcoal"
+                }`}>
                   {stat.value}
                 </span>
                 <span className="text-xs text-deep-charcoal/50 whitespace-nowrap">{stat.label}</span>

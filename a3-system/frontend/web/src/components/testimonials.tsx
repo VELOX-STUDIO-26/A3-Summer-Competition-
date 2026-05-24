@@ -6,14 +6,14 @@ import { cn } from "@/lib/utils";
 
 const testimonials = [
   {
-    quote: "A3 didn't just teach me cloud computing — it understood exactly where I was struggling and adapted the entire curriculum around my weak points. The agent swarm feels like having a personal tutor available 24/7.",
+    quote: "NOBOGYAN didn't just teach me cloud computing — it understood exactly where I was struggling and adapted the entire curriculum around my weak points. The agent swarm feels like having a personal tutor available 24/7.",
     name: "Sarah Chen",
     role: "DevOps Engineer @ TechCorp",
     style: "visual",
     rating: 5,
   },
   {
-    quote: "I've tried dozens of learning platforms. None of them adapted to my pace like A3. When I struggled with Kubernetes networking, it automatically generated simpler prerequisite content without me asking.",
+    quote: "I've tried dozens of learning platforms. None of them adapted to my pace like NOBOGYAN. When I struggled with Kubernetes networking, it automatically generated simpler prerequisite content without me asking.",
     name: "Marcus Johnson",
     role: "CS Student @ Stanford",
     style: "kinesthetic",

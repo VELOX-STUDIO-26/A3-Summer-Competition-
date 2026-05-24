@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FileText, GitBranch, Code2, HelpCircle, Video, type LucideIcon } from "lucide-react";
 import { useInView } from "../hooks/useInView";
 
 /* ─── Agent colour map ─── */
@@ -15,8 +16,10 @@ const agentColours: Record<string, string> = {
   Sage: "#1ABC9C",
   Director: "#E74C3C",
   Architect: "#34495E",
-  "Gate Agent": "#3498DB",
+  "Mastery Guard": "#3498DB",
   Evaluator: "#9B59B6",
+  "Insight Engine": "#8E44AD",
+  "Progress Tracker": "#16A085",
 };
 
 /* ═══════════════════════════════════════════
@@ -52,8 +55,16 @@ const steps = [
     title: "Master",
     body: "Unlock Milestones",
     detail:
-      "Gate Agents track mastery across completion, quiz scores and engagement. Hit the threshold and the next module unlocks automatically.",
-    agents: ["Gate Agent", "Evaluator"],
+      "Mastery Guards track your progress across completion, quiz scores and engagement. Hit the threshold and the next module unlocks automatically.",
+    agents: ["Mastery Guard", "Evaluator"],
+  },
+  {
+    number: "05",
+    title: "Analyze",
+    body: "See Your Growth in Real Time",
+    detail:
+      "The Insight Engine continuously analyzes your learning patterns, identifies weak spots, and surfaces actionable recommendations—so you always know exactly where to focus next.",
+    agents: ["Insight Engine", "Progress Tracker"],
   },
 ];
 
@@ -201,16 +212,16 @@ function PlanView() {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col justify-center p-2">
+    <div className="w-full h-full min-h-[380px] flex flex-col items-center justify-center p-6">
       <div
-        className="rounded-2xl p-5 border border-white/60"
+        className="rounded-2xl p-6 w-full border border-white/60"
         style={{
           background: "rgba(255,255,255,0.45)",
           backdropFilter: "blur(24px)",
           boxShadow: "inset 0 1px 2px rgba(255,255,255,0.8), 0 12px 32px rgba(0,0,0,0.03)",
         }}
       >
-        <div className="relative h-64">
+        <div className="relative h-72">
           <svg className="absolute inset-0 w-full h-full pointer-events-none">
             <defs>
               <linearGradient id="pathGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -501,7 +512,153 @@ function MasterView() {
   );
 }
 
-const views = [DiscoverView, PlanView, LearnView, MasterView];
+/* ── Step 5 : Analytics ── */
+function AnalyzeView() {
+  return (
+    <div className="w-full h-full min-h-[380px] flex flex-col items-center justify-center p-6">
+      {/* Main analytics card */}
+      <div
+        className="rounded-2xl p-5 w-full border border-white/60"
+        style={{
+          background: "rgba(255,255,255,0.45)",
+          backdropFilter: "blur(24px)",
+          boxShadow: "inset 0 1px 2px rgba(255,255,255,0.8), 0 12px 32px rgba(0,0,0,0.03)",
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+              <svg className="w-4 h-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-deep-charcoal">Learning Analytics</p>
+              <p className="text-[10px] text-deep-charcoal/50">Real-time insights</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono text-green-500 bg-green-500/10 px-2 py-1 rounded-full">↑ 23%</span>
+        </div>
+
+        {/* Chart area */}
+        <div className="h-32 relative mb-4">
+          <svg className="w-full h-full" viewBox="0 0 280 100" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="analyzeChartGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#8E44AD" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#8E44AD" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {/* Grid lines */}
+            {[25, 50, 75].map((y) => (
+              <line key={y} x1="0" y1={y} x2="280" y2={y} stroke="#EDE8E0" strokeWidth="1" />
+            ))}
+            {/* Area */}
+            <motion.path
+              d="M 0 85 L 40 70 L 80 75 L 120 50 L 160 55 L 200 30 L 240 35 L 280 15 L 280 100 L 0 100 Z"
+              fill="url(#analyzeChartGrad)"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6 }}
+            />
+            {/* Line */}
+            <motion.path
+              d="M 0 85 L 40 70 L 80 75 L 120 50 L 160 55 L 200 30 L 240 35 L 280 15"
+              fill="none"
+              stroke="#8E44AD"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+            />
+            {/* Data points */}
+            {[[0, 85], [40, 70], [80, 75], [120, 50], [160, 55], [200, 30], [240, 35], [280, 15]].map(([x, y], i) => (
+              <motion.circle
+                key={i}
+                cx={x}
+                cy={y}
+                r="4"
+                fill="white"
+                stroke="#8E44AD"
+                strokeWidth="2"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.15 * i, duration: 0.2 }}
+              />
+            ))}
+          </svg>
+          {/* Y-axis labels */}
+          <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-[8px] text-deep-charcoal/40 -ml-1">
+            <span>100%</span>
+            <span>50%</span>
+            <span>0%</span>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Weak Spots", value: "2", color: "text-amber-500", bg: "bg-amber-500/10" },
+            { label: "Strengths", value: "5", color: "text-green-500", bg: "bg-green-500/10" },
+            { label: "Streak", value: "7d", color: "text-purple-500", bg: "bg-purple-500/10" },
+          ].map((stat) => (
+            <div key={stat.label} className={`${stat.bg} rounded-lg p-2 text-center`}>
+              <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
+              <p className="text-[9px] text-deep-charcoal/50">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* AI Recommendation strip */}
+      <div
+        className="mt-4 w-full flex items-center gap-3 rounded-lg px-4 py-3 border border-purple-200/50"
+        style={{
+          background: "rgba(142,68,173,0.08)",
+          backdropFilter: "blur(16px)",
+        }}
+      >
+        <div className="w-8 h-8 rounded-full bg-purple-500/15 flex items-center justify-center shrink-0">
+          <svg className="w-4 h-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <p className="text-xs font-medium text-purple-700">AI Recommendation</p>
+          <p className="text-[10px] text-purple-600/70">Focus on K8s Networking—unlocks 3 modules</p>
+        </div>
+        <motion.div
+          className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.8, type: "spring", stiffness: 200 }}
+        >
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+          </svg>
+        </motion.div>
+      </div>
+
+      {/* Agent status */}
+      <div
+        className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2 border border-white/50"
+        style={{
+          background: "rgba(255,255,255,0.5)",
+          backdropFilter: "blur(16px)",
+        }}
+      >
+        <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+        <span className="text-[10px] font-mono text-deep-charcoal/70">Insight Engine:</span>
+        <span className="text-[10px] text-deep-charcoal/50">Analyzing patterns...</span>
+        <span className="ml-auto text-[10px] font-mono text-purple-500">Live</span>
+      </div>
+    </div>
+  );
+}
+
+const views = [DiscoverView, PlanView, LearnView, MasterView, AnalyzeView];
 
 /* ═══════════════════════════════════════════
    MAIN SECTION
@@ -640,7 +797,7 @@ export default function HowItWorks() {
             className="mt-4 text-4xl md:text-5xl font-serif font-semibold text-deep-charcoal"
             style={{ fontFamily: "var(--font-serif)", letterSpacing: "-0.02em" }}
           >
-            Four Steps. Infinite Personalization.
+            Five Steps. One Continuous Loop.
           </h2>
         </div>
       </div>
@@ -802,11 +959,30 @@ function DiscoverBento() {
         </div>
       </BentoCell>
 
-      {/* Metric card */}
+      {/* Dimensions mini-chart */}
       <BentoCell delay={0.08} style={{ background: "rgba(155,89,182,0.08)" }}>
-        <div className="h-full flex flex-col items-center justify-center text-center">
-          <span className="text-2xl font-serif font-bold text-purple-600">6</span>
-          <span className="text-[9px] font-mono text-purple-500/70 uppercase">Dimensions</span>
+        <div className="h-full flex flex-col justify-center">
+          <span className="text-[8px] font-mono text-purple-500/70 uppercase mb-1.5">6 Dimensions</span>
+          <div className="space-y-1">
+            {[
+              { label: "Style", value: "Visual", width: "85%" },
+              { label: "Pace", value: "Normal", width: "60%" },
+              { label: "Base", value: "Beginner", width: "30%" },
+            ].map((d) => (
+              <div key={d.label} className="flex items-center gap-1.5">
+                <span className="text-[7px] text-purple-600/60 w-7">{d.label}</span>
+                <div className="flex-1 h-1 bg-purple-200/50 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-purple-500 rounded-full" 
+                    initial={{ width: 0 }} 
+                    animate={{ width: d.width }} 
+                    transition={{ duration: 0.8, delay: 0.2 }} 
+                  />
+                </div>
+                <span className="text-[7px] font-medium text-purple-600 w-10 text-right">{d.value}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </BentoCell>
 
@@ -842,23 +1018,43 @@ function DiscoverBento() {
 function PlanBento() {
   return (
     <div className="grid grid-cols-3 gap-2.5 auto-rows-fr">
-      {/* Knowledge graph - main */}
+      {/* Knowledge graph - main with connected path */}
       <BentoCell delay={0} span="2" className="!p-3 row-span-2">
         <div className="relative h-full min-h-[140px]">
           <svg className="absolute inset-0 w-full h-full">
-            <path d="M 25 90 Q 60 60 100 50 Q 140 40 175 45" fill="none" stroke="#7C9A6B" strokeWidth="2" strokeDasharray="4 3" opacity="0.4" />
+            <defs>
+              <linearGradient id="planPathGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#7C9A6B" />
+                <stop offset="100%" stopColor="#1ABC9C" />
+              </linearGradient>
+            </defs>
+            {/* Main curved path connecting nodes */}
+            <motion.path 
+              d="M 25 105 C 50 85, 70 65, 100 55 C 130 45, 150 40, 175 38" 
+              fill="none" 
+              stroke="url(#planPathGrad)" 
+              strokeWidth="2" 
+              strokeDasharray="6 4"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+            />
+            {/* Animated dot traveling along path */}
+            <circle r="3" fill="#7C9A6B">
+              <animateMotion dur="3s" repeatCount="indefinite" path="M 25 105 C 50 85, 70 65, 100 55 C 130 45, 150 40, 175 38" />
+            </circle>
           </svg>
           {[
             { x: "12%", y: "75%", label: "Docker", active: true },
             { x: "48%", y: "40%", label: "K8s", active: true },
-            { x: "85%", y: "35%", label: "Pods", active: false },
+            { x: "85%", y: "28%", label: "Pods", active: false },
           ].map((n, i) => (
             <motion.div
               key={n.label}
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.05 + i * 0.03 }}
-              className={`absolute px-2 py-1 rounded-lg text-[9px] font-mono font-medium ${n.active ? "bg-sage-400 text-white shadow-sm" : "bg-sand-200 text-deep-charcoal/50"}`}
+              transition={{ delay: 0.3 + i * 0.15 }}
+              className={`absolute px-2.5 py-1.5 rounded-lg text-[9px] font-mono font-medium ${n.active ? "bg-sage-400 text-white shadow-md shadow-sage-400/30" : "bg-sand-200 text-deep-charcoal/50"}`}
               style={{ left: n.x, top: n.y, transform: "translate(-50%, -50%)" }}
             >
               {n.label}
@@ -905,12 +1101,12 @@ function PlanBento() {
 
 /* ── Step 3: Learn - Bento Grid ── */
 function LearnBento() {
-  const resources = [
-    { label: "Notes", icon: "📝", colour: "#9B59B6", agent: "Scholar", done: true },
-    { label: "Mind Map", icon: "🧠", colour: "#E67E22", agent: "Mapper", done: true },
-    { label: "Code Lab", icon: "💻", colour: "#34495E", agent: "Architect", done: true },
-    { label: "Quiz", icon: "❓", colour: "#1ABC9C", agent: "Sage", done: false },
-    { label: "Video", icon: "🎬", colour: "#E74C3C", agent: "Director", done: false },
+  const resources: { label: string; icon: LucideIcon; colour: string; agent: string; done: boolean }[] = [
+    { label: "Notes", icon: FileText, colour: "#9B59B6", agent: "Scholar", done: true },
+    { label: "Mind Map", icon: GitBranch, colour: "#E67E22", agent: "Mapper", done: true },
+    { label: "Code Lab", icon: Code2, colour: "#34495E", agent: "Architect", done: false },
+    { label: "Quiz", icon: HelpCircle, colour: "#1ABC9C", agent: "Sage", done: false },
+    { label: "Video", icon: Video, colour: "#E74C3C", agent: "Director", done: false },
   ];
 
   const topRow = resources.slice(0, 2);
@@ -921,7 +1117,9 @@ function LearnBento() {
     <BentoCell key={r.label} delay={i * 0.03} className="!p-4" span={span}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-lg">{r.icon}</span>
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${r.colour}15` }}>
+            <r.icon className="w-4 h-4" style={{ color: r.colour }} />
+          </div>
           <span className="text-xs font-semibold text-deep-charcoal">{r.label}</span>
         </div>
         {r.done ? (
@@ -949,13 +1147,19 @@ function LearnBento() {
       {/* Center row: Code Lab - spans full width, centered content */}
       <BentoCell delay={0.08} span="2" className="!p-4">
         <div className="flex items-center justify-center gap-3">
-          <span className="text-xl">{centerCard.icon}</span>
-          <span className="text-sm font-semibold text-deep-charcoal">{centerCard.label}</span>
-          <div className="w-5 h-5 rounded-full bg-green-500/15 flex items-center justify-center">
-            <svg className="w-3 h-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${centerCard.colour}15` }}>
+            <centerCard.icon className="w-5 h-5" style={{ color: centerCard.colour }} />
           </div>
+          <span className="text-sm font-semibold text-deep-charcoal">{centerCard.label}</span>
+          {centerCard.done ? (
+            <div className="w-5 h-5 rounded-full bg-green-500/15 flex items-center justify-center">
+              <svg className="w-3 h-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          ) : (
+            <div className="w-5 h-5 rounded-full border-2 border-sage-400 border-t-transparent animate-spin" />
+          )}
           <div className="flex items-center gap-1.5 ml-2">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: centerCard.colour }} />
             <span className="text-[9px] font-mono text-deep-charcoal/50">{centerCard.agent}</span>
@@ -1073,11 +1277,11 @@ function MasterBento() {
         </div>
       </BentoCell>
 
-      {/* Gate agent */}
+      {/* Mastery guard */}
       <BentoCell delay={0.12}>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-blue-500" />
-          <span className="text-[9px] font-mono text-deep-charcoal/60">Gate Agent</span>
+          <span className="text-[9px] font-mono text-deep-charcoal/60">Mastery Guard</span>
         </div>
         <span className="text-[8px] text-green-500 mt-1 block">✓ Tracking</span>
       </BentoCell>
@@ -1085,8 +1289,140 @@ function MasterBento() {
   );
 }
 
+/* ── Step 5: Analyze - Bento Grid ── */
+function AnalyzeBento() {
+  return (
+    <div className="grid grid-cols-3 gap-2.5 auto-rows-fr">
+      {/* Main analytics chart */}
+      <BentoCell delay={0} span="2" className="row-span-2 !p-4">
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[9px] font-mono text-purple-500 uppercase tracking-wider">Learning Velocity</span>
+            <span className="text-[8px] text-green-500 font-medium">↑ 23% this week</span>
+          </div>
+          {/* Mini line chart */}
+          <div className="flex-1 relative min-h-[80px]">
+            <svg className="w-full h-full" viewBox="0 0 200 80" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="chartGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#8E44AD" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#8E44AD" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              {/* Area fill */}
+              <motion.path
+                d="M 0 70 L 30 55 L 60 60 L 90 40 L 120 45 L 150 25 L 180 30 L 200 15 L 200 80 L 0 80 Z"
+                fill="url(#chartGrad)"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8 }}
+              />
+              {/* Line */}
+              <motion.path
+                d="M 0 70 L 30 55 L 60 60 L 90 40 L 120 45 L 150 25 L 180 30 L 200 15"
+                fill="none"
+                stroke="#8E44AD"
+                strokeWidth="2"
+                strokeLinecap="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+              />
+              {/* Data points */}
+              {[[0, 70], [30, 55], [60, 60], [90, 40], [120, 45], [150, 25], [180, 30], [200, 15]].map(([x, y], i) => (
+                <motion.circle
+                  key={i}
+                  cx={x}
+                  cy={y}
+                  r="3"
+                  fill="#8E44AD"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1 * i, duration: 0.2 }}
+                />
+              ))}
+            </svg>
+          </div>
+          <div className="flex justify-between text-[8px] text-deep-charcoal/40 mt-1">
+            <span>Mon</span>
+            <span>Today</span>
+          </div>
+        </div>
+      </BentoCell>
+
+      {/* Weak spots */}
+      <BentoCell delay={0.05}>
+        <span className="text-[8px] font-mono text-amber-500 uppercase tracking-wider">Weak Spots</span>
+        <div className="mt-2 space-y-1">
+          {["Networking", "Volumes"].map((s) => (
+            <div key={s} className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span className="text-[9px] text-deep-charcoal/70">{s}</span>
+            </div>
+          ))}
+        </div>
+      </BentoCell>
+
+      {/* Strength */}
+      <BentoCell delay={0.08}>
+        <span className="text-[8px] font-mono text-green-500 uppercase tracking-wider">Strengths</span>
+        <div className="mt-2 space-y-1">
+          {["Containers", "CLI"].map((s) => (
+            <div key={s} className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+              <span className="text-[9px] text-deep-charcoal/70">{s}</span>
+            </div>
+          ))}
+        </div>
+      </BentoCell>
+
+      {/* Recommendation card */}
+      <BentoCell delay={0.1} span="2" style={{ background: "rgba(142,68,173,0.08)", borderColor: "rgba(142,68,173,0.2)" }}>
+        <div className="flex items-start gap-2">
+          <div className="w-6 h-6 rounded-lg bg-purple-500/15 flex items-center justify-center shrink-0">
+            <svg className="w-3 h-3 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <span className="text-[10px] font-semibold text-purple-700">AI Recommendation</span>
+            <p className="text-[9px] text-purple-600/70 mt-0.5">Focus on K8s Networking next—it unlocks 3 advanced modules.</p>
+          </div>
+        </div>
+      </BentoCell>
+
+      {/* Agent status */}
+      <BentoCell delay={0.12}>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+          <span className="text-[9px] font-mono text-deep-charcoal/60">Insight Engine</span>
+        </div>
+        <span className="text-[8px] text-green-500 mt-1 block">✓ Analyzing</span>
+      </BentoCell>
+
+      {/* Study streak */}
+      <BentoCell delay={0.14} span="2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔥</span>
+            <div>
+              <span className="text-[10px] font-semibold text-deep-charcoal">7-Day Streak</span>
+              <span className="text-[8px] text-deep-charcoal/50 block">Keep it going!</span>
+            </div>
+          </div>
+          <div className="flex gap-0.5">
+            {[1, 1, 1, 1, 1, 1, 1].map((_, i) => (
+              <div key={i} className="w-3 h-3 rounded-sm bg-green-400" />
+            ))}
+          </div>
+        </div>
+      </BentoCell>
+    </div>
+  );
+}
+
 /* ── Bento views array ── */
-const bentoViews = [DiscoverBento, PlanBento, LearnBento, MasterBento];
+const bentoViews = [DiscoverBento, PlanBento, LearnBento, MasterBento, AnalyzeBento];
 
 /* ── Step view for sticky layout ── */
 function StepView({ step, index, isActive }: { step: (typeof steps)[0]; index: number; isActive: boolean }) {

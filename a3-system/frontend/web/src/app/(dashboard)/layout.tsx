@@ -31,8 +31,8 @@ export default function DashboardLayout({
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0f]">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-[#2DD4BF] flex items-center justify-center animate-pulse">
-            <span className="text-black font-bold text-sm">A3</span>
+          <div className="w-10 h-10 rounded-lg bg-[#6B7F6B] flex items-center justify-center animate-pulse">
+            <img src="/nobogyan-logo.png" alt="NOBOGYAN" className="w-8 h-8" />
           </div>
           <div className="text-white/40 text-sm">Loading...</div>
         </div>

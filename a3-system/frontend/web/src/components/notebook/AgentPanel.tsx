@@ -13,7 +13,7 @@ import {
   X,
   Users,
   Target,
-  Sparkles,
+  Layers,
 } from "lucide-react";
 
 interface GeneratedResource {
@@ -318,7 +318,7 @@ export default function AgentPanel({
               {generatedResources.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <div className="w-12 h-12 rounded-xl bg-[#D6CFC2]/50 flex items-center justify-center mb-3">
-                    <Sparkles className="w-6 h-6 text-[#999]" />
+                    <Layers className="w-6 h-6 text-[#999]" />
                   </div>
                   <p className="text-sm text-[#666] mb-1">No resources yet</p>
                   <p className="text-xs text-[#999]">Click an agent above to generate</p>

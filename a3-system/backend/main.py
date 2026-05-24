@@ -280,6 +280,14 @@ app.include_router(asr.router, prefix="/api/asr", tags=["ASR"])
 from api.routers import cohorts
 app.include_router(cohorts.router, tags=["Cohorts"])
 
+# Dynamic Knowledge Graphs Router
+from api.routers import graphs
+app.include_router(graphs.router, tags=["Knowledge Graphs"])
+
+# Hierarchical Knowledge Graphs Router (v2.1)
+from api.routers import hierarchical_graphs
+app.include_router(hierarchical_graphs.router, prefix="/api/hierarchical", tags=["Hierarchical Graphs"])
+
 
 if __name__ == "__main__":
     import uvicorn

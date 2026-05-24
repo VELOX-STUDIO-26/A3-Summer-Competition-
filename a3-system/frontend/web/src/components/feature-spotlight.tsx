@@ -160,7 +160,7 @@ export function FeatureSpotlight() {
         <FeatureRow
           label="Feature 02"
           headline="A* Path Planning Over Knowledge Graphs"
-          body="A3 runs A* search across a knowledge graph of 500+ topics to find your optimal learning path. The Dynamic Adaptation Engine reshuffles your route based on quiz performance, goals, and engagement."
+          body="NOBOGYAN runs A* search across a knowledge graph of 500+ topics to find your optimal learning path. The Dynamic Adaptation Engine reshuffles your route based on quiz performance, goals, and engagement."
           badges={["Path Planner", "Recommender", "Gate Agent"]}
           features={[
             "PageRank-informed heuristics",

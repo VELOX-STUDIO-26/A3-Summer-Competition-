@@ -4,6 +4,7 @@ import Hero from "./sections/Hero";
 import TrustBar from "./sections/TrustBar";
 import HowItWorks from "./sections/HowItWorks";
 import TheSwarm from "./sections/TheSwarm";
+import AITutor from "./sections/AITutor";
 import FeatureSpotlight from "./sections/FeatureSpotlight";
 import InteractiveDemo from "./sections/InteractiveDemo";
 import Metrics from "./sections/Metrics";
@@ -22,6 +23,7 @@ export default function Home() {
       <TrustBar />
       <HowItWorks />
       <TheSwarm />
+      <AITutor />
       <FeatureSpotlight />
       <InteractiveDemo />
       <Metrics />

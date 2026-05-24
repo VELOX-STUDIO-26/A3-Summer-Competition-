@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Clock, Rocket, Bell, Check } from "lucide-react";
+import { Clock, Rocket, Bell, Check } from "lucide-react";
 import ScrollReveal from "../components/landing/ScrollReveal";
 import SwarmCanvas from "../components/landing/SwarmCanvas";
 import { addToWaitlist } from "@/lib/firebase";
@@ -96,8 +96,8 @@ export default function FinalCTA() {
 
         <ScrollReveal delay={0.2}>
           <p className="mt-4 sm:mt-6 text-base sm:text-lg text-white/60 max-w-xl mx-auto px-4">
-            15+ AI agents working together to create your perfect learning journey. 
-            Join the waitlist and get exclusive early access.
+            Skip what you already know. Master what you don't. Experience a continuous 
+            learning loop that adapts to your pace, style, and goals in real time.
           </p>
         </ScrollReveal>
 
@@ -170,7 +170,7 @@ export default function FinalCTA() {
                   className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm bg-sage-400 text-[#111111] hover:bg-sage-500 transition-all duration-300 whitespace-nowrap shadow-lg shadow-sage-400/20 disabled:opacity-70"
                 >
                   <span>{isSubmitting ? "Joining..." : "Join the Waitlist"}</span>
-                  {!isSubmitting && <Sparkles className="w-4 h-4" />}
+                  {!isSubmitting && <Rocket className="w-4 h-4" />}
                 </motion.button>
               </div>
             )}
@@ -189,7 +189,7 @@ export default function FinalCTA() {
             </div>
             <div className="hidden sm:block w-1 h-1 rounded-full bg-white/20" />
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-sage-400" />
+              <Check className="w-4 h-4 text-sage-400" />
               <span className="text-xs sm:text-sm">Founding member perks</span>
             </div>
             <div className="hidden sm:block w-1 h-1 rounded-full bg-white/20" />
