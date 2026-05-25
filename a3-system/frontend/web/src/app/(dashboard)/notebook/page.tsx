@@ -8,7 +8,7 @@ import { useGateStatus } from "@/hooks/useTracking";
 import { useVoiceStream } from "@/hooks/useVoiceStream";
 import { useTutorSessions } from "@/hooks/useTutorSessions";
 import { useQuizState } from "@/hooks/useQuizState";
-import TutorSessionSidebar from "@/components/tutor/TutorSessionSidebar";
+// TutorSessionSidebar removed - sessions now managed via ChatPanel modal
 import {
   LearningPathPanel,
   ChatPanel,
@@ -17,6 +17,7 @@ import {
   ResourcePreview,
 } from "@/components/notebook";
 import { RatingPrompt } from "@/app/components/PathRating";
+import { MessageSquare, Plus, PanelRightOpen } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -106,10 +107,13 @@ export default function NotebookPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
   const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
+  const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(true);
+  const [chatPanelWidth, setChatPanelWidth] = useState(384);
 
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [quotedText, setQuotedText] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeAgent, setActiveAgent] = useState<string | null>(null);
 
@@ -405,7 +409,7 @@ export default function NotebookPage() {
       setMessages([
         {
           role: "assistant",
-          content: `Hey${userName ? ` ${userName}` : ""}! ${progressText}\n\nI see you're diving into **${currentTopic}** right now — that's a fantastic topic! 🚀\n\nI'm here to make learning cloud computing fun and approachable. Whether you want me to:\n• 🧠 **Explain concepts** in a way that clicks for you\n• 🎯 **Walk through examples** step by step\n• 💡 **Connect ideas** to what you've already learned\n• ❓ **Answer specific questions** — no question is too small!\n\nWhat would you like to explore first?`,
+          content: `Hey${userName ? ` ${userName}` : ""}! I'm NoboGyan 👋 ${progressText}\n\nI see you're diving into **${currentTopic}** right now — that's a fantastic topic! 🚀\n\nI'm here to make learning cloud computing fun and approachable. Whether you want me to:\n• 🧠 **Explain concepts** in a way that clicks for you\n• 🎯 **Walk through examples** step by step\n• 💡 **Connect ideas** to what you've already learned\n• ❓ **Answer specific questions** — no question is too small!\n\nWhat would you like to explore first?`,
         },
       ]);
     }
@@ -439,7 +443,7 @@ export default function NotebookPage() {
           setMessages([
             {
               role: "assistant",
-              content: `Hi${userName ? ` ${userName}` : " there"}! 👋 Welcome to your AI learning companion. I'm here to help you master **${currentTopic}**.\n\nFeel free to ask me anything - whether it's explaining concepts, working through problems, or just chatting about what you're learning. What's on your mind?`,
+              content: `Hi${userName ? ` ${userName}` : " there"}! 👋 I'm NoboGyan, your AI learning companion. I'm here to help you master **${currentTopic}**.\n\nFeel free to ask me anything - whether it's explaining concepts, working through problems, or just chatting about what you're learning. What's on your mind?`,
             },
           ]);
         }
@@ -509,29 +513,41 @@ export default function NotebookPage() {
   };
 
   const handleSendMessage = async () => {
-    if ((!inputValue.trim() && !selectedImage) || isLoading || isSending || isAnalyzingImage) return;
+    if ((!inputValue.trim() && !selectedImage && !quotedText) || isLoading || isSending || isAnalyzingImage) return;
 
     if (selectedImage) {
       await handleImageAnalysis();
       return;
     }
 
-    const msg = inputValue.trim();
+    // Build message with quoted context if present
+    let msg = inputValue.trim();
+    if (quotedText) {
+      msg = msg ? `About "${quotedText}": ${msg}` : `I have a question about: "${quotedText}"`;
+      setQuotedText(null);
+    }
     setInputValue("");
     await sendMessageToTutor(msg);
   };
 
-  // Handle text selection from resources - directly sends to AI tutor
+  // Handle text selection from resources - sends to AI tutor or shows quote
   const handleSendToChat = useCallback(async (selectedText: string, question?: string) => {
-    const message = question || `I have a question about: "${selectedText}"`;
+    // Open chat panel if collapsed
+    setIsRightPanelCollapsed(false);
     
     // Close right panel on mobile to show chat
     if (window.innerWidth < 1024) {
       setIsRightPanelOpen(false);
     }
     
-    // Directly send to tutor (no need for user to click send)
-    await sendMessageToTutor(message);
+    // If no question provided (user clicked "Ask in chat"), show quote and wait for input
+    if (!question) {
+      setQuotedText(selectedText);
+      return;
+    }
+    
+    // Otherwise, directly send to tutor
+    await sendMessageToTutor(question);
   }, [sendMessageToTutor]);
 
   const handleStopStream = () => {
@@ -662,11 +678,7 @@ export default function NotebookPage() {
   const activeResource = generatedResources.find((r) => r.id === selectedResource) || remedialResources.find((r) => r.id === selectedResource);
 
   return (
-    <div className="h-screen flex bg-[#F7F5F0] text-[#2a2a2a] overflow-hidden relative isolate">
-      {/* Subtle Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#E7E2D7]/50 via-[#F7F5F0] to-[#C9D2D6]/30 -z-10" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#B8C3C9]/20 rounded-full blur-[128px] -z-10" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#D6CFC2]/30 rounded-full blur-[128px] -z-10" />
+    <div className="h-screen flex bg-white text-[#2a2a2a] overflow-hidden relative isolate">
 
       {/* Mobile Backdrop */}
       {(isMobileMenuOpen || isRightPanelOpen) && (
@@ -697,69 +709,7 @@ export default function NotebookPage() {
         onToggleCollapse={() => setIsLeftPanelCollapsed(!isLeftPanelCollapsed)}
       />
 
-      {/* Tutor Session Sidebar */}
-      <TutorSessionSidebar
-        sessions={sessions}
-        activeSessionId={activeSessionId}
-        onNewChat={async () => {
-          const sessionId = await newChat(currentTopic);
-          if (sessionId) {
-            setMessages([
-              {
-                role: "assistant",
-                content: `Hi${userName ? ` ${userName}` : " there"}! 👋 Welcome to your AI learning companion. I'm here to help you master **${currentTopic}**.\n\nFeel free to ask me anything - whether it's explaining concepts, working through problems, or just chatting about what you're learning. What's on your mind?`,
-              },
-            ]);
-          }
-        }}
-        onSelectSession={loadSession}
-        onArchiveSession={archiveSession}
-        onRenameSession={renameSession}
-      />
-
-      {/* Center Panel - Chat */}
-      <ChatPanel
-        messages={messages}
-        inputValue={inputValue}
-        setInputValue={setInputValue}
-        isLoading={isLoading}
-        isSending={isSending}
-        isLoadingSessions={isLoadingSessions}
-        currentTopic={currentTopic}
-        activeSessionId={activeSessionId}
-        onSendMessage={handleSendMessage}
-        onStopStream={handleStopStream}
-        voice={{
-          isStreaming: voice.isStreaming,
-          isConnecting: voice.isConnecting,
-          isError: voice.isError,
-          toggle: voice.toggle,
-        }}
-        asrLanguage={asrLanguage}
-        setAsrLanguage={setAsrLanguage}
-        selectedImage={selectedImage}
-        imagePreview={imagePreview}
-        setSelectedImage={setSelectedImage}
-        setImagePreview={setImagePreview}
-        isAnalyzingImage={isAnalyzingImage}
-        onOpenLeftPanel={() => setIsMobileMenuOpen(true)}
-        onOpenRightPanel={() => setIsRightPanelOpen(true)}
-        ratingPrompt={
-          graphId && studentId && graphSubject ? (
-            <RatingPrompt
-              graphId={graphId}
-              studentId={studentId}
-              pathSubject={graphSubject}
-              completionPercentage={Math.round(
-                (learningPath.filter((n) => n.status === "completed").length / learningPath.length) * 100
-              )}
-            />
-          ) : null
-        }
-        onSendToChat={handleSendToChat}
-      />
-
-      {/* Right Panel - Agents & Resources */}
+      {/* Center Panel - Agents & Resources */}
       <AgentPanel
         generatedResources={generatedResources}
         remedialResources={remedialResources}
@@ -773,6 +723,8 @@ export default function NotebookPage() {
         isGenerating={isGenerating}
         isAutoGenerating={isAutoGenerating}
         gateStatus={gateStatus}
+        gateLoading={gateLoading}
+        refreshGate={refreshGate}
         onAgentClick={handleAgentClick}
         onMarkConsumed={handleMarkConsumed}
         rightPanelWidth={rightPanelWidth}
@@ -793,7 +745,96 @@ export default function NotebookPage() {
             />
           ) : null
         }
+        isCenter={true}
       />
+
+      {/* Right Panel - Chat (Collapsible) */}
+      {isRightPanelCollapsed ? (
+        /* Collapsed state - just expand button */
+        <div className="flex flex-col h-full w-10 bg-white items-center pt-3 shrink-0">
+          <button
+            onClick={() => setIsRightPanelCollapsed(false)}
+            className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+            title="Open chat"
+          >
+            <PanelRightOpen className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
+        /* Expanded state - full chat */
+            <ChatPanel
+              messages={messages}
+              inputValue={inputValue}
+              setInputValue={setInputValue}
+              quotedText={quotedText}
+              onClearQuote={() => setQuotedText(null)}
+              isLoading={isLoading}
+              isSending={isSending}
+              isLoadingSessions={isLoadingSessions}
+              currentTopic={currentTopic}
+              activeSessionId={activeSessionId}
+              onSendMessage={handleSendMessage}
+              onStopStream={handleStopStream}
+              voice={{
+                isStreaming: voice.isStreaming,
+                isConnecting: voice.isConnecting,
+                isError: voice.isError,
+                toggle: voice.toggle,
+              }}
+              asrLanguage={asrLanguage}
+              setAsrLanguage={setAsrLanguage}
+              selectedImage={selectedImage}
+              imagePreview={imagePreview}
+              setSelectedImage={setSelectedImage}
+              setImagePreview={setImagePreview}
+              isAnalyzingImage={isAnalyzingImage}
+              onOpenLeftPanel={() => setIsMobileMenuOpen(true)}
+              onOpenRightPanel={() => setIsRightPanelOpen(true)}
+              ratingPrompt={
+                graphId && studentId && graphSubject ? (
+                  <RatingPrompt
+                    graphId={graphId}
+                    studentId={studentId}
+                    pathSubject={graphSubject}
+                    completionPercentage={Math.round(
+                      (learningPath.filter((n) => n.status === "completed").length / learningPath.length) * 100
+                    )}
+                  />
+                ) : null
+              }
+              onSendToChat={handleSendToChat}
+              isSidebar={true}
+              onCollapse={() => setIsRightPanelCollapsed(true)}
+              width={chatPanelWidth}
+              onWidthChange={setChatPanelWidth}
+              sessions={sessions}
+              onNewChat={async () => {
+                // If current chat is empty, don't create a new session - just reset the welcome message
+                if (messages.length === 0 || (messages.length === 1 && messages[0].role === "assistant")) {
+                  setMessages([
+                    {
+                      role: "assistant",
+                      content: `Hi${userName ? ` ${userName}` : " there"}! 👋 I'm NoboGyan, your AI learning companion. I'm here to help you master **${currentTopic}**.\n\nFeel free to ask me anything - whether it's explaining concepts, working through problems, or just chatting about what you're learning. What's on your mind?`,
+                    },
+                  ]);
+                  return;
+                }
+                // Otherwise create a new session
+                const sessionId = await newChat(currentTopic);
+                if (sessionId) {
+                  setMessages([
+                    {
+                      role: "assistant",
+                      content: `Hi${userName ? ` ${userName}` : " there"}! 👋 I'm NoboGyan, your AI learning companion. I'm here to help you master **${currentTopic}**.\n\nFeel free to ask me anything - whether it's explaining concepts, working through problems, or just chatting about what you're learning. What's on your mind?`,
+                    },
+                  ]);
+                }
+              }}
+              onSelectSession={loadSession}
+              onDeleteSession={archiveSession}
+              onClearChat={() => setMessages([])}
+            />
+      )}
 
       {/* Quiz Config Modal */}
       <QuizConfigModal

@@ -18,10 +18,14 @@ Faithfulness Check → Response Streaming → TTS (optional) → Student
 **File:** `backend/core/tutor_engine.py`
 
 Core tutoring logic with:
-- **RAG grounding**: Retrieves relevant chunks from vector store
-- **Profile adaptation**: Adjusts tone/depth based on cognitive style
-- **Faithfulness checking**: Verifies claims against sources
-- **Response type detection**: Determines if answer needs code, diagram, etc.
+- **RAG grounding**: Retrieves top-3 chunks via embedding search (fallback to keyword search)
+- **Profile adaptation**: Adjusts tone/depth based on cognitive style (visual/verbal/mixed instructions)
+- **Faithfulness checking**: Verifies claims against sources with warning prepending
+- **Response type detection**: Determines if answer needs code, diagram, walkthrough, or voice
+- **Mastery celebration**: Detects milestone achievements (50%, 80%) and celebrates
+- **Weak point focus**: Extra scaffolding when current topic is a weak point
+- **Learning path context**: Shows completed/current/upcoming topics
+- **Mermaid diagram generation**: Auto-generates diagrams for visual/mixed learners
 
 ### 2. Conversation Management
 
@@ -84,11 +88,12 @@ Edge-TTS + iFlytek fallback:
 #### Image Input
 **File:** `backend/core/vision_llm_client.py`
 
-Vision-capable model routing:
-- **GPT-4o**: Primary vision model
-- **GPT-4o-mini**: Fallback
-- **Claude 3**: Alternative
-- **Gemini Pro Vision**: Alternative
+Vision analysis using Kimi multimodal model:
+- **Model**: Kimi 2.6 (multimodal)
+- **Image compression**: Auto-compress to 500KB limit, max 1024px dimension
+- **Compression strategy**: JPEG quality reduction (85→20), then resize (0.75→0.25 scale)
+- **Supported formats**: PNG, JPEG, GIF, WebP
+- **Max upload size**: 5MB (compressed before API call)
 
 **Endpoints:**
 - `POST /api/tutor/analyze-image`: General image analysis
@@ -127,20 +132,35 @@ flowchart TD
 3. **Re-ranking**: Boost by source relevance
 4. **Context injection**: Add chunks to LLM prompt
 
-### Prompt Template
+### System Prompt Structure
+
+The tutor engine builds a comprehensive system prompt:
 
 ```python
-system_prompt = """You are A3, a helpful learning assistant. Answer the student's 
-question using the provided context. If the context doesn't contain the answer, 
-say so honestly.
-
-Context:
-{rag_chunks}
+system_prompt = f"""You are NoboGyan, a warm, enthusiastic learning companion...
 
 Student Profile:
-- Cognitive Style: {cognitive_style}
-- Learning Pace: {learning_pace}
-- Weak Points: {weak_points}
+- Name: {student_name}
+- Current topic: {current_topic or 'General'}
+- Mastery level: {topic_mastery:.0%}
+- Learning style: {cognitive_style}
+- Weak points: {', '.join(weak_points) if weak_points else 'None identified'}
+{weak_point_note}      # Extra scaffolding if topic is weak point
+{mastery_celebration}  # 🎉 if just crossed 50% or 80%
+{path_context}         # Learning journey progress
+
+Your Personality & Approach:
+🌟 Warm & Encouraging: Celebrate effort, not just correctness
+🤝 Empathetic & Patient: Normalize struggle
+🎯 Confidence Building: Use "yet" framing
+📚 Learning-Focused: Connect to bigger picture
+
+{style_instructions}   # Visual/Verbal/Mixed specific instructions
+
+DIAGRAM GENERATION:
+- Generate MERMAID diagrams in ```mermaid blocks
+- Supported: flowcharts, sequence, class, ER, state diagrams
+- Keep simple (5-10 nodes)
 """
 ```
 
@@ -308,29 +328,36 @@ If LLM summarization fails:
 
 | File | Purpose |
 |------|---------|
-| `backend/core/tutor_engine.py` | Core tutoring logic |
-| `backend/core/vision_llm_client.py` | Image analysis |
-| `backend/core/tts_client.py` | Text-to-speech |
-| `backend/core/asr_client.py` | Speech recognition |
-| `backend/api/routers/tutor.py` | Tutor endpoints |
-| `backend/api/routers/tutor_sessions.py` | Session management |
-| `backend/api/routers/asr.py` | ASR endpoints |
-| `backend/rag/vector_store.py` | RAG retrieval |
+| `backend/core/tutor_engine.py` | `TutorEngine` class with RAG, streaming, profile adaptation, mastery detection |
+| `backend/core/vision_llm_client.py` | `VisionLLMClient` using Kimi 2.6 for image analysis with compression |
+| `backend/core/tts_client.py` | Edge-TTS + iFlytek TTS with caching |
+| `backend/core/asr_client.py` | `IFlytekASRClient` with WebSocket streaming, frame protocol |
+| `backend/core/conversation_manager.py` | `ConversationManager` with rolling context and LLM summarization |
+| `backend/api/routers/tutor.py` | `/ask`, `/ask/stream`, `/speak`, `/analyze-image`, `/extract-equation` |
+| `backend/api/routers/tutor_sessions.py` | Session CRUD, message history, streaming messages, auto-titling |
+| `backend/api/routers/asr.py` | `/transcribe`, `/stream` (WebSocket), `/status` |
+| `backend/rag/vector_store.py` | Vector store with embedding + keyword search fallback |
 
 ### API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/tutor/ask` | POST | Non-streaming Q&A |
-| `/api/tutor/ask/stream` | POST | Streaming Q&A (SSE) |
-| `/api/tutor/speak` | POST | Text-to-speech |
-| `/api/tutor/analyze-image` | POST | Image analysis |
-| `/api/tutor/extract-equation` | POST | LaTeX extraction |
-| `/api/tutor/sessions` | GET/POST | Session CRUD |
-| `/api/tutor/sessions/{id}/messages` | GET/POST | Message CRUD |
-| `/api/tutor/sessions/{id}/messages/stream` | POST | Streaming messages |
-| `/api/asr/transcribe` | POST | Speech-to-text |
-| `/api/asr/stream` | WS | Real-time ASR |
+| `/api/tutor/ask` | POST | Non-streaming Q&A with RAG + faithfulness |
+| `/api/tutor/ask/stream` | POST | Streaming Q&A (SSE) with disconnect detection |
+| `/api/tutor/speak` | POST | Text-to-speech (returns MP3) |
+| `/api/tutor/analyze-image` | POST | Image analysis (multipart form, max 5MB) |
+| `/api/tutor/extract-equation` | POST | LaTeX extraction from equation images |
+| `/api/tutor/sessions` | POST | Create new tutor session |
+| `/api/tutor/sessions` | GET | List student's sessions (newest first) |
+| `/api/tutor/sessions/{id}` | GET | Get session details with message count |
+| `/api/tutor/sessions/{id}` | PATCH | Update session title/status |
+| `/api/tutor/sessions/{id}` | DELETE | Archive session (soft delete) |
+| `/api/tutor/sessions/{id}/messages` | GET | Load message history (paginated) |
+| `/api/tutor/sessions/{id}/messages` | POST | Send message (blocking) |
+| `/api/tutor/sessions/{id}/messages/stream` | POST | Send message (SSE streaming) |
+| `/api/asr/transcribe` | POST | Speech-to-text (WAV/MP3 upload) |
+| `/api/asr/stream` | WS | Real-time ASR WebSocket |
+| `/api/asr/status` | GET | Check ASR configuration status |
 
 ### Frontend Components
 
@@ -346,40 +373,123 @@ If LLM summarization fails:
 
 ## Testing
 
-- **33 tests** in `backend/tests/test_asr_client.py`
-- **10 tests** in `backend/tests/test_asr_router.py`
-- **25 tests** in `backend/tests/test_conversation_manager.py`
+### Test Files
+
+| File | Tests | Coverage |
+|------|-------|----------|
+| `test_conversation_manager.py` | 27 tests | Turn dataclass, initialization, add_message, summarization, get_context, persistence |
+| `test_asr_client.py` | 22 tests | Message parsing, frame building, WebSocket protocol, mock mode |
+| `test_asr_router.py` | 12 tests | /status, /transcribe, /stream endpoints, error handling |
+| `test_faithfulness_checker.py` | 15 tests | Claim extraction, verification, scoring |
+| `test_content_moderator.py` | 18 tests | Harmful content detection, refusal messages |
+
+**Total: 94+ tests for Feature 4**
+
+### Key Test Cases
+
+```python
+# Conversation manager tests
+test_summarization_triggered_at_threshold
+test_no_summarization_below_threshold
+test_context_with_summary
+test_summarize_chunk_fallback_on_exception
+test_from_db_factory
+
+# ASR client tests
+test_parse_ok_partial_segment
+test_parse_final_segment_marks_end_of_stream
+test_parse_error_code_returns_end_true
+
+# ASR router tests
+test_status_reports_configured
+test_transcribe_success
+test_transcribe_rejects_invalid_format
+```
 
 ## Completion Status
 
-**Status: ~85% Complete**
+**Status: 100% Complete**
 
-| Requirement | Status |
-|-------------|--------|
-| Text input/output | ✅ Complete |
-| Streaming responses | ✅ Complete |
-| RAG grounding | ✅ Complete |
-| Faithfulness checking | ✅ Complete |
-| Voice input (ASR) | ✅ Complete |
-| Voice output (TTS) | ✅ Complete |
-| Image input | ✅ Complete |
-| Diagram output | ✅ Complete |
-| Session management | ✅ Complete |
-| Auto-titling | ✅ Complete |
-| Stop generation | ✅ Complete |
-| Content moderation | ✅ Complete |
-| Rolling context with summarization | ✅ Complete | `core/conversation_manager.py` |
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| Text input/output | ✅ Complete | Markdown, code highlighting |
+| Streaming responses | ✅ Complete | SSE with disconnect detection |
+| RAG grounding | ✅ Complete | Embedding + keyword fallback |
+| Faithfulness checking | ✅ Complete | Warning prepending on low scores |
+| Voice input (ASR) | ✅ Complete | iFlytek IAT WebSocket |
+| Voice output (TTS) | ✅ Complete | Edge-TTS + iFlytek |
+| Image input | ✅ Complete | Kimi 2.6 multimodal with compression |
+| Diagram output | ✅ Complete | Mermaid generation for visual learners |
+| Session management | ✅ Complete | Full CRUD + soft delete |
+| Auto-titling | ✅ Complete | LLM-generated, max 5 words |
+| Stop generation | ✅ Complete | AbortController support |
+| Content moderation | ✅ Complete | Input filtering on all endpoints |
+| Rolling context | ✅ Complete | 6-turn window + LLM summarization |
+| Profile adaptation | ✅ Complete | Visual/verbal/mixed instructions |
+| Mastery celebration | ✅ Complete | 50%/80% milestone detection |
 
 ## Performance
 
-- **Response latency**: 2-5 seconds for first token
+- **Response latency**: 2-5 seconds for first token (depends on RAG retrieval)
 - **Streaming throughput**: ~10-20 tokens/second
-- **ASR latency**: ~200ms for partial results
-- **TTS generation**: ~1 second for 100 words
-- **Image analysis**: ~3-5 seconds
+- **ASR latency**: ~200ms for partial results (40ms frame size)
+- **TTS generation**: ~1 second for 100 words (cached)
+- **Image analysis**: ~3-5 seconds (includes compression time)
+- **Summarization**: ~1-2 seconds per chunk (amortized)
+
+## Response Type Detection
+
+The tutor engine automatically detects the best response type:
+
+```python
+def _detect_response_type(self, question: str, profile: Dict) -> str:
+    if profile.get("hands_free"):
+        return "voice"
+    
+    # Problem-solving keywords → walkthrough
+    problem_keywords = ["how do i", "how to", "step by step", "solve", "debug", "implement"]
+    if any(kw in question_lower for kw in problem_keywords):
+        return "walkthrough"
+    
+    # Conceptual + visual learner → diagram
+    conceptual_keywords = ["what is", "explain", "difference between", "compare", "why"]
+    if any(kw in question_lower for kw in conceptual_keywords) and "visual" in cognitive_style:
+        return "diagram"
+    
+    return "text"
+```
+
+## Database Schema
+
+**ChatSession Model**:
+```python
+class ChatSession(Base):
+    session_id = Column(String(50), primary_key=True)
+    student_id = Column(String(50), ForeignKey("student_profiles.student_id"))
+    session_type = Column(String(20))  # "tutor" | "profiling"
+    status = Column(String(20))  # "active" | "archived"
+    title = Column(String(100))  # LLM-generated or default
+    current_node_id = Column(String(50))  # Current topic context
+    context_summary = Column(Text)  # Rolling summary
+    created_at = Column(DateTime(timezone=True))
+    updated_at = Column(DateTime(timezone=True))
+```
+
+**ChatMessage Model**:
+```python
+class ChatMessage(Base):
+    message_id = Column(String(50), primary_key=True)
+    session_id = Column(String(50), ForeignKey("chat_sessions.session_id"))
+    role = Column(String(20))  # "user" | "assistant"
+    content = Column(Text)
+    content_type = Column(String(20))  # "text" | "code" | "image"
+    created_at = Column(DateTime(timezone=True))
+```
 
 ## Future Enhancements
 
 1. **Voice activity detection**: Auto-start recording
 2. **Real-time collaboration**: Multi-student sessions
 3. **Proactive tutoring**: Trigger based on struggle detection
+4. **Equation rendering**: MathJax/KaTeX for LaTeX display
+5. **Code execution**: Sandboxed code runner for practice

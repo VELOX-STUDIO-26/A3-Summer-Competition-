@@ -505,3 +505,32 @@ html {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.18);
 }
+
+/* Chat message word wrapping */
+.chat-message {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* Remove focus outline from chat input */
+.chat-input-no-focus:focus,
+.chat-input-no-focus:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: inherit !important;
+}
+
+.chat-message p {
+  margin: 0;
+}
+
+.chat-message ul,
+.chat-message ol {
+  margin: 0.25rem 0;
+  padding-left: 1rem;
+}
+
+.chat-message li {
+  margin: 0.125rem 0;
+}

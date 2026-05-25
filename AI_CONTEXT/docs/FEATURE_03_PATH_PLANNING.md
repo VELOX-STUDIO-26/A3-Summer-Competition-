@@ -17,15 +17,17 @@ The knowledge graph defines:
 
 ```json
 {
-  "node_id": "docker_basics",
-  "title": "Docker Basics",
-  "difficulty": 0.3,
-  "est_minutes": 30,
-  "hard_prerequisites": ["linux_fundamentals"],
-  "soft_prerequisites": ["command_line_basics"],
-  "topic_tags": ["docker", "containers"],
-  "content_types": ["text", "video", "code"],
-  "description": "Introduction to containerization..."
+  "node_id": "N01",
+  "title": "Cloud Services",
+  "difficulty": 0.61,
+  "est_minutes": 45,
+  "hard_prerequisites": ["N04", "N11", "N27"],
+  "soft_prerequisites": [],
+  "topic_tags": [],
+  "content_types": ["diagram", "interactive", "text"],
+  "description": "Cloud services refer to infrastructure, platforms, or software hosted by third-party providers...",
+  "pagerank_score": 6.3734,
+  "is_active": true
 }
 ```
 
@@ -58,25 +60,35 @@ Where:
 
 ### Algorithm Steps
 
-1. **Initialize**: Start node, student state
-2. **Expand**: Visit lowest-f-cost node
+1. **Initialize**: Compute in-degree for all unmastered nodes, identify entry points (in-degree == 0)
+2. **Priority Queue**: Use min-heap ordered by f-score for available nodes
 3. **Calculate Costs**:
-   - g(n) = edge weight (difficulty difference)
-   - h(n) = (1 - PageRank) × difficulty
-   - profile_bias = weak_point_match × λ₁
-   - preference_bonus = content_match × λ₂
-4. **Goal Test**: Reached target node or completed δ nodes
-5. **Reconstruct Path**: Backtrack through came_from
+   - `g(n)` = cumulative cost from start (difficulty × est_minutes × pace_factor / 10)
+   - `h(n)` = PageRank-based heuristic (goal.pagerank - node.pagerank)
+   - `profile_bias` = weak point bonus (-0.3), goal match (-0.2), mastered penalty (+10.0)
+   - `preference_bonus` = content type match ratio × -0.2
+4. **Expansion**: Pop lowest f-cost node, decrement dependents' in-degree, add newly available nodes to queue
+5. **Termination**: All unmastered nodes visited in valid topological order
 
 ### Example Path
 
 ```python
-path = planner.plan_path(
-    student_state=student,
-    start_node="cloud_computing_intro",
-    goal_node="kubernetes_advanced"
+from agents.path_planner import plan_learning_path
+
+result = plan_learning_path(
+    student_id="student_123",
+    knowledge_base={"N01": 0.9, "N02": 0.85},  # Already mastered
+    weak_points=["Docker", "Kubernetes"],
+    goals=["Cloud Computing"],
+    learning_pace=0.5,
+    content_preferences=["video", "diagram"]
 )
-# Returns: ["cloud_intro", "docker_basics", "docker_networking", ...]
+# Returns: {
+#   "path": ["N03", "N04", "N05", ...],
+#   "milestones": [{"index": 1, "nodes": [...], "duration_minutes": 180}],
+#   "total_estimated_time": 540,
+#   "metrics": {"dependency_satisfaction": 1.0, "profile_match": 0.85, ...}
+# }
 ```
 
 ## Dynamic Adaptation Engine
@@ -91,55 +103,68 @@ Performance Signal → Event Creation → Strategy Selection → Cooldown Check 
 
 ### Event Types
 
-| Event | Trigger | Strategy |
-|-------|---------|----------|
-| `QuizCompletedEvent` | Quiz submission | remediate / accelerate / continue |
-| `GateCalculatedEvent` | Milestone unlock scoring | replan / unlock_next |
-| `GoalChangedEvent` | Student updates goals | replan |
-| `MilestoneStuckEvent` | 3+ retries on node | tutor_nudge / replan |
+| Event | Trigger | Possible Strategies |
+|-------|---------|---------------------|
+| `QuizCompletedEvent` | Quiz submission | `remediate` / `accelerate` / `continue` / `replan` |
+| `GateCalculatedEvent` | Milestone gate score computed | `tutor_nudge` / `noop` |
+| `GoalChangedEvent` | Student updates goals | `replan` / `noop` |
+| `MilestoneStuckEvent` | Stuck on milestone (days/attempts) | `replan` / `tutor_nudge` |
 
 ### Adaptation Strategies
 
 #### 1. Remediate
-- **Trigger**: Quiz score < 0.5 or weak point detected
-- **Action**: Generate remedial resources on failed topics
+- **Trigger**: Quiz score < 60% OR (rushed_through AND score < 70%)
+- **Action**: `regenerate_resources` with `scope: "targeted_concepts"`, `complexity_override: "simpler"`
 - **Cooldown**: 2 minutes
 
 #### 2. Accelerate
-- **Trigger**: Quiz score > 0.85 and learning_pace > 0.7
-- **Action**: Skip ahead, reduce node estimates
+- **Trigger**: Quiz score ≥ 85% AND time_ratio < 1.2 (finished fast)
+- **Action**: `unlock_next` with `mode: "accelerated"`
 - **Cooldown**: 30 seconds
 
 #### 3. Replan
-- **Trigger**: Goal change or 3+ consecutive low scores
-- **Action**: Recalculate path from current position
+- **Trigger**: 3+ consecutive low scores OR goal change OR milestone stuck (≥7 days OR ≥5 attempts)
+- **Action**: `replan_path` + `regenerate_resources` with `scope: "full_milestone"`
 - **Cooldown**: 10 minutes
 
 #### 4. Tutor Nudge
-- **Trigger**: Stuck on milestone (> 3 retries)
-- **Action**: Suggest tutor session on stuck topic
+- **Trigger**: Gate engagement "skipped" OR gate_score < 0.30 OR milestone stuck (< 7 days)
+- **Action**: `suggest_tutor` with blocking_resources list
 - **Cooldown**: 5 minutes
 
 #### 5. Continue
-- **Trigger**: Normal progress
-- **Action**: No change, increment progress
+- **Trigger**: Quiz score ≥ 60% (normal progress)
+- **Action**: `unlock_next` with `mode: "standard"`
 - **Cooldown**: 30 seconds
+
+#### 6. Noop
+- **Trigger**: Healthy gate engagement OR unchanged goals
+- **Action**: No intervention needed
+- **Cooldown**: None
 
 ### Cooldown System
 
-Prevents double-firing from flaky clients:
+Prevents double-firing from flaky clients. Keyed on `(student_id, strategy_name)` tuple:
 
 ```python
-# Keyed on (student_id, strategy_name)
-cooldown_key = f"{student_id}:{strategy}"
-last_triggered = cooldown_map.get(cooldown_key)
+# Default cooldowns per strategy
+DEFAULT_COOLDOWNS = {
+    "accelerate": timedelta(seconds=30),
+    "continue": timedelta(seconds=30),
+    "remediate": timedelta(minutes=2),
+    "replan": timedelta(minutes=10),
+    "tutor_nudge": timedelta(minutes=5),
+    "noop": timedelta(0),
+}
 
-if last_triggered and now - last_triggered < cooldown_duration:
-    return AdaptationResult(
-        strategy="noop",
-        cooldown_active=True,
-        cooldown_until=last_triggered + cooldown_duration
-    )
+# Cooldown check in handle_event()
+key = (event.student_id, result.strategy)
+now = self._clock()
+allowed_at = self._next_allowed.get(key)
+if allowed_at and now < allowed_at:
+    result.cooldown_active = True
+    result.cooldown_until = allowed_at
+    return result  # Strategy reported but not executed
 ```
 
 ## Recommendation Engine
@@ -150,57 +175,99 @@ Hybrid content-based + collaborative filtering:
 
 ### Content-Based Scoring
 
+Scores nodes by token overlap between node's `topic_tags`/`title` and student's `goals` + `weak_points`:
+
 ```python
-content_score = Σ (topic_match × difficulty_match × format_match)
+# Weak points weighted higher (default 2.0x)
+weak_matches = sum(1 for ts in weak_token_sets if ts & node_tokens)
+goal_matches = sum(1 for ts in goal_token_sets if ts & node_tokens)
+content_score = goal_matches + weak_point_weight * weak_matches
 ```
 
 ### Collaborative Filtering
 
+Finds K most similar students by Jaccard similarity over mastered topics:
+
 ```python
-collab_score = Jaccard_similarity(student_history, similar_student_history)
+# Jaccard similarity over knowledge_base (mastery ≥ 0.8)
+my_mastered = {k for k, v in student.knowledge_base.items() if v >= 0.8}
+other_mastered = {k for k, v in other.knowledge_base.items() if v >= 0.8}
+sim = len(my_mastered & other_mastered) / len(my_mastered | other_mastered)
+
+# Score = similarity-weighted fraction of neighbours who mastered each node
 ```
 
 ### Hybrid Fusion
 
 ```python
-final_score = α × content_score + (1 - α) × collab_score
-# α = 0.7 (configurable)
+# α = 0.6 (default, configurable)
+final_score = α × content_norm + (1 - α) × collab_norm
+# Both signals min-max normalized before fusion
 ```
 
 ### Features
 
-- **Weak-point boost**: Failed topics get +0.3 score
-- **Exclude mastered**: Completed nodes filtered out
-- **Explainability**: Returns why recommended ("Because you struggled with X")
+- **Weak-point boost**: 2.0x weight on weak point matches (configurable)
+- **Exclude mastered**: Nodes with mastery ≥ 0.8 filtered out
+- **Cold-start fallback**: If no signals, recommend easiest unmastered nodes
+- **Explainability**: Returns reason string ("Matches your weak points and goals", "Popular among similar learners")
+- **Neighbours K**: Top 5 similar students used (configurable)
 
 ## Milestone System
 
 **File:** `backend/api/routers/milestone.py`
 
-### Gate Calculation
+### Milestone Structure
 
-Milestones unlock based on gate scores:
+Milestones are created by splitting the path into chunks of δ nodes (default 15):
 
 ```python
-gate_score = (
-    completion_rate × 0.4 +
-    avg_quiz_score × 0.4 +
-    engagement_score × 0.2
-)
-
-unlock_threshold = 0.7  # Configurable
+def create_milestones(self, path: List[str]) -> List[Dict]:
+    milestones = []
+    for i in range(0, len(path), self.delta):
+        chunk = path[i:i + self.delta]
+        duration = sum(self.graph.nodes[nid].est_minutes for nid in chunk)
+        milestones.append({
+            "index": len(milestones) + 1,
+            "nodes": chunk,
+            "duration_minutes": duration
+        })
+    return milestones
 ```
 
 ### Progress Tracking
 
-```sql
--- MilestoneProgress model
-student_id: String(FK)
-milestone_id: String(FK)
-node_id: String
-completed: Boolean
-completed_at: Timestamp
-attempts: Integer
+Milestone status determined by quiz completion on topics:
+
+```python
+# Status logic in milestone.py
+if progress == 100:
+    status = "completed"
+elif progress > 0:
+    status = "in_progress"
+elif idx == 0 or previous_milestone_completed:
+    status = "available"
+else:
+    status = "locked"
+```
+
+### Milestone Response Structure
+
+```python
+{
+    "id": "m1",
+    "title": "Container Technology",
+    "description": "Milestone 1: covers Docker, Containers, Images...",
+    "estimatedTime": 180,
+    "topics": ["Docker", "Containers", "Images"],
+    "status": "in_progress",
+    "progress": 33,
+    "xpReward": 250,
+    "prerequisites": [],
+    "totalNodes": 5,
+    "completedNodes": 2,
+    "difficulty": "Intermediate"
+}
 ```
 
 ## Implementation Details
@@ -209,40 +276,103 @@ attempts: Integer
 
 | File | Purpose |
 |------|---------|
-| `backend/agents/path_planner.py` | A* path planning |
-| `backend/adaptation/engine.py` | Dynamic adaptation |
-| `backend/adaptation/recommender.py` | Content recommendations |
-| `backend/adaptation/events.py` | Event definitions |
-| `backend/api/routers/path.py` | Path API endpoints |
-| `backend/api/routers/milestone.py` | Milestone management |
-| `backend/api/routers/adaptation.py` | Adaptation endpoints |
+| `backend/agents/path_planner.py` | A* path planning with `KnowledgeGraph`, `AdaptivePathPlanner`, `StudentState` classes |
+| `backend/adaptation/engine.py` | `DynamicAdaptationEngine` with strategy selection, cooldowns, executor registration |
+| `backend/adaptation/recommender.py` | `Recommender` class with hybrid content-based + collaborative filtering |
+| `backend/adaptation/events.py` | Event dataclasses: `QuizCompletedEvent`, `GateCalculatedEvent`, `GoalChangedEvent`, `MilestoneStuckEvent` |
+| `backend/api/routers/path.py` | `/api/path/plan` endpoint with auto-profile creation |
+| `backend/api/routers/milestone.py` | Milestone CRUD, progress tracking, node listing |
+| `backend/api/routers/adaptation.py` | Event ingestion endpoints + `/recommend` for hybrid recommendations |
+| `data/knowledge_graph_en.json` | Pre-built Cloud Computing graph (80 nodes, 159 edges) |
+| `backend/models/schemas.py` | `PathPlanRequest`, `PathPlanResponse`, `PathMetrics`, `PathNodeDetail` schemas |
+
+### Database Schema
+
+**LearningPath Model** (`backend/models/database.py`):
+
+```python
+class LearningPath(Base):
+    __tablename__ = "learning_paths"
+    
+    path_id = Column(String(50), primary_key=True)  # "path_{uuid8}"
+    student_id = Column(String(50), ForeignKey("student_profiles.student_id"))
+    course_id = Column(String(50), ForeignKey("courses.course_id"))
+    path_sequence = Column(ARRAY(String))  # Ordered list of node IDs
+    milestones = Column(JSONB)  # Milestone groupings with metadata
+    total_estimated_time = Column(Integer)  # Total time in minutes
+    path_hash = Column(String(64), unique=True)  # Cache/version hash
+    metrics = Column(JSONB)  # Path quality metrics
+    status = Column(String(20))  # "active" | "completed" | "abandoned"
+    created_at = Column(DateTime(timezone=True))
+    updated_at = Column(DateTime(timezone=True))
+```
 
 ### API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/path/plan` | POST | Generate learning path |
-| `/api/path/{id}` | GET | Get path details |
-| `/api/milestone` | GET | List milestones |
+| `/api/path/plan` | POST | Generate learning path with A* algorithm |
+| `/api/milestone` | GET | List all milestones for a student |
+| `/api/milestone/{id}` | GET | Get specific milestone details |
+| `/api/milestone/{id}/nodes` | GET | Get all nodes for a milestone |
 | `/api/milestone/{id}/progress` | POST | Update node progress |
-| `/api/milestone/{id}/gate` | GET | Calculate gate score |
-| `/api/adapt/events/quiz_completed` | POST | Submit quiz event |
-| `/api/adapt/events/goal_changed` | POST | Submit goal change event |
-| `/api/adapt/recommend` | GET | Get recommendations |
+| `/api/milestone/{id}/next` | GET | Get next available node |
+| `/api/adapt/events/quiz-completed` | POST | Submit quiz completion event |
+| `/api/adapt/events/gate-calculated` | POST | Submit gate score event |
+| `/api/adapt/events/goal-changed` | POST | Submit goal change event |
+| `/api/adapt/events/milestone-stuck` | POST | Submit milestone stuck event |
+| `/api/adapt/recommend` | POST | Get hybrid recommendations |
 
 ### Frontend Components
 
-**File:** `frontend/web/src/components/milestone/GateStatus.tsx`
-
-- Visual milestone progress
-- Gate unlock indicators
-- Quiz unlock requirements
-- Path visualization
+| Component | Location | Purpose |
+|-----------|----------|--------|
+| `LearningPathGraph.tsx` | `app/components/` | Visual path graph rendering |
+| `PathRating.tsx` | `app/components/` | Path rating interface |
+| `LearningPathPanel.tsx` | `components/notebook/` | Path panel in notebook view |
+| `PathPreview.tsx` | `components/path/` | Path preview with social proof |
+| `new-path/` | `app/(dashboard)/` | New path creation flow |
 
 ## Testing
 
-- **35 tests** in `backend/tests/test_adaptation_engine.py`
-- **35 tests** in `backend/tests/test_recommender.py`
+### Test Files
+
+| File | Tests | Coverage |
+|------|-------|----------|
+| `test_path_planner.py` | 17 tests | A* algorithm, milestones, personalization, edge cases |
+| `test_adaptation_engine.py` | 18 tests | Strategy selection, cooldowns, executors |
+| `test_recommender.py` | 14 tests | Content-based, collaborative, hybrid fusion |
+| `test_dynamic_knowledge_graph.py` | 24 tests | Dynamic graph generation models |
+| `test_knowledge_graph_generator.py` | 37 tests | LLM generation/validation |
+| `test_graph_service.py` | 23 tests | Graph service layer |
+| `test_hierarchical_graph_generator.py` | 23 tests | Hierarchical graph generation |
+| `test_hierarchical_models.py` | 20 tests | Hierarchical data models |
+
+**Total: 176+ tests for Feature 3**
+
+### Key Test Cases
+
+```python
+# Path planner tests
+test_plan_returns_non_empty_path_for_beginner
+test_path_satisfies_all_hard_prerequisites
+test_mastered_nodes_are_skipped
+test_weak_points_appear_in_path
+test_milestones_partition_the_path
+
+# Adaptation engine tests
+test_quiz_high_score_with_fast_completion_accelerates
+test_quiz_low_score_remediates_targeted_concepts
+test_quiz_three_consecutive_low_replans_and_regenerates
+test_cooldown_suppresses_repeat_replan
+test_cooldowns_are_per_student
+
+# Recommender tests
+test_content_based_prefers_weak_point_matches
+test_collaborative_recommends_what_similar_students_mastered
+test_recommend_excludes_already_mastered
+test_recommend_with_no_signals_returns_fallback
+```
 
 ## Completion Status
 
@@ -261,9 +391,22 @@ attempts: Integer
 
 ## Performance
 
-- **Path generation**: ~200ms for 50-node graph
-- **Adaptation latency**: <100ms (event to action)
-- **Recommendation**: ~50ms for top-10
+- **Path generation**: ~200ms for 80-node graph (Cloud Computing course)
+- **Adaptation latency**: <100ms (event to strategy selection)
+- **Recommendation**: ~50ms for top-5 recommendations
+- **Milestone listing**: ~150ms with DB queries
+
+## Path Quality Metrics
+
+The planner calculates quality metrics for each generated path:
+
+| Metric | Description | Target |
+|--------|-------------|--------|
+| `dependency_satisfaction` | Fraction of nodes with prerequisites satisfied | 1.0 |
+| `profile_match` | Average content type match with preferences | >0.7 |
+| `difficulty_smoothness` | 1 - avg difficulty jumps between nodes | >0.8 |
+| `weak_point_coverage` | Fraction of weak points included in path | 1.0 |
+| `goal_convergence` | Whether all goals are reachable | true |
 
 ---
 

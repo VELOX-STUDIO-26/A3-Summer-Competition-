@@ -532,7 +532,7 @@ Use this as inspiration but adapt to the student's specific goals and knowledge 
             learning_pace=f"{learning_pace:.0%}"
         ) + template_guidance
 
-        max_retries = 3
+        max_retries = 2  # Reduced from 3 to keep total time under 5 minutes
         last_error = None
         raw_content = ""
         
@@ -641,7 +641,11 @@ Use this as inspiration but adapt to the student's specific goals and knowledge 
                 )
 
             except Exception as e:
-                last_error = f"Generation failed: {str(e)}"
+                error_msg = str(e)
+                if "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                    last_error = f"LLM request timed out (attempt {attempt + 1}). The model may be overloaded."
+                else:
+                    last_error = f"Generation failed: {error_msg}"
                 logger.warning(f"Attempt {attempt + 1}: {last_error}")
                 continue
         

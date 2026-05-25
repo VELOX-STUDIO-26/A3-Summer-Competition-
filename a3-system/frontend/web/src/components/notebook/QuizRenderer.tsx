@@ -1,6 +1,7 @@
 "use client";
 
 import { getCorrectAnswerIndex } from "@/hooks/useQuizState";
+import { Target } from "lucide-react";
 
 interface QuizRendererProps {
   resourceId: string;
@@ -88,10 +89,10 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
               <div className="flex items-center gap-1 shrink-0">
                 {isWeakPointQuestion && (
                   <span
-                    className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-[9px] font-semibold"
+                    className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-[9px] font-semibold flex items-center gap-1"
                     title="Focus question targeting your weak area"
                   >
-                    🎯 Focus
+                    <Target className="w-2.5 h-2.5" /> Focus
                   </span>
                 )}
                 <span className="px-1.5 py-0.5 rounded bg-[#E7E2D7] text-[#666] text-[9px] font-medium">

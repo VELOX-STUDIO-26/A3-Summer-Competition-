@@ -609,7 +609,7 @@ class OpenRouterClient:
 
             for attempt in range(per_key_attempts):
                 try:
-                    async with httpx.AsyncClient(timeout=180.0) as client:
+                    async with httpx.AsyncClient(timeout=240.0) as client:
                         response = await client.post(
                             f"{self.base_url}/chat/completions",
                             headers=key_headers,
@@ -705,7 +705,7 @@ class OpenRouterClient:
             
             for attempt in range(max_retries):
                 try:
-                    async with httpx.AsyncClient(timeout=180.0) as client:
+                    async with httpx.AsyncClient(timeout=240.0) as client:
                         async with client.stream(
                             "POST",
                             f"{self.base_url}/chat/completions",
@@ -970,6 +970,118 @@ class GeminiClient:
 
 
 # ============================================================================
+# Kimi Client (OpenAI-compatible API)
+# ============================================================================
+
+class KimiClient:
+    """
+    Kimi LLM Client - OpenAI-compatible API.
+    
+    Uses the kimi-2.6 model via OpenAI-compatible endpoint.
+    """
+
+    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
+        self.api_key = api_key or os.getenv("KIMI_API_KEY", "sk-xJuTUc3KAhsnnrtRTuNjewyaorAGCwtPaSe2pyogHdTHm4Wb")
+        self.base_url = base_url or os.getenv("KIMI_BASE_URL", "https://api.xixixixi.cloud")
+        self.model = "kimi-2.6"
+        
+        if self.api_key:
+            logger.info(f"KimiClient initialized with base URL: {self.base_url}")
+
+    async def generate(
+        self,
+        messages: List[Dict[str, str]],
+        model: str = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2000,
+        stream: bool = False
+    ) -> Dict[str, Any]:
+        """Generate text completion using Kimi API (OpenAI-compatible)."""
+        model = model or self.model
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": stream
+        }
+        
+        url = f"{self.base_url}/v1/chat/completions"
+        
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            response = await client.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            
+            return {
+                "choices": data.get("choices", []),
+                "usage": data.get("usage", {}),
+                "provider": "kimi"
+            }
+
+    async def generate_stream(
+        self,
+        messages: List[Dict[str, str]],
+        model: str = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2000
+    ) -> AsyncGenerator[str, None]:
+        """Stream text completion using Kimi API."""
+        model = model or self.model
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": True
+        }
+        
+        url = f"{self.base_url}/v1/chat/completions"
+        
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            async with client.stream("POST", url, headers=headers, json=payload) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if line.startswith("data: "):
+                        data_str = line[6:]
+                        if data_str.strip() == "[DONE]":
+                            break
+                        try:
+                            data = json.loads(data_str)
+                            if "choices" in data and len(data["choices"]) > 0:
+                                delta = data["choices"][0].get("delta", {})
+                                content = delta.get("content", "")
+                                if content:
+                                    yield content
+                        except json.JSONDecodeError:
+                            continue
+
+    async def validate_api_key(self) -> bool:
+        """Check if API key is valid."""
+        try:
+            result = await self.generate(
+                messages=[{"role": "user", "content": "Hi"}],
+                max_tokens=5
+            )
+            return "choices" in result
+        except Exception as e:
+            logger.error(f"Kimi API validation failed: {e}")
+            return False
+
+
+# ============================================================================
 # Mock LLM Client (Demo / Offline Mode)
 # ============================================================================
 
@@ -1044,36 +1156,29 @@ class MockLLMClient:
 
 class LLMClient:
     """
-    Unified LLM client with multiple provider support.
+    Unified LLM client using Kimi as the sole provider.
 
-    Uses Gemini as primary, with OpenRouter as fallback, and mock mode as last resort.
+    Uses Kimi 2.6 for all LLM operations (text and multimodal).
     """
 
     def __init__(self):
-        self.glm = GLMClient()
-        self.gemini = GeminiClient()
-        self.openrouter = OpenRouterClient()
+        self.kimi = KimiClient()
         self.mock = MockLLMClient()
         
-        # Priority: OpenRouter > GLM > Gemini > Mock (OpenRouter is most reliable)
-        if self.openrouter.api_key:
-            self.primary = self.openrouter
+        # Use Kimi only
+        if self.kimi.api_key:
+            self.primary = self.kimi
             self.use_mock = False
-            logger.info("LLM Client initialized with OpenRouter (primary)")
-        elif self.glm.api_key:
-            self.primary = self.glm
-            self.use_mock = False
-            logger.info("LLM Client initialized with GLM (fallback)")
-        elif self.gemini.api_key:
-            self.primary = self.gemini
-            self.use_mock = False
-            logger.info("LLM Client initialized with Gemini (fallback)")
+            logger.info("=" * 60)
+            logger.info("LLM Client initialized with Kimi 2.6")
+            logger.info(f"Base URL: {self.kimi.base_url}")
+            logger.info("=" * 60)
         else:
             self.primary = self.mock
             self.use_mock = True
             logger.warning("=" * 60)
             logger.warning("RUNNING IN DEMO/MOCK MODE")
-            logger.warning("No API keys found. Set OPENROUTER_API_KEY, GLM_API_KEY, or GEMINI_API_KEY")
+            logger.warning("No KIMI_API_KEY found")
             logger.warning("=" * 60)
 
     async def generate(
@@ -1120,22 +1225,14 @@ class LLMClient:
                 "provider": "mock",
                 "status": "healthy",
                 "mode": "demo",
-                "note": "Set GLM_API_KEY, OPENROUTER_API_KEY, or GEMINI_API_KEY for real LLM responses"
+                "note": "Set KIMI_API_KEY for real LLM responses"
             }
         
-        if isinstance(self.primary, GLMClient):
-            provider = "glm"
-        elif isinstance(self.primary, GeminiClient):
-            provider = "gemini"
-        else:
-            provider = "openrouter"
-        
-        model = self.primary.model if hasattr(self.primary, 'model') else settings.llm.model
-        
         return {
-            "provider": provider,
+            "provider": "kimi",
             "status": "healthy",
-            "model": model
+            "model": self.kimi.model,
+            "base_url": self.kimi.base_url
         }
 
 

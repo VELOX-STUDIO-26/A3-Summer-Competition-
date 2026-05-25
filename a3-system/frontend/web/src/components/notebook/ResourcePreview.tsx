@@ -9,6 +9,7 @@ import QuizRenderer from "./QuizRenderer";
 import { renderMarkdown } from "@/lib/markdown";
 import MermaidRenderer from "@/components/MermaidRenderer";
 import TextSelectionPopup from "./TextSelectionPopup";
+import { FileText, Target, Code2, GitBranch, Clapperboard } from "lucide-react";
 
 interface GeneratedResource {
   id: string;
@@ -70,7 +71,7 @@ export default function ResourcePreview({
     <div className="flex-1 overflow-auto min-h-0 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
       <div 
         ref={contentRef}
-        className={`relative flex flex-col h-full bg-[#e9e4da] ${resType === "mindmap" ? "p-0" : "p-5"}`}
+        className={`relative flex flex-col h-full bg-white ${resType === "mindmap" ? "p-0" : "p-5"}`}
       >
         {/* Text Selection Popup */}
         {onSendToChat && (
@@ -82,34 +83,24 @@ export default function ResourcePreview({
 
         {/* Header bar */}
         <div className={`flex items-center gap-2.5 ${resType === "mindmap" ? "px-5 pt-5 pb-3" : "mb-4"}`}>
-          <div
-            className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm ${
-              resType === "notes"
-                ? "bg-blue-100"
-                : resType === "quiz"
-                ? "bg-orange-100"
-                : resType === "code"
-                ? "bg-green-100"
-                : resType === "mindmap"
-                ? "bg-purple-100"
-                : "bg-red-100"
-            }`}
-          >
-            {resType === "notes"
-              ? "📝"
-              : resType === "quiz"
-              ? "🎯"
-              : resType === "code"
-              ? "💻"
-              : resType === "mindmap"
-              ? "🗺️"
-              : "🎬"}
+          <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center">
+            {resType === "notes" ? (
+              <FileText className="w-3.5 h-3.5 text-gray-600" />
+            ) : resType === "quiz" ? (
+              <Target className="w-3.5 h-3.5 text-gray-600" />
+            ) : resType === "code" ? (
+              <Code2 className="w-3.5 h-3.5 text-gray-600" />
+            ) : resType === "mindmap" ? (
+              <GitBranch className="w-3.5 h-3.5 text-gray-600" />
+            ) : (
+              <Clapperboard className="w-3.5 h-3.5 text-gray-600" />
+            )}
           </div>
           <div>
-            <span className="text-[10px] uppercase tracking-widest text-[#888] font-medium">
+            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-medium">
               {resType}
             </span>
-            <h2 className="text-sm font-bold text-[#2a2a2a] -mt-0.5 leading-tight">
+            <h2 className="text-sm font-semibold text-gray-900 -mt-0.5 leading-tight">
               {resource.topic}
             </h2>
           </div>

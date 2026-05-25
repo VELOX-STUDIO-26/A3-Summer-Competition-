@@ -52,19 +52,19 @@ import {
   Trash2,
 } from "lucide-react";
 
-// Sage & Sand color palette
+// Clean gray palette (matching notebook design)
 const COLORS = {
-  sage: "#6B7F6B",
-  sageDark: "#5a6d5a",
-  sageLight: "#8a9ba3",
-  sand: "#D6CFC2",
-  sandLight: "#E7E2D7",
-  sandLighter: "#F7F5F0",
-  cream: "#FAF8F5",
-  text: "#2a2a2a",
-  textMuted: "#666",
-  textLight: "#888",
-  success: "#22c55e",
+  primary: "#111827",  // gray-900
+  secondary: "#374151",  // gray-700
+  muted: "#6b7280",  // gray-500
+  light: "#9ca3af",  // gray-400
+  border: "#e5e7eb",  // gray-200
+  background: "#f9fafb",  // gray-50
+  card: "#ffffff",
+  text: "#111827",
+  textMuted: "#6b7280",
+  textLight: "#9ca3af",
+  success: "#10b981",
   warning: "#f59e0b",
   danger: "#ef4444",
 };
@@ -274,10 +274,10 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-[#6B7F6B]" />
-          <p className="text-[#666]">Loading your analytics...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          <p className="text-gray-500">Loading your analytics...</p>
         </div>
       </div>
     );
@@ -285,13 +285,13 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <p className="text-[#666] mb-4">{error}</p>
+          <p className="text-gray-500 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-[#6B7F6B] text-white rounded-lg hover:bg-[#5a6d5a]"
+            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
           >
             Retry
           </button>
@@ -327,7 +327,7 @@ export default function AnalyticsPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5]">
+    <div className="min-h-screen bg-gray-50">
       {/* Delete Account Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -382,47 +382,41 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* Background gradients */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#6B7F6B]/5 rounded-full blur-[128px]" />
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-[#D6CFC2]/30 rounded-full blur-[128px]" />
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push("/notebook")}
-              className="p-2 rounded-lg hover:bg-[#E7E2D7] transition-colors"
+              className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-[#666]" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-serif font-bold text-[#2a2a2a]">
+              <h1 className="text-xl font-bold text-gray-900">
                 Learning Analytics
               </h1>
-              <p className="text-sm text-[#888]">
+              <p className="text-sm text-gray-500">
                 {userName ? `${userName}'s` : "Your"} learning journey insights
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-100 to-amber-100 border border-orange-200/60 shadow-sm">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
-                <Flame className="w-4 h-4 text-white" />
+            {streak.current > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200">
+                <Flame className="w-4 h-4 text-orange-500" />
+                <span className="text-sm font-medium text-gray-700">{streak.current} day streak</span>
               </div>
-              <span className="text-sm font-bold text-orange-700">{streak.current} day streak</span>
-            </div>
+            )}
 
-            {/* Delete Account Button */}
+            {/* Delete Account Button - Subtle */}
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02]"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
             >
               <Trash2 className="w-4 h-4" />
-              <span className="text-sm font-medium">Delete Account</span>
+              <span className="text-sm">Delete</span>
             </button>
           </div>
         </div>
@@ -433,25 +427,21 @@ export default function AnalyticsPage() {
             icon={<Clock className="w-5 h-5" />}
             label="Study Time"
             value={`${overview.totalStudyTime}m`}
-            color="sage"
           />
           <StatCard
             icon={<BookOpen className="w-5 h-5" />}
             label="Modules"
             value={overview.modulesCompleted.toString()}
-            color="blue"
           />
           <StatCard
             icon={<Target className="w-5 h-5" />}
             label="Quizzes"
             value={overview.quizzesTaken.toString()}
-            color="purple"
           />
           <StatCard
             icon={<Zap className="w-5 h-5" />}
             label="Avg Score"
             value={`${overview.averageScore}%`}
-            color="amber"
           />
         </div>
 
@@ -460,27 +450,27 @@ export default function AnalyticsPage() {
           {/* Left Column - Charts */}
           <div className="lg:col-span-2 space-y-6">
             {/* Progress Over Time */}
-            <div className="bg-white rounded-2xl border border-[#D6CFC2]/60 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-[#2a2a2a]">Progress Over Time</h2>
-                <span className="text-xs text-[#888] bg-[#F7F5F0] px-2 py-1 rounded-md">Last 14 days</span>
+                <h2 className="text-base font-semibold text-gray-900">Progress Over Time</h2>
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Last 14 days</span>
               </div>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height={256}>
                   <AreaChart data={progressChartData}>
                     <defs>
                       <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={COLORS.sage} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={COLORS.sage} stopOpacity={0} />
+                        <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.15} />
+                        <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={COLORS.sandLight} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={COLORS.border} />
                     <XAxis dataKey="date" tick={{ fontSize: 11, fill: COLORS.textMuted }} />
                     <YAxis tick={{ fontSize: 11, fill: COLORS.textMuted }} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "white",
-                        border: `1px solid ${COLORS.sand}`,
+                        border: `1px solid ${COLORS.border}`,
                         borderRadius: "8px",
                         fontSize: "12px",
                       }}
@@ -488,7 +478,7 @@ export default function AnalyticsPage() {
                     <Area
                       type="monotone"
                       dataKey="hours"
-                      stroke={COLORS.sage}
+                      stroke={COLORS.primary}
                       strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#colorHours)"
@@ -500,21 +490,21 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Weekly Activity */}
-            <div className="bg-white rounded-2xl border border-[#D6CFC2]/60 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-[#2a2a2a]">This Week</h2>
-                <span className="text-xs text-[#888] bg-[#F7F5F0] px-2 py-1 rounded-md">Daily hours</span>
+                <h2 className="text-base font-semibold text-gray-900">This Week</h2>
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Daily hours</span>
               </div>
               <div className="h-48">
                 <ResponsiveContainer width="100%" height={192}>
                   <BarChart data={weeklyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={COLORS.sandLight} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={COLORS.border} />
                     <XAxis dataKey="day" tick={{ fontSize: 11, fill: COLORS.textMuted }} />
                     <YAxis tick={{ fontSize: 11, fill: COLORS.textMuted }} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "white",
-                        border: `1px solid ${COLORS.sand}`,
+                        border: `1px solid ${COLORS.border}`,
                         borderRadius: "8px",
                         fontSize: "12px",
                       }}
@@ -523,7 +513,7 @@ export default function AnalyticsPage() {
                       {weeklyData.map((_, index) => (
                         <Cell
                           key={`cell-${index}`}
-                          fill={index === weeklyData.length - 1 ? COLORS.sage : COLORS.sageLight}
+                          fill={index === weeklyData.length - 1 ? COLORS.primary : COLORS.light}
                         />
                       ))}
                     </Bar>
@@ -534,12 +524,12 @@ export default function AnalyticsPage() {
 
             {/* Subject Mastery Radar */}
             {radarData.length > 0 && (
-              <div className="bg-white rounded-2xl border border-[#D6CFC2] p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-[#2a2a2a] mb-4">Topic Mastery</h2>
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-base font-semibold text-gray-900 mb-4">Topic Mastery</h2>
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height={288}>
                     <RadarChart data={radarData}>
-                      <PolarGrid stroke={COLORS.sandLight} />
+                      <PolarGrid stroke={COLORS.border} />
                       <PolarAngleAxis
                         dataKey="subject"
                         tick={{ fontSize: 10, fill: COLORS.textMuted }}
@@ -552,9 +542,9 @@ export default function AnalyticsPage() {
                       <Radar
                         name="Mastery"
                         dataKey="mastery"
-                        stroke={COLORS.sage}
-                        fill={COLORS.sage}
-                        fillOpacity={0.3}
+                        stroke={COLORS.primary}
+                        fill={COLORS.primary}
+                        fillOpacity={0.15}
                         strokeWidth={2}
                       />
                     </RadarChart>
@@ -567,53 +557,53 @@ export default function AnalyticsPage() {
           {/* Right Column - Insights & Activity */}
           <div className="space-y-6">
             {/* AI Insights */}
-            <div className="bg-gradient-to-br from-white to-[#F7F5F0]/50 rounded-2xl border border-[#D6CFC2]/60 p-6 shadow-sm">
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-[#2a2a2a] flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-[#6B7F6B]" />
+                  <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-gray-600" />
                     AI Insights
                   </h2>
                   {insights?.generated_at && (
-                    <p className="text-xs text-[#888] mt-0.5 flex items-center gap-1">
+                    <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                       Updated {formatCacheTime(insights.generated_at)} • Refreshes daily
                     </p>
                   )}
                 </div>
                 {isLoadingInsights && (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#6B7F6B]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                 )}
               </div>
 
               {isLoadingInsights && !insights ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#6B7F6B]" />
-                    <p className="text-xs text-[#888]">Analyzing your learning patterns...</p>
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                    <p className="text-xs text-gray-500">Analyzing your learning patterns...</p>
                   </div>
                 </div>
               ) : insights ? (
                 <div className="space-y-3">
                   {/* Predictions */}
                   {insights.predictions && (
-                    <div className="p-4 rounded-xl bg-gradient-to-r from-[#6B7F6B]/10 to-[#8a9ba3]/10 border border-[#6B7F6B]/20">
+                    <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
                           <TrendIcon trend={insights.predictions.mastery_trajectory} />
                         </div>
                         <div>
-                          <span className="text-sm font-semibold text-[#2a2a2a] capitalize">
+                          <span className="text-sm font-semibold text-gray-900 capitalize">
                             {insights.predictions.mastery_trajectory} Trajectory
                           </span>
-                          <p className="text-xs text-[#666]">{insights.predictions.completion_forecast}</p>
+                          <p className="text-xs text-gray-500">{insights.predictions.completion_forecast}</p>
                         </div>
                       </div>
                       {insights.predictions.at_risk && (
-                        <div className="mt-3 p-3 rounded-lg bg-rose-50 border border-rose-200">
+                        <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
                           <div className="flex items-center gap-2">
-                            <AlertTriangle className="w-4 h-4 text-rose-500" />
-                            <p className="text-xs font-medium text-rose-700">{insights.predictions.at_risk_reason}</p>
+                            <AlertTriangle className="w-4 h-4 text-amber-600" />
+                            <p className="text-xs font-medium text-amber-700">{insights.predictions.at_risk_reason}</p>
                           </div>
                         </div>
                       )}
@@ -632,17 +622,17 @@ export default function AnalyticsPage() {
                 </div>
               ) : (
                 <div className="text-center py-6">
-                  <p className="text-sm text-[#888]">Click refresh to generate AI insights</p>
+                  <p className="text-sm text-gray-500">Click refresh to generate AI insights</p>
                 </div>
               )}
             </div>
 
             {/* Recommendations */}
             {insights?.recommendations && insights.recommendations.length > 0 && (
-              <div className="bg-gradient-to-br from-amber-50/80 to-orange-50/50 rounded-2xl border border-amber-200/60 p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-[#2a2a2a] flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                    <Lightbulb className="w-4 h-4 text-white" />
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Lightbulb className="w-4 h-4 text-gray-600" />
                   </div>
                   Recommendations
                 </h2>
@@ -650,17 +640,17 @@ export default function AnalyticsPage() {
                   {insights.recommendations.map((rec, i) => (
                     <div
                       key={i}
-                      className="p-4 rounded-xl bg-white/80 border border-amber-200/40 hover:bg-white hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                      className="p-4 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer group"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                        <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
                           <span className="text-lg">{rec.emoji}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-[#2a2a2a]">{rec.title}</p>
-                          <p className="text-xs text-[#555] mt-1 leading-relaxed">{rec.description}</p>
+                          <p className="text-sm font-semibold text-gray-900">{rec.title}</p>
+                          <p className="text-xs text-gray-500 mt-1 leading-relaxed">{rec.description}</p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ChevronRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     </div>
                   ))}
@@ -669,10 +659,10 @@ export default function AnalyticsPage() {
             )}
 
             {/* Recent Activity */}
-            <div className="bg-white rounded-2xl border border-[#D6CFC2]/60 p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-[#2a2a2a] flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-[#E7E2D7] flex items-center justify-center">
-                  <Calendar className="w-4 h-4 text-[#6B7F6B]" />
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <Calendar className="w-4 h-4 text-gray-600" />
                 </div>
                 Recent Activity
               </h2>
@@ -681,17 +671,17 @@ export default function AnalyticsPage() {
                   <ActivityItem key={i} activity={activity} />
                 ))}
                 {activities.length === 0 && (
-                  <p className="text-sm text-[#888] text-center py-4">No recent activity</p>
+                  <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
                 )}
               </div>
             </div>
 
             {/* Achievements */}
             {achievements.length > 0 && (
-              <div className="bg-gradient-to-br from-violet-50/50 to-purple-50/30 rounded-2xl border border-violet-200/60 p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-[#2a2a2a] flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-                    <Award className="w-4 h-4 text-white" />
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Award className="w-4 h-4 text-gray-600" />
                   </div>
                   Achievements
                 </h2>
@@ -699,16 +689,16 @@ export default function AnalyticsPage() {
                   {achievements.slice(0, 4).map((achievement) => (
                     <div
                       key={achievement.id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#F7F5F0] transition-colors"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                        <Award className="w-5 h-5 text-white" />
+                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <Award className="w-5 h-5 text-gray-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#2a2a2a] truncate">{achievement.name}</p>
-                        <p className="text-xs text-[#888]">{achievement.description}</p>
+                        <p className="text-sm font-medium text-gray-900 truncate">{achievement.name}</p>
+                        <p className="text-xs text-gray-500">{achievement.description}</p>
                       </div>
-                      <span className="text-xs font-semibold text-amber-600">+{achievement.xp} XP</span>
+                      <span className="text-xs font-semibold text-gray-600">+{achievement.xp} XP</span>
                     </div>
                   ))}
                 </div>
@@ -717,29 +707,29 @@ export default function AnalyticsPage() {
 
             {/* Comparative Analytics */}
             {comparative?.available && (
-              <div className="bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-2xl border border-blue-200/60 p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-[#2a2a2a] flex items-center gap-2 mb-1">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                    <Users className="w-4 h-4 text-white" />
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Users className="w-4 h-4 text-gray-600" />
                   </div>
                   Peer Comparison
                 </h2>
-                <p className="text-xs text-[#888] mb-4">
+                <p className="text-xs text-gray-500 mb-4">
                   {comparative.cohort_name} • {comparative.cohort_size} students
                 </p>
 
                 {/* Rank Badge */}
                 {comparative.rank?.overall && (
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/80 border border-blue-100 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                      <Trophy className="w-6 h-6 text-white" />
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 mb-4">
+                    <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <Trophy className="w-6 h-6 text-gray-600" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#2a2a2a]">
+                      <p className="text-2xl font-bold text-gray-900">
                         #{comparative.rank.overall}
-                        <span className="text-sm font-normal text-[#888]"> of {comparative.rank.total}</span>
+                        <span className="text-sm font-normal text-gray-500"> of {comparative.rank.total}</span>
                       </p>
-                      <p className="text-xs text-[#666]">Overall Rank</p>
+                      <p className="text-xs text-gray-500">Overall Rank</p>
                     </div>
                   </div>
                 )}
@@ -783,32 +773,23 @@ function StatCard({
   icon,
   label,
   value,
-  color,
   subtitle,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  color: "sage" | "blue" | "purple" | "amber";
   subtitle?: string;
 }) {
-  const colorMap = {
-    sage: { bg: "bg-[#6B7F6B]/10", icon: "from-[#6B7F6B] to-[#5a6d5a]", text: "text-[#6B7F6B]" },
-    blue: { bg: "bg-blue-50", icon: "from-blue-500 to-blue-600", text: "text-blue-600" },
-    purple: { bg: "bg-violet-50", icon: "from-violet-500 to-purple-600", text: "text-violet-600" },
-    amber: { bg: "bg-amber-50", icon: "from-amber-500 to-orange-500", text: "text-amber-600" },
-  };
-
   return (
-    <div className={`rounded-2xl border border-[#D6CFC2]/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 ${colorMap[color].bg}`}>
+    <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-sm transition-shadow">
       <div className="flex items-start justify-between mb-3">
-        <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${colorMap[color].icon} flex items-center justify-center text-white shadow-lg shadow-black/10`}>
+        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
           {icon}
         </div>
       </div>
-      <p className={`text-3xl font-bold ${colorMap[color].text} tracking-tight`}>{value}</p>
-      <p className="text-sm font-medium text-[#555] mt-1">{label}</p>
-      {subtitle && <p className="text-xs text-[#888] mt-0.5">{subtitle}</p>}
+      <p className="text-2xl font-bold text-gray-900 tracking-tight">{value}</p>
+      <p className="text-sm text-gray-500 mt-1">{label}</p>
+      {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
     </div>
   );
 }
@@ -819,28 +800,19 @@ function TrendIcon({ trend }: { trend: string }) {
   } else if (trend === "declining") {
     return <TrendingDown className="w-5 h-5 text-rose-500" />;
   }
-  return <Minus className="w-5 h-5 text-[#8a9ba3]" />;
+  return <Minus className="w-5 h-5 text-gray-400" />;
 }
 
 function InsightCard({ insight }: { insight: Insight }) {
-  const priorityStyles = {
-    high: { bg: "bg-rose-50/50", icon: "bg-rose-100" },
-    medium: { bg: "bg-amber-50/30", icon: "bg-amber-100" },
-    low: { bg: "bg-[#6B7F6B]/5", icon: "bg-[#6B7F6B]/10" },
-  };
-  const style = priorityStyles[insight.priority as keyof typeof priorityStyles] || priorityStyles.medium;
-
   return (
-    <div
-      className={`p-4 rounded-xl ${style.bg} border border-[#E7E2D7]/60 hover:shadow-sm transition-all duration-200`}
-    >
+    <div className="p-4 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors">
       <div className="flex items-start gap-3">
-        <div className={`w-9 h-9 rounded-lg ${style.icon} flex items-center justify-center flex-shrink-0`}>
+        <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
           <span className="text-lg">{insight.emoji}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#2a2a2a]">{insight.title}</p>
-          <p className="text-xs text-[#555] mt-1 leading-relaxed line-clamp-3">{insight.description}</p>
+          <p className="text-sm font-semibold text-gray-900">{insight.title}</p>
+          <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-3">{insight.description}</p>
         </div>
       </div>
     </div>
@@ -848,21 +820,17 @@ function InsightCard({ insight }: { insight: Insight }) {
 }
 
 function AlertCard({ alert }: { alert: Alert }) {
-  const severityStyles = {
-    critical: { bg: "bg-gradient-to-r from-rose-50 to-red-50", border: "border-rose-200", icon: "bg-rose-100", text: "text-rose-700" },
-    warning: { bg: "bg-gradient-to-r from-amber-50 to-orange-50", border: "border-amber-200", icon: "bg-amber-100", text: "text-amber-700" },
-  };
-  const style = severityStyles[alert.severity as keyof typeof severityStyles] || severityStyles.warning;
-
+  const isWarning = alert.severity === "warning";
+  
   return (
-    <div className={`p-4 rounded-xl ${style.bg} border ${style.border}`}>
+    <div className={`p-4 rounded-lg border ${isWarning ? "bg-amber-50 border-amber-200" : "bg-gray-50 border-gray-200"}`}>
       <div className="flex items-start gap-3">
-        <div className={`w-9 h-9 rounded-lg ${style.icon} flex items-center justify-center flex-shrink-0`}>
-          <AlertTriangle className={`w-4 h-4 ${style.text}`} />
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isWarning ? "bg-amber-100" : "bg-gray-100"}`}>
+          <AlertTriangle className={`w-4 h-4 ${isWarning ? "text-amber-600" : "text-gray-600"}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-semibold ${style.text}`}>{alert.title}</p>
-          <p className={`text-xs mt-1 ${style.text} opacity-80 leading-relaxed`}>{alert.description}</p>
+          <p className={`text-sm font-semibold ${isWarning ? "text-amber-800" : "text-gray-900"}`}>{alert.title}</p>
+          <p className={`text-xs mt-1 leading-relaxed ${isWarning ? "text-amber-700" : "text-gray-600"}`}>{alert.description}</p>
         </div>
       </div>
     </div>
@@ -878,13 +846,6 @@ function PercentileBar({
   percentile: number;
   vsAvg?: number;
 }) {
-  const getPercentileColor = (p: number) => {
-    if (p >= 75) return "from-emerald-400 to-green-500";
-    if (p >= 50) return "from-blue-400 to-indigo-500";
-    if (p >= 25) return "from-amber-400 to-orange-500";
-    return "from-rose-400 to-red-500";
-  };
-
   const getPercentileLabel = (p: number) => {
     if (p >= 90) return "Top 10%";
     if (p >= 75) return "Top 25%";
@@ -896,19 +857,19 @@ function PercentileBar({
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium text-[#555]">{label}</span>
+        <span className="text-xs font-medium text-gray-600">{label}</span>
         <div className="flex items-center gap-2">
           {vsAvg != null && (
             <span className={`text-xs font-medium ${vsAvg >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
               {vsAvg >= 0 ? "+" : ""}{vsAvg.toFixed(1)}%
             </span>
           )}
-          <span className="text-xs text-[#888]">{getPercentileLabel(percentile)}</span>
+          <span className="text-xs text-gray-500">{getPercentileLabel(percentile)}</span>
         </div>
       </div>
-      <div className="h-2 bg-[#E7E2D7] rounded-full overflow-hidden">
+      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className={`h-full bg-gradient-to-r ${getPercentileColor(percentile)} rounded-full transition-all duration-500`}
+          className="h-full bg-gray-900 rounded-full transition-all duration-500"
           style={{ width: `${Math.max(percentile, 5)}%` }}
         />
       </div>
@@ -918,26 +879,26 @@ function PercentileBar({
 
 function ActivityItem({ activity }: { activity: Activity }) {
   const typeIcons: Record<string, React.ReactNode> = {
-    quiz: <Target className="w-4 h-4 text-violet-500" />,
-    resource_consumed: <BookOpen className="w-4 h-4 text-blue-500" />,
-    resource_viewed: <BookOpen className="w-4 h-4 text-[#8a9ba3]" />,
-    tutor_session: <Brain className="w-4 h-4 text-[#6B7F6B]" />,
+    quiz: <Target className="w-4 h-4 text-gray-600" />,
+    resource_consumed: <BookOpen className="w-4 h-4 text-gray-600" />,
+    resource_viewed: <BookOpen className="w-4 h-4 text-gray-400" />,
+    tutor_session: <Brain className="w-4 h-4 text-gray-600" />,
   };
 
   return (
-    <div className="flex items-center gap-3 py-2 border-b border-[#E7E2D7] last:border-0">
-      <div className="w-8 h-8 rounded-lg bg-[#F7F5F0] flex items-center justify-center">
-        {typeIcons[activity.type] || <Zap className="w-4 h-4 text-[#888]" />}
+    <div className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+        {typeIcons[activity.type] || <Zap className="w-4 h-4 text-gray-400" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[#2a2a2a] truncate">{activity.title}</p>
-        <p className="text-xs text-[#888]">{activity.date}</p>
+        <p className="text-sm text-gray-900 truncate">{activity.title}</p>
+        <p className="text-xs text-gray-500">{activity.date}</p>
       </div>
       {activity.score !== undefined && (
-        <span className="text-xs font-semibold text-[#6B7F6B]">{activity.score}%</span>
+        <span className="text-xs font-semibold text-gray-600">{activity.score}%</span>
       )}
       {activity.xp !== undefined && activity.xp > 0 && (
-        <span className="text-xs font-semibold text-amber-600">+{activity.xp} XP</span>
+        <span className="text-xs font-semibold text-gray-600">+{activity.xp} XP</span>
       )}
     </div>
   );

@@ -1,10 +1,16 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import MermaidRenderer from "@/components/MermaidRenderer";
 import ImageUpload from "@/components/tutor/ImageUpload";
 import { FaithfulnessBadge } from "@/components/FaithfulnessBadge";
@@ -22,6 +28,15 @@ import {
   PanelRight,
   MessageSquare,
   GraduationCap,
+  MoreVertical,
+  ImagePlus,
+  Languages,
+  PanelRightClose,
+  Plus,
+  History,
+  Settings,
+  Trash2,
+  Paperclip,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -40,10 +55,19 @@ interface Message {
   };
 }
 
+interface TutorSession {
+  session_id: string;
+  title: string;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 interface ChatPanelProps {
   messages: Message[];
   inputValue: string;
   setInputValue: (value: string) => void;
+  quotedText?: string | null;
+  onClearQuote?: () => void;
   isLoading: boolean;
   isSending: boolean;
   isLoadingSessions: boolean;
@@ -73,12 +97,27 @@ interface ChatPanelProps {
   ratingPrompt?: React.ReactNode;
   // Text selection to ask AI
   onSendToChat?: (selectedText: string, question?: string) => void;
+  // Sidebar mode (fixed width like left panel)
+  isSidebar?: boolean;
+  // Collapse callback (when parent controls collapse state)
+  onCollapse?: () => void;
+  // Resizable width
+  width?: number;
+  onWidthChange?: (width: number) => void;
+  // Session management
+  sessions?: TutorSession[];
+  onNewChat?: () => void;
+  onSelectSession?: (sessionId: string) => void;
+  onDeleteSession?: (sessionId: string) => void;
+  onClearChat?: () => void;
 }
 
 export default function ChatPanel({
   messages,
   inputValue,
   setInputValue,
+  quotedText,
+  onClearQuote,
   isLoading,
   isSending,
   isLoadingSessions,
@@ -98,13 +137,54 @@ export default function ChatPanel({
   onOpenRightPanel,
   ratingPrompt,
   onSendToChat,
+  isSidebar = false,
+  onCollapse,
+  width,
+  onWidthChange,
+  sessions = [],
+  onNewChat,
+  onSelectSession,
+  onDeleteSession,
+  onClearChat,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [showSessionsModal, setShowSessionsModal] = useState(false);
+  const isResizingRef = useRef(false);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Resize handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!onWidthChange) return;
+    isResizingRef.current = true;
+    startXRef.current = e.clientX;
+    startWidthRef.current = width || 384;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizingRef.current) return;
+      const delta = startXRef.current - e.clientX;
+      const newWidth = Math.min(Math.max(startWidthRef.current + delta, 320), 600);
+      onWidthChange(newWidth);
+    };
+    
+    const handleMouseUp = () => {
+      isResizingRef.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+    
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -116,11 +196,29 @@ export default function ChatPanel({
       }
     }
   };
+  
+  const formatDate = (iso: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  };
 
   return (
-    <div className="flex-1 flex flex-col bg-transparent relative z-10 min-w-0">
+    <div 
+      className={`flex flex-col bg-white relative z-10 shrink-0 overflow-hidden ${isSidebar ? "border-l border-gray-200" : "flex-1 min-w-0"}`}
+      style={isSidebar && width ? { width: `${width}px` } : isSidebar ? { width: '384px' } : undefined}
+    >
+      {/* Resize Handle */}
+      {isSidebar && onWidthChange && (
+        <div
+          onMouseDown={handleMouseDown}
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize z-20 group hover:bg-gray-300 transition-colors"
+        >
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gray-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      )}
       {/* Mobile Navigation Header */}
-      <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-[#F7F5F0] border-b border-[#D6CFC2] shrink-0">
+      <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shrink-0">
         <button
           onClick={onOpenLeftPanel}
           className="p-2 rounded-lg hover:bg-[#E7E2D7] text-[#666] transition-colors"
@@ -141,40 +239,67 @@ export default function ChatPanel({
         </button>
       </div>
 
-      {/* Chat Header */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#D6CFC2] flex items-center justify-between bg-[#F7F5F0]/80 backdrop-blur-xl">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          <div className="relative shrink-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white flex items-center justify-center shadow-md shadow-[#B8C3C9]/30 border border-[#D6CFC2]">
-              <Image src="/nobogyan-logo.png" alt="NOBOGYAN" width={36} height={36} className="w-7 h-7 sm:w-9 sm:h-9" />
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#6B7F6B] border-2 border-[#F7F5F0] flex items-center justify-center">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white animate-pulse" />
-            </div>
+      {/* Chat Header - Clean */}
+      <div className="px-3 py-2.5 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+            <MessageSquare className="w-4 h-4 text-gray-600" />
           </div>
           <div className="min-w-0">
-            <h2 className="font-semibold text-[#2a2a2a] text-base sm:text-lg">NOBOGYAN Tutor</h2>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <span className="text-xs sm:text-sm text-[#666]">Teaching:</span>
-              <span className="text-xs sm:text-sm text-[#4a5568] font-medium truncate">
-                {currentTopic}
-              </span>
-            </div>
+            <h2 className="font-medium text-gray-900 text-sm">NoboGyan</h2>
+            <p className="text-xs text-gray-500 truncate max-w-[200px]">
+              {currentTopic}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <div className="px-3 py-1.5 rounded-full bg-[#C9D2D6]/30 border border-[#B8C3C9]/50 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#8a9ba3] animate-pulse" />
-            <span className="text-xs text-[#4a5568] font-medium">Live</span>
-          </div>
+        
+        {/* Header Actions */}
+        <div className="flex items-center gap-1">
+          {/* Three-dot menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors">
+              <MoreVertical className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg rounded-lg">
+              {onNewChat && (
+                <DropdownMenuItem onClick={onNewChat} className="cursor-pointer py-2 hover:bg-gray-50">
+                  <Plus className="w-4 h-4 mr-2 text-gray-500" />
+                  New conversation
+                </DropdownMenuItem>
+              )}
+              {sessions.length > 0 && (
+                <DropdownMenuItem onClick={() => setShowSessionsModal(true)} className="cursor-pointer py-2 hover:bg-gray-50">
+                  <History className="w-4 h-4 mr-2 text-gray-500" />
+                  View sessions ({sessions.length})
+                </DropdownMenuItem>
+              )}
+              {onClearChat && messages.length > 0 && (
+                <DropdownMenuItem onClick={onClearChat} className="cursor-pointer py-2 hover:bg-gray-50 text-red-600">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear chat
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {/* Collapse button - only in sidebar mode */}
+          {isSidebar && onCollapse && (
+            <button
+              onClick={onCollapse}
+              className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 min-h-0">
         <div 
           ref={messagesContainerRef}
-          className="relative space-y-4 max-w-3xl mx-auto"
+          className="relative space-y-4 p-4"
         >
           {/* Text Selection Popup for chat messages */}
           {onSendToChat && (
@@ -187,21 +312,21 @@ export default function ChatPanel({
           {/* Loading indicator when switching sessions */}
           {isLoadingSessions && (
             <div className="flex items-center justify-center py-12">
-              <div className="flex items-center gap-3 text-[#8a9ba3]">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-sm">Loading messages...</span>
+              <div className="flex items-center gap-2 text-gray-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Loading...</span>
               </div>
             </div>
           )}
 
           {!isLoadingSessions && messages.length === 0 && activeSessionId && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#B8C3C9]/20 flex items-center justify-center mb-4">
-                <MessageSquare className="w-8 h-8 text-[#8a9ba3]" />
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center mb-4">
+                <MessageSquare className="w-7 h-7 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-[#2a2a2a] mb-2">Start a conversation</h3>
-              <p className="text-sm text-[#666] max-w-sm">
-                Ask me anything about {currentTopic} and I'll help you learn!
+              <h3 className="text-base font-medium text-gray-800 mb-1">Start a conversation</h3>
+              <p className="text-sm text-gray-500 max-w-xs">
+                Ask me anything about {currentTopic}
               </p>
             </div>
           )}
@@ -221,13 +346,30 @@ export default function ChatPanel({
       )}
 
       {/* Input */}
-      <div className="p-2 sm:p-4 border-t border-[#D6CFC2] bg-[#F7F5F0]/80 backdrop-blur-xl">
-        <div className="max-w-3xl mx-auto px-2 sm:px-0">
+      <div className="p-3 border-t border-gray-100 bg-white shrink-0">
+        <div className="max-w-3xl mx-auto">
+          {/* Quoted text context - like ChatGPT/Claude */}
+          {quotedText && (
+            <div className="mb-2 flex items-start gap-2 p-2 bg-gray-50 rounded-lg border-l-2 border-gray-300">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500 mb-0.5">Asking about:</p>
+                <p className="text-sm text-gray-700 line-clamp-2">"{quotedText}"</p>
+              </div>
+              <button
+                onClick={onClearQuote}
+                className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+                title="Remove"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Image preview above input */}
           {imagePreview && selectedImage && (
-            <div className="mb-3 flex items-center gap-2">
+            <div className="mb-2 flex items-center gap-2">
               <div className="relative inline-block">
-                <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-[#D6CFC2] bg-[#F7F5F0]">
+                <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
                   <img src={imagePreview} alt="Selected" className="w-full h-full object-cover" />
                 </div>
                 <button
@@ -235,18 +377,73 @@ export default function ChatPanel({
                     setSelectedImage(null);
                     setImagePreview(null);
                   }}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-gray-900 text-white rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors"
                   type="button"
-                  title="Remove image"
+                  title="Remove"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-2.5 h-2.5" />
                 </button>
               </div>
-              <span className="text-xs text-[#666] truncate max-w-[200px]">{selectedImage.name}</span>
+              <span className="text-xs text-gray-500 truncate max-w-[150px]">{selectedImage.name}</span>
             </div>
           )}
 
-          <div className="flex gap-2 items-center p-2 rounded-2xl bg-white border border-[#D6CFC2] focus-within:border-[#B8C3C9] focus-within:shadow-md transition-all duration-300">
+          <div className="flex gap-2 items-center p-1.5 rounded-xl bg-gray-50 border border-gray-200 transition-all focus-within:border-gray-200">
+            {/* Attachment button */}
+            {!isSending && !isLoading && (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className="w-8 h-8 rounded-lg hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors shrink-0"
+                  title="Attach"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-44 bg-white border border-gray-200 shadow-lg rounded-lg">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = "image/*";
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            setSelectedImage(file);
+                            setImagePreview(ev.target?.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      };
+                      input.click();
+                    }}
+                    disabled={voice.isStreaming || voice.isConnecting}
+                    className="cursor-pointer py-2 hover:bg-gray-50"
+                  >
+                    <ImagePlus className="w-4 h-4 mr-2 text-gray-500" />
+                    Upload image
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={voice.toggle}
+                    disabled={voice.isConnecting}
+                    className="cursor-pointer py-2 hover:bg-gray-50"
+                  >
+                    {voice.isStreaming ? (
+                      <>
+                        <MicOff className="w-4 h-4 mr-2 text-red-500" />
+                        Stop recording
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="w-4 h-4 mr-2 text-gray-500" />
+                        Record voice
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -254,103 +451,34 @@ export default function ChatPanel({
               placeholder={
                 isSending || isLoading
                   ? "AI is responding..."
-                  : `Ask me anything about ${currentTopic}...`
+                  : "Ask anything..."
               }
               disabled={isSending || isLoading}
-              className="flex-1 bg-transparent border-0 focus-visible:ring-0 text-[#2a2a2a] placeholder:text-[#999] text-sm disabled:opacity-60"
+              className="chat-input-no-focus flex-1 bg-transparent border-0 focus-visible:ring-0 focus:ring-0 focus:outline-none ring-0 outline-none shadow-none focus:border-0 text-gray-900 placeholder:text-gray-400 text-sm disabled:opacity-60 h-8"
             />
 
-            {/* Action Buttons Group */}
-            <div className="flex items-center gap-1.5 pr-1">
-              {/* Image Upload - hidden during streaming */}
-              {!isSending && !isLoading && (
-                <ImageUpload
-                  onImageSelected={(file, preview) => {
-                    setSelectedImage(file);
-                    setImagePreview(preview);
-                  }}
-                  onClear={() => {
-                    setSelectedImage(null);
-                    setImagePreview(null);
-                  }}
-                  selectedImage={selectedImage}
-                  imagePreview={imagePreview}
-                  disabled={voice.isStreaming || voice.isConnecting}
-                />
-              )}
-
-              {/* Language Toggle - hidden during streaming */}
-              {!isSending && !isLoading && (
-                <Button
-                  onClick={() => setAsrLanguage(asrLanguage === "en_us" ? "zh_cn" : "en_us")}
-                  disabled={voice.isStreaming || voice.isConnecting}
-                  size="sm"
-                  title={asrLanguage === "en_us" ? "Switch to Chinese" : "Switch to English"}
-                  className="rounded-lg shadow-sm transition-all h-9 px-2.5 text-xs font-medium bg-[#F4F1EC] hover:bg-[#E7E2D7] text-[#5a5a5a] border border-[#D6CFC2]"
-                >
-                  {asrLanguage === "en_us" ? "EN" : "中"}
-                </Button>
-              )}
-
-              {/* Voice Button - hidden during streaming */}
-              {!isSending && !isLoading && (
-                <Button
-                  onClick={voice.toggle}
-                  disabled={voice.isConnecting}
-                  size="sm"
-                  title={
-                    voice.isStreaming
-                      ? "Stop recording"
-                      : voice.isConnecting
-                      ? "Connecting..."
-                      : "Record voice question"
-                  }
-                  aria-label={voice.isStreaming ? "Stop recording" : "Start recording"}
-                  aria-pressed={voice.isStreaming}
-                  className={`rounded-lg shadow-sm transition-all h-9 w-9 p-0 ${
-                    voice.isStreaming
-                      ? "bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-red-500/30"
-                      : "bg-[#E7E2D7] hover:bg-[#D6CFC2] text-[#5a5a5a] border border-[#D6CFC2]"
-                  }`}
-                >
-                  {voice.isConnecting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : voice.isStreaming ? (
-                    <MicOff className="w-4 h-4" />
-                  ) : (
-                    <Mic className="w-4 h-4" />
-                  )}
-                </Button>
-              )}
-
-              {/* Divider */}
-              <div className="w-px h-6 bg-[#D6CFC2] mx-1" />
-
-              {/* Send / Stop Button */}
-              {isSending || isLoading ? (
-                <Button
-                  onClick={onStopStream}
-                  size="sm"
-                  title="Stop generating"
-                  className="bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-md shadow-red-500/30 transition-all h-9 w-9 p-0 animate-pulse"
-                >
-                  <Square className="w-3.5 h-3.5 fill-current" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={onSendMessage}
-                  disabled={(!inputValue.trim() && !selectedImage) || voice.isStreaming}
-                  size="sm"
-                  title="Send message"
-                  className="bg-[#6B7F6B] hover:bg-[#5a6d5a] text-white font-semibold rounded-lg shadow-md shadow-[#6B7F6B]/30 transition-all h-9 w-9 p-0 disabled:opacity-50"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+            {/* Send / Stop Button */}
+            {isSending || isLoading ? (
+              <button
+                onClick={onStopStream}
+                title="Stop"
+                className="w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors shrink-0"
+              >
+                <Square className="w-3 h-3 fill-current" />
+              </button>
+            ) : (
+              <button
+                onClick={onSendMessage}
+                disabled={(!inputValue.trim() && !selectedImage) || voice.isStreaming}
+                title="Send"
+                className="w-8 h-8 rounded-lg bg-gray-900 hover:bg-gray-800 text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          {/* Status text */}
+          {/* Status text - simplified */}
           <StatusText
             voice={voice}
             asrLanguage={asrLanguage}
@@ -360,6 +488,106 @@ export default function ChatPanel({
           />
         </div>
       </div>
+      
+      {/* Sessions Modal */}
+      {showSessionsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setShowSessionsModal(false)}
+          />
+          
+          {/* Modal */}
+          <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-sm mx-4 max-h-[70vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-900">Chat Sessions</h3>
+              <button
+                onClick={() => setShowSessionsModal(false)}
+                className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Sessions List */}
+            <div className="flex-1 overflow-y-auto p-2">
+              {sessions.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  No sessions yet
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {sessions.map((session) => {
+                    const isActive = session.session_id === activeSessionId;
+                    return (
+                      <div
+                        key={session.session_id}
+                        className={`group flex items-center gap-2 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive 
+                            ? "bg-gray-900 text-white" 
+                            : "hover:bg-gray-50 text-gray-700"
+                        }`}
+                      >
+                        <button
+                          onClick={() => {
+                            onSelectSession?.(session.session_id);
+                            setShowSessionsModal(false);
+                          }}
+                          className="flex-1 flex items-center gap-2 text-left min-w-0"
+                        >
+                          <MessageSquare className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-gray-400"}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{session.title || "Untitled"}</p>
+                            <p className={`text-xs ${isActive ? "text-gray-300" : "text-gray-400"}`}>
+                              {formatDate(session.updated_at || session.created_at)}
+                            </p>
+                          </div>
+                        </button>
+                        {onDeleteSession && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm("Delete this session?")) {
+                                onDeleteSession(session.session_id);
+                              }
+                            }}
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
+                              isActive 
+                                ? "hover:bg-white/20 text-white" 
+                                : "hover:bg-gray-200 text-gray-400 hover:text-red-500"
+                            }`}
+                            title="Delete session"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            
+            {/* Footer */}
+            {onNewChat && (
+              <div className="px-3 py-2 border-t border-gray-100">
+                <button
+                  onClick={() => {
+                    onNewChat();
+                    setShowSessionsModal(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  New conversation
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -393,11 +621,11 @@ function MessageBubble({ message }: { message: Message }) {
       <>
         {/* Show image if present */}
         {message.imageUrl && (
-          <div className="mb-3 rounded-xl overflow-hidden border border-[#D6CFC2] bg-[#F7F5F0] max-w-md">
+          <div className="mb-2 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 max-w-[200px]">
             <img
               src={message.imageUrl}
               alt="Uploaded"
-              className="w-full h-auto max-h-64 object-contain"
+              className="w-full h-auto max-h-48 object-contain"
             />
           </div>
         )}
@@ -417,10 +645,10 @@ function MessageBubble({ message }: { message: Message }) {
             return (
               <pre
                 key={i}
-                className="bg-[#2a2a2a] rounded-xl p-3 my-2 overflow-x-auto border border-[#444] scrollbar-hide"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                className="bg-gray-900 rounded-md p-2 my-1.5 overflow-x-auto text-[10px]"
+                style={{ scrollbarWidth: "thin" }}
               >
-                <code className="text-white text-xs font-mono">{code}</code>
+                <code className="text-gray-100 font-mono whitespace-pre-wrap break-all">{code}</code>
               </pre>
             );
           }
@@ -543,34 +771,34 @@ function MessageBubble({ message }: { message: Message }) {
   };
 
   return (
-    <div className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+    <div className={`flex gap-2 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
       <div
-        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+        className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
           message.role === "user"
-            ? "bg-[#D6CFC2]"
-            : "bg-white border border-[#D6CFC2] shadow-sm"
+            ? "bg-gray-200"
+            : "bg-gray-100"
         }`}
       >
         {message.role === "user" ? (
-          <User className="w-4 h-4 text-[#555]" />
+          <User className="w-3 h-3 text-gray-600" />
         ) : (
-          <Image src="/nobogyan-logo.png" alt="NOBOGYAN" width={24} height={24} className="w-5 h-5" />
+          <GraduationCap className="w-3 h-3 text-gray-600" />
         )}
       </div>
       <div
         className={cn(
-          "p-4 rounded-2xl max-w-[90%] sm:max-w-[85%] md:max-w-[80%]",
+          "px-2.5 py-1.5 rounded-lg min-w-0 overflow-hidden",
           message.role === "user"
-            ? "bg-[#E7E2D7] border border-[#D6CFC2]"
-            : "bg-white border border-[#D6CFC2] shadow-sm"
+            ? "bg-gray-100 ml-6"
+            : "bg-white border border-gray-100 mr-6"
         )}
       >
-        <div className="text-sm prose prose-sm max-w-none chat-message text-[#2a2a2a] min-h-[1.5em]">
+        <div className="text-xs prose prose-xs max-w-none chat-message text-gray-700 min-h-[1em] break-words overflow-wrap-anywhere leading-relaxed">
           {renderContent()}
         </div>
         {/* Faithfulness Badge for assistant messages */}
         {message.role === "assistant" && message.faithfulness && (
-          <div className="mt-2 pt-2 border-t border-[#D6CFC2]/50">
+          <div className="mt-1.5 pt-1.5 border-t border-gray-100">
             <FaithfulnessBadge faithfulness={message.faithfulness} size="sm" />
           </div>
         )}
@@ -605,35 +833,23 @@ function StatusText({
   isAnalyzingImage: boolean;
 }) {
   if (voice.isError) {
-    return <p className="text-center text-xs text-red-500 mt-2">Mic error: check console</p>;
+    return <p className="text-center text-xs text-red-500 mt-2">Microphone error</p>;
   }
   if (isAnalyzingImage) {
-    return (
-      <p className="text-center text-xs text-[#8a9ba3] mt-2 animate-pulse">📷 Analyzing image...</p>
-    );
+    return <p className="text-center text-xs text-gray-400 mt-2">Analyzing image...</p>;
   }
   if (isLoading || isSending) {
-    return (
-      <p className="text-center text-xs text-[#8a9ba3] mt-2 animate-pulse">
-        ✨ AI is responding... Press{" "}
-        <kbd className="px-1 py-0.5 bg-[#E7E2D7] rounded text-[10px]">Enter</kbd> or click the stop
-        button to cancel
-      </p>
-    );
+    return <p className="text-center text-xs text-gray-400 mt-2">AI is responding...</p>;
   }
   if (voice.isStreaming) {
     return (
-      <p className="text-center text-xs text-red-500 mt-2 animate-pulse">
-        ● Listening ({asrLanguage === "en_us" ? "English" : "中文"}) — click mic to stop
+      <p className="text-center text-xs text-red-500 mt-2">
+        ● Listening ({asrLanguage === "en_us" ? "EN" : "中文"})
       </p>
     );
   }
   if (voice.isConnecting) {
-    return <p className="text-center text-xs text-[#999] mt-2">Connecting to speech service...</p>;
+    return <p className="text-center text-xs text-gray-400 mt-2">Connecting...</p>;
   }
-  return (
-    <p className="text-center text-xs text-[#999] mt-2">
-      Press Enter to send • Upload images • Record voice
-    </p>
-  );
+  return <p className="text-center text-xs text-gray-400 mt-1.5">Enter to send</p>;
 }

@@ -63,58 +63,56 @@ export default function TutorSessionSidebar({
   const activeSession = sessions.find(s => s.session_id === activeSessionId);
   const activeTitle = activeSession?.title || "Chat";
 
-  if (isCollapsed) {
-    return (
-      <div className="flex flex-col h-full w-14 border-r border-[#D6CFC2] bg-[#E7E2D7]/80 backdrop-blur-xl">
-        <div className="p-2 border-b border-[#D6CFC2]">
-          <Button
-            onClick={() => setIsCollapsed(false)}
-            size="icon"
-            className="w-10 h-10 bg-[#B8C3C9] hover:bg-[#8a9ba3] text-white"
-            title="Expand sidebar"
-          >
-            <PanelLeftOpen className="w-4 h-4" />
-          </Button>
-        </div>
-        <div className="flex-1 overflow-hidden py-2">
-          <div className="flex flex-col items-center gap-2">
-            <Button
+  // Sidebar with dedicated toggle button on the right side
+  return (
+    <div className="relative h-full flex">
+      {/* Collapsed state - just show toggle button */}
+      {isCollapsed ? (
+        <div className="flex flex-col h-full w-10 border-l border-gray-200 bg-white">
+          <div className="p-1.5 flex flex-col items-center gap-2">
+            <button
+              onClick={() => setIsCollapsed(false)}
+              className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition-colors"
+              title="Show chat history"
+            >
+              <PanelLeftOpen className="w-4 h-4" />
+            </button>
+            <button
               onClick={onNewChat}
-              size="icon"
-              className="w-10 h-10 bg-[#B8C3C9] hover:bg-[#8a9ba3] text-white"
+              className="w-7 h-7 rounded-lg bg-[#6B7F6B] hover:bg-[#5a6d5a] flex items-center justify-center text-white transition-colors"
               title="New Chat"
             >
               <Plus className="w-4 h-4" />
-            </Button>
-            {sessions.slice(0, 10).map((session) => {
-              const isActive = session.session_id === activeSessionId;
-              return (
-                <button
-                  key={session.session_id}
-                  onClick={() => onSelectSession(session.session_id)}
-                  className={`
-                    w-10 h-10 rounded-lg flex items-center justify-center transition-all
-                    ${isActive
-                      ? "bg-[#B8C3C9] text-white shadow-md"
-                      : "bg-white/50 text-[#666] hover:bg-white hover:text-[#4a5568]"
-                    }
-                  `}
-                  title={session.title || "New Chat"}
-                >
-                  <MessageSquare className="w-4 h-4" />
-                </button>
-              );
-            })}
+            </button>
+          </div>
+          {/* Session icons */}
+          <div className="flex-1 overflow-hidden py-1">
+            <div className="flex flex-col items-center gap-1">
+              {sessions.slice(0, 8).map((session) => {
+                const isActive = session.session_id === activeSessionId;
+                return (
+                  <button
+                    key={session.session_id}
+                    onClick={() => onSelectSession(session.session_id)}
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                      isActive
+                        ? "bg-[#6B7F6B] text-white"
+                        : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                    }`}
+                    title={session.title || "Chat"}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col h-full w-64 border-r border-[#D6CFC2] bg-[#E7E2D7]/80 backdrop-blur-xl relative">
-      {/* Header with Collapse Toggle */}
-      <div className="p-3 border-b border-[#D6CFC2] flex items-center justify-between gap-2">
+      ) : (
+        /* Expanded state - full sidebar */
+        <div className="flex flex-col h-full w-56 border-l border-gray-200 bg-white">
+          {/* Header with Collapse Toggle */}
+          <div className="p-2 border-b border-gray-200 flex items-center gap-2">
         <Button
           onClick={onNewChat}
           className="flex-1 justify-start gap-2 bg-[#B8C3C9] hover:bg-[#8a9ba3] text-white"
@@ -244,6 +242,8 @@ export default function TutorSessionSidebar({
           })}
         </div>
       </ScrollArea>
+        </div>
+      )}
     </div>
   );
 }

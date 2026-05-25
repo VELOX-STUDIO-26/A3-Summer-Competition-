@@ -931,7 +931,16 @@ export default function NewPathPage() {
       setStep("preview");
     } catch (err: any) {
       console.error("Graph generation failed:", err);
-      setError(err.message || "Failed to generate learning path");
+      // Provide user-friendly error messages
+      let errorMessage = "Failed to generate learning path";
+      if (err.code === "ECONNABORTED" || err.message?.includes("timeout")) {
+        errorMessage = "Generation is taking longer than expected. The AI service may be busy. Please try again.";
+      } else if (err.response?.status === 500) {
+        errorMessage = "Server error occurred. Please try again in a moment.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
       // Stay on generating step but show error, don't go back to review
       // User can retry or go back
     } finally {

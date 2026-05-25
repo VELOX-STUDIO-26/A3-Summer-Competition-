@@ -71,13 +71,19 @@ export default function Navigation() {
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-2">
+            <a
+              href="/login"
+              className="hidden sm:inline-flex px-4 py-2 rounded-full font-medium text-sm text-deep-charcoal/70 hover:text-deep-charcoal hover:bg-sand-100 transition-all duration-200"
+            >
+              Login
+            </a>
             <motion.a
-              href="#waitlist"
+              href="/register"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="hidden sm:inline-flex items-center gap-2 px-5 py-2 rounded-full font-semibold text-sm bg-sage-400 text-white hover:bg-sage-500 transition-colors shadow-sm"
             >
-              Join Waitlist
+              Register
             </motion.a>
             
             {/* Mobile menu button */}
@@ -120,11 +126,18 @@ export default function Navigation() {
                 ))}
                 <div className="h-px bg-sand-200 my-2" />
                 <a
-                  href="#waitlist"
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-3 text-sm font-medium text-deep-charcoal/70 hover:text-deep-charcoal hover:bg-sand-100 rounded-xl transition-all duration-200 text-center"
+                >
+                  Login
+                </a>
+                <a
+                  href="/register"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-sage-400 hover:bg-sage-500 rounded-xl transition-all duration-200"
                 >
-                  Join Waitlist
+                  Register
                 </a>
               </div>
             </div>

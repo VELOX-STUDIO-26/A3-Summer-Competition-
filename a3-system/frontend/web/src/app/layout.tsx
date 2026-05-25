@@ -30,9 +30,12 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/nobogyan-logo.png",
-    shortcut: "/nobogyan-logo.png",
-    apple: "/nobogyan-logo.png",
+    icon: [
+      { url: "/nobogyan-logo.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/nobogyan-logo.png", type: "image/png" },
+    ],
   },
   openGraph: {
     type: "website",

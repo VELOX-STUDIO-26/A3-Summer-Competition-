@@ -46,15 +46,19 @@ export function GateStatusPanel({
 
   if (loading || !gateStatus) {
     return (
-      <div className="p-6 rounded-2xl bg-[#E7E2D7]/50 border border-[#D6CFC2]">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-[#B8C3C9]/30 animate-pulse" />
-          <div className="space-y-2">
-            <div className="h-4 w-32 bg-[#D6CFC2] rounded animate-pulse" />
-            <div className="h-3 w-24 bg-[#E7E2D7] rounded animate-pulse" />
+      <div className="group/card relative">
+        <div className="relative rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-xl" />
+          <div className="absolute inset-0 rounded-2xl border border-white/50" />
+          <div className="relative p-5">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-gray-100/50 animate-pulse" />
+              <div className="w-11 h-11 rounded-full bg-gray-100/50 animate-pulse" />
+            </div>
+            <div className="h-5 w-24 bg-gray-100/50 rounded-lg animate-pulse mb-2" />
+            <div className="h-4 w-16 bg-gray-50/50 rounded-lg animate-pulse" />
           </div>
         </div>
-        <div className="h-3 bg-[#D6CFC2] rounded-full animate-pulse" />
       </div>
     );
   }
@@ -109,64 +113,72 @@ export function GateStatusPanel({
     }
   };
 
-  // State 1: Resources Incomplete
+  // State 1: Resources Incomplete - Glassmorphism Style
   if (!quiz_unlocked && !bypass_mode) {
     return (
       <>
-        <div className="p-6 rounded-2xl bg-[#E7E2D7]/50 border border-[#D6CFC2] space-y-5">
-          {/* Header */}
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#B8C3C9]/30 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-[#8a9ba3]" />
+        <div className="group/card relative cursor-pointer" onClick={() => setShowBypassDialog(true)}>
+          {/* Glassmorphism Card */}
+          <div className="relative rounded-2xl overflow-hidden transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl shadow-slate-500/25">
+            {/* Glass background */}
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-400 to-slate-500 opacity-[0.03]" />
+            
+            {/* Border glow effect */}
+            <div className="absolute inset-0 rounded-2xl border border-white/50" />
+            
+            {/* Card Content */}
+            <div className="relative p-5">
+              {/* Header Row */}
+              <div className="flex items-start justify-between mb-4">
+                {/* Icon with glow */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-400 to-slate-500 rounded-2xl blur-lg opacity-40 group-hover/card:opacity-60 transition-opacity" />
+                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform duration-300">
+                    <Lock className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+                
+                {/* Progress Ring */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-slate-500/10 rounded-full blur-sm" />
+                  <div className="relative">
+                    <ProgressRing percentage={gatePercentage} color="#64748b" size={44} />
+                    <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700">
+                      {gatePercentage}%
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-[#2a2a2a]">
-                  Milestone Quiz Locked
-                </h3>
-                <p className="text-sm text-[#888]">
-                  Complete resources to unlock
-                </p>
+
+              {/* Title & Status */}
+              <div className="mb-3">
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Milestone</h3>
+                <p className="text-sm text-gray-500">Quiz Locked</p>
+              </div>
+
+              {/* Progress Badge & Arrow */}
+              <div className="flex items-center justify-between">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-500/10 backdrop-blur-sm">
+                  <span className="w-2 h-2 rounded-full bg-gradient-to-br from-slate-400 to-slate-500" />
+                  <span className="text-sm font-medium text-gray-700">{gatePercentage}% of 80%</span>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-slate-500/10 flex items-center justify-center group-hover/card:bg-gradient-to-br group-hover/card:from-slate-400 group-hover/card:to-slate-500 transition-all duration-300">
+                  <ChevronRight className="w-4 h-4 text-gray-500 group-hover/card:text-white group-hover/card:translate-x-0.5 transition-all" />
+                </div>
               </div>
             </div>
-            <div className="text-right">
-              <span className="text-2xl font-bold text-[#4a5568]">
-                {gatePercentage}%
-              </span>
-              <p className="text-xs text-[#888]">of 80% required</p>
-            </div>
           </div>
-
-          {/* Progress Ring */}
-          <div className="relative">
-            <Progress
-              value={gatePercentage}
-              max={100}
-              className="h-3 bg-[#D6CFC2]"
-            />
-            <div
-              className="absolute top-0 w-0.5 h-3 bg-[#8a9ba3]"
-              style={{ left: "80%" }}
-            />
-          </div>
-
-          {/* Bypass Link */}
-          <button
-            onClick={() => setShowBypassDialog(true)}
-            className="text-xs text-[#888] hover:text-[#555] underline underline-offset-2"
-          >
-            I already know this topic →
-          </button>
         </div>
 
         {/* Bypass Dialog */}
         <Dialog open={showBypassDialog} onOpenChange={setShowBypassDialog}>
-          <DialogContent className="bg-[#F7F5F0] border-[#D6CFC2]">
+          <DialogContent className="bg-white border-gray-200">
             <DialogHeader>
-              <DialogTitle className="text-[#2a2a2a]">
+              <DialogTitle className="text-gray-900">
                 Skip to Quiz?
               </DialogTitle>
-              <DialogDescription className="text-[#666]">
+              <DialogDescription className="text-gray-500">
                 You can take the milestone quiz immediately. Pass with 85% or
                 higher to mark this milestone complete without studying the
                 resources.
@@ -191,11 +203,11 @@ export function GateStatusPanel({
                 <Button
                   onClick={handleBypass}
                   disabled={bypassing}
-                  className="flex-1 bg-[#B8C3C9] hover:bg-[#8a9ba3]"
+                  className="flex-1 bg-gray-900 hover:bg-gray-800 text-white"
                 >
                   {bypassing ? (
                     <>
-                      <Timer className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Unlocking...
                     </>
                   ) : (
@@ -213,45 +225,95 @@ export function GateStatusPanel({
     );
   }
 
-  // State 2: Quiz Unlocked
+  // State 2: Quiz Unlocked - Glassmorphism Style
   return (
-    <div className="p-6 rounded-2xl bg-[#E7E2D7]/50 border border-[#D6CFC2] space-y-5">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-          <CheckCircle className="w-5 h-5 text-green-600" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-[#2a2a2a]">
-            {bypass_mode ? "Quiz Unlocked (Bypass)" : "Quiz Unlocked!"}
-          </h3>
-          <p className="text-sm text-[#888]">
-            {gatePercentage >= 80
-              ? "You've completed the required resources"
-              : "Test your existing knowledge"}
-          </p>
+    <div className="group/card relative cursor-pointer" onClick={handleStartQuiz}>
+      {/* Glassmorphism Card */}
+      <div className="relative rounded-2xl overflow-hidden transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl shadow-emerald-500/25">
+        {/* Glass background */}
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-green-500 opacity-[0.05]" />
+        
+        {/* Border glow effect */}
+        <div className="absolute inset-0 rounded-2xl border border-white/50" />
+        
+        {/* Card Content */}
+        <div className="relative p-5">
+          {/* Header Row */}
+          <div className="flex items-start justify-between mb-4">
+            {/* Icon with glow */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-green-500 rounded-2xl blur-lg opacity-40 group-hover/card:opacity-60 transition-opacity" />
+              <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform duration-300">
+                <CheckCircle className="w-7 h-7 text-white" />
+              </div>
+            </div>
+            
+            {/* Progress Ring */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-emerald-500/10 rounded-full blur-sm" />
+              <div className="relative">
+                <ProgressRing percentage={100} color="#10b981" size={44} />
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-emerald-600">
+                  ✓
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Title & Status */}
+          <div className="mb-3">
+            <h3 className="text-base font-semibold text-gray-900 mb-1">Milestone</h3>
+            <p className="text-sm text-emerald-600 font-medium">
+              {bypass_mode ? "Bypass Mode" : "Quiz Ready"}
+            </p>
+          </div>
+
+          {/* Status Badge & Arrow */}
+          <div className="flex items-center justify-between">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 backdrop-blur-sm">
+              <span className="w-2 h-2 rounded-full bg-gradient-to-br from-emerald-500 to-green-500" />
+              <span className="text-sm font-medium text-emerald-700">
+                {startingQuiz ? "Starting..." : "Start Quiz"}
+              </span>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover/card:bg-gradient-to-br group-hover/card:from-emerald-500 group-hover/card:to-green-500 transition-all duration-300">
+              {startingQuiz ? (
+                <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+              ) : (
+                <Zap className="w-4 h-4 text-emerald-600 group-hover/card:text-white transition-all" />
+              )}
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Start Quiz Button */}
-      <Button
-        className="w-full bg-gradient-to-r from-[#B8C3C9] to-[#8a9ba3] hover:from-[#8a9ba3] hover:to-[#6b7b83] text-white font-semibold py-6 rounded-xl shadow-lg shadow-[#B8C3C9]/30 transition-all hover:scale-[1.02]"
-        onClick={handleStartQuiz}
-        disabled={startingQuiz}
-      >
-        {startingQuiz ? (
-          <>
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-            Generating Quiz...
-          </>
-        ) : (
-          <>
-            <Zap className="w-5 h-5 mr-2" />
-            Start Milestone Quiz
-            <ChevronRight className="w-5 h-5 ml-2" />
-          </>
-        )}
-      </Button>
     </div>
+  );
+}
+
+// Progress Ring Component for GateStatus
+function ProgressRing({ percentage, color, size = 24 }: { percentage: number; color: string; size?: number }) {
+  const strokeWidth = size > 30 ? 3 : 2.5;
+  const radius = (size - strokeWidth * 2) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - percentage / 100);
+  const center = size / 2;
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+      <circle cx={center} cy={center} r={radius} fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth} />
+      <circle
+        cx={center}
+        cy={center}
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        className="transition-all duration-500 ease-out"
+      />
+    </svg>
   );
 }

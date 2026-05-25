@@ -854,7 +854,7 @@ export async function generateHierarchicalGraph(
         student_id: studentId,
         is_premium: options.isPremium || false,
       },
-      timeout: 180000, // 3 minutes for generation
+      timeout: 300000, // 5 minutes for generation (LLM can be slow with retries)
     }
   );
   return res.data;
