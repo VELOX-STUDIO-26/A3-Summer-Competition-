@@ -274,7 +274,7 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center font-creator-notes">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
           <p className="text-gray-500">Loading your analytics...</p>
@@ -285,7 +285,7 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center font-creator-notes">
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
           <p className="text-gray-500 mb-4">{error}</p>
@@ -327,7 +327,7 @@ export default function AnalyticsPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-creator-notes">
       {/* Delete Account Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -446,7 +446,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Main Grid */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6 items-start">
           {/* Left Column - Charts */}
           <div className="lg:col-span-2 space-y-6">
             {/* Progress Over Time */}
@@ -658,62 +658,70 @@ export default function AnalyticsPage() {
               </div>
             )}
 
-            {/* Recent Activity */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <Calendar className="w-4 h-4 text-gray-600" />
-                </div>
-                Recent Activity
-              </h2>
-              <div className="space-y-2">
-                {activities.slice(0, 8).map((activity, i) => (
-                  <ActivityItem key={i} activity={activity} />
-                ))}
-                {activities.length === 0 && (
-                  <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
-                )}
+          </div>
+        </div>
+
+        {/* Bottom Section - Full Width Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+          {/* Recent Activity */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-gray-600" />
               </div>
+              Recent Activity
+            </h2>
+            <div className="space-y-2">
+              {activities.slice(0, 5).map((activity, i) => (
+                <ActivityItem key={i} activity={activity} />
+              ))}
+              {activities.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
+              )}
             </div>
+          </div>
 
-            {/* Achievements */}
-            {achievements.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                    <Award className="w-4 h-4 text-gray-600" />
-                  </div>
-                  Achievements
-                </h2>
-                <div className="space-y-2">
-                  {achievements.slice(0, 4).map((achievement) => (
-                    <div
-                      key={achievement.id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                        <Award className="w-5 h-5 text-gray-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{achievement.name}</p>
-                        <p className="text-xs text-gray-500">{achievement.description}</p>
-                      </div>
-                      <span className="text-xs font-semibold text-gray-600">+{achievement.xp} XP</span>
-                    </div>
-                  ))}
-                </div>
+          {/* Achievements */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                <Award className="w-4 h-4 text-gray-600" />
               </div>
-            )}
-
-            {/* Comparative Analytics */}
-            {comparative?.available && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-1">
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                    <Users className="w-4 h-4 text-gray-600" />
+              Achievements
+            </h2>
+            {achievements.length > 0 ? (
+              <div className="space-y-2">
+                {achievements.slice(0, 4).map((achievement) => (
+                  <div
+                    key={achievement.id}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <Award className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{achievement.name}</p>
+                      <p className="text-xs text-gray-500">{achievement.description}</p>
+                    </div>
+                    <span className="text-xs font-semibold text-gray-600">+{achievement.xp} XP</span>
                   </div>
-                  Peer Comparison
-                </h2>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">No achievements yet</p>
+            )}
+          </div>
+
+          {/* Comparative Analytics */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                <Users className="w-4 h-4 text-gray-600" />
+              </div>
+              Peer Comparison
+            </h2>
+            {comparative?.available ? (
+              <>
                 <p className="text-xs text-gray-500 mb-4">
                   {comparative.cohort_name} • {comparative.cohort_size} students
                 </p>
@@ -758,7 +766,9 @@ export default function AnalyticsPage() {
                     />
                   )}
                 </div>
-              </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4 mt-3">No peer data available</p>
             )}
           </div>
         </div>

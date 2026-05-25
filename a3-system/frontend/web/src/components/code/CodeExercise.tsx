@@ -198,13 +198,13 @@ export default function CodeExercise({ data, topic }: Props) {
           {data.difficulty}
         </span>
         {data.time_complexity && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-mono bg-[#E7E2D7] text-[#666] border border-[#D6CFC2]">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-mono bg-gray-100 text-gray-600 border border-gray-200">
             <Clock className="w-3 h-3" />
             {data.time_complexity}
           </span>
         )}
         {data.space_complexity && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-mono bg-[#E7E2D7] text-[#666] border border-[#D6CFC2]">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-mono bg-gray-100 text-gray-600 border border-gray-200">
             <Cpu className="w-3 h-3" />
             {data.space_complexity}
           </span>
@@ -212,10 +212,10 @@ export default function CodeExercise({ data, topic }: Props) {
       </div>
 
       {/* ── Problem Statement ── */}
-      <div className="rounded-xl border border-[#D6CFC2] bg-[#F7F5F0] p-4">
+      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-6 h-6 rounded-lg bg-[#C9D2D6]/30 flex items-center justify-center">
-            <Lightbulb className="w-3.5 h-3.5 text-[#8a9ba3]" />
+          <div className="w-6 h-6 rounded-lg bg-gray-200 flex items-center justify-center">
+            <Lightbulb className="w-3.5 h-3.5 text-gray-500" />
           </div>
           <span className="text-[10px] uppercase tracking-widest text-[#888] font-medium">Problem</span>
         </div>
@@ -240,13 +240,13 @@ export default function CodeExercise({ data, topic }: Props) {
             <span className="text-[10px] uppercase tracking-widest text-[#888] font-medium">Test Cases</span>
             <span className="text-[9px] text-[#999]">— {data.test_cases.length} tests</span>
           </div>
-          <div className="rounded-xl border border-[#D6CFC2] overflow-hidden">
+          <div className="rounded-xl border border-gray-200 overflow-hidden">
             {/* Table header */}
-            <div className="grid grid-cols-[auto_1fr_1fr_1fr] gap-px bg-[#D6CFC2]">
-              <div className="px-3 py-2 text-[9px] uppercase tracking-widest text-[#666] font-medium bg-[#E7E2D7]">#</div>
-              <div className="px-3 py-2 text-[9px] uppercase tracking-widest text-[#666] font-medium bg-[#E7E2D7]">Input</div>
-              <div className="px-3 py-2 text-[9px] uppercase tracking-widest text-[#666] font-medium bg-[#E7E2D7]">Expected</div>
-              <div className="px-3 py-2 text-[9px] uppercase tracking-widest text-[#666] font-medium bg-[#E7E2D7]">Description</div>
+            <div className="grid grid-cols-[auto_1fr_1fr_1fr] gap-px bg-gray-200">
+              <div className="px-3 py-2 text-[9px] uppercase tracking-widest text-gray-600 font-medium bg-gray-100">#</div>
+              <div className="px-3 py-2 text-[9px] uppercase tracking-widest text-gray-600 font-medium bg-gray-100">Input</div>
+              <div className="px-3 py-2 text-[9px] uppercase tracking-widest text-gray-600 font-medium bg-gray-100">Expected</div>
+              <div className="px-3 py-2 text-[9px] uppercase tracking-widest text-gray-600 font-medium bg-gray-100">Description</div>
             </div>
             {/* Rows */}
             {data.test_cases.map((tc, i) => (
@@ -261,23 +261,23 @@ export default function CodeExercise({ data, topic }: Props) {
                       : "bg-white"
                 }`}
               >
-                <div className="px-3 py-2 flex items-center justify-center bg-[#F7F5F0]">
+                <div className="px-3 py-2 flex items-center justify-center bg-gray-50">
                   {testResults[i] === "pass" ? (
                     <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
                   ) : testResults[i] === "fail" ? (
                     <XCircle className="w-3.5 h-3.5 text-red-600" />
                   ) : (
-                    <span className="text-[10px] text-[#888] font-mono">{i + 1}</span>
+                    <span className="text-[10px] text-gray-500 font-mono">{i + 1}</span>
                   )}
                 </div>
-                <div className="px-3 py-2 bg-[#F7F5F0]">
-                  <code className="text-[10px] text-[#4a5568] font-mono break-all">{tc.input}</code>
+                <div className="px-3 py-2 bg-gray-50">
+                  <code className="text-[10px] text-gray-600 font-mono break-all">{tc.input}</code>
                 </div>
-                <div className="px-3 py-2 bg-[#F7F5F0]">
+                <div className="px-3 py-2 bg-gray-50">
                   <code className="text-[10px] text-orange-700 font-mono break-all">{tc.expected}</code>
                 </div>
-                <div className="px-3 py-2 bg-[#F7F5F0]">
-                  <span className="text-[10px] text-[#666]">{tc.description}</span>
+                <div className="px-3 py-2 bg-gray-50">
+                  <span className="text-[10px] text-gray-600">{tc.description}</span>
                 </div>
               </div>
             ))}
@@ -330,7 +330,7 @@ export default function CodeExercise({ data, topic }: Props) {
             </span>
           </button>
           {showExplanation && (
-            <div className="rounded-xl border border-[#B8C3C9]/30 bg-[#C9D2D6]/20 p-4">
+            <div className="rounded-xl border border-gray-200 bg-gray-100 p-4">
               <p className="text-[11px] text-[#555] leading-relaxed whitespace-pre-line">
                 {data.explanation}
               </p>

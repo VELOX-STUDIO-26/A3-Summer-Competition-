@@ -2,6 +2,16 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Creator Notes Font - for notebook pages */
+@font-face {
+  font-family: 'Creator Notes';
+  src: url('./fonts/creator-notes/CreatorNotes.woff') format('woff'),
+       url('./fonts/creator-notes/CreatorNotes.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -167,6 +177,124 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Creator Notes Font - Notebook Pages */
+.font-creator-notes {
+  font-family: 'Creator Notes', var(--font-sans), system-ui, sans-serif;
+  font-size: 1.1em;
+}
+
+/* Dropdown menus in portals */
+[data-slot="dropdown-menu-content"] {
+  font-family: 'Creator Notes', var(--font-sans), system-ui, sans-serif !important;
+}
+
+/* Larger font in study notes content */
+.study-notes {
+  font-size: 18px !important;
+}
+
+.study-notes p,
+.study-notes li,
+.study-notes span:not(code span),
+.study-notes div:not(.group\/code) {
+  font-size: 18px !important;
+  line-height: 1.8 !important;
+}
+
+/* Exclude code from inheriting large font */
+.study-notes code,
+.study-notes code * {
+  font-size: 13px !important;
+}
+
+.study-notes td,
+.study-notes th,
+.study-notes table td,
+.study-notes table th {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.study-notes td code,
+.study-notes th code,
+.study-notes table td code,
+.study-notes table th code,
+.study-notes table code,
+.study-notes td > code,
+.study-notes th > code {
+  font-size: 11px !important;
+  padding: 2px 5px !important;
+  line-height: 1.4 !important;
+}
+
+/* Force table text to be smaller */
+.study-notes table,
+.study-notes table * {
+  font-size: 13px !important;
+}
+
+.study-notes table code,
+.study-notes table code[style] {
+  font-size: 11px !important;
+}
+
+/* Nuclear override for all code elements - reset and set */
+.study-notes code:not(pre code) {
+  all: revert;
+  font-family: ui-monospace, monospace !important;
+  font-size: 13px !important;
+  background: #f3f4f6 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.study-notes table code {
+  font-size: 11px !important;
+}
+
+/* Override any inline text-[Xpx] classes */
+.study-notes [class*="text-["] {
+  font-size: inherit !important;
+}
+
+.study-notes strong,
+.study-notes em {
+  font-size: inherit !important;
+}
+
+.study-notes h1 { font-size: 32px !important; line-height: 1.3 !important; }
+.study-notes h2 { font-size: 28px !important; line-height: 1.3 !important; }
+.study-notes h3 { font-size: 24px !important; line-height: 1.4 !important; }
+.study-notes h4 { font-size: 20px !important; line-height: 1.4 !important; }
+
+/* Callout boxes and special elements */
+.study-notes details,
+.study-notes details * {
+  font-size: 18px !important;
+  line-height: 1.7 !important;
+}
+
+/* Blockquote-style callouts */
+.study-notes > div[class*="border"],
+.study-notes > div[class*="border"] * {
+  font-size: 18px !important;
+  line-height: 1.7 !important;
+}
+
+/* Keep code blocks at their original size */
+.study-notes pre,
+.study-notes pre code,
+.study-notes pre span {
+  font-size: 11px !important;
+  line-height: 1.5 !important;
+}
+
+/* Inline code */
+.study-notes :not(pre) > code {
+  font-size: 15px !important;
 }
 
 /* Midnight Theme - Landing Page */
@@ -533,4 +661,79 @@ html {
 
 .chat-message li {
   margin: 0.125rem 0;
+}
+
+/* Dark mode notes styling */
+.dark-mode-notes h2,
+.dark-mode-notes h3,
+.dark-mode-notes h4 {
+  color: #e2e8f0 !important;
+}
+
+.dark-mode-notes p,
+.dark-mode-notes li,
+.dark-mode-notes span {
+  color: #cbd5e1 !important;
+}
+
+.dark-mode-notes strong {
+  color: #f1f5f9 !important;
+}
+
+.dark-mode-notes code:not(pre code) {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #e5e7eb !important;
+}
+
+.dark-mode-notes table {
+  border-color: #374151 !important;
+}
+
+.dark-mode-notes th {
+  background: #1f2937 !important;
+  color: #9ca3af !important;
+  border-color: #374151 !important;
+}
+
+.dark-mode-notes td {
+  border-color: #374151 !important;
+  color: #d1d5db !important;
+}
+
+.dark-mode-notes tr:hover {
+  background: #1f2937 !important;
+}
+
+.dark-mode-notes blockquote,
+.dark-mode-notes .callout {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+/* Study notes enhanced typography */
+.study-notes {
+  line-height: 1.75;
+}
+
+.study-notes h2 {
+  scroll-margin-top: 1rem;
+}
+
+.study-notes h3 {
+  scroll-margin-top: 1rem;
+}
+
+/* Code block hover effect */
+.group\/code:hover pre {
+  border-color: #4b5563;
+}
+
+/* Show copy button on code block hover */
+.group\/code:hover .copy-code-btn {
+  opacity: 1 !important;
+}
+
+.copy-code-btn:hover {
+  opacity: 1 !important;
 }

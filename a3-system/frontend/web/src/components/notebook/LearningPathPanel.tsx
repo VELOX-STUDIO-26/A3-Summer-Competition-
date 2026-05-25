@@ -46,11 +46,12 @@ export default function LearningPathPanel({
 }: LearningPathPanelProps) {
   return (
     <div
-      className={`relative flex flex-col bg-white border-r border-gray-100 transition-all duration-300 ease-in-out shrink-0 overflow-hidden
+      className={`relative flex flex-col bg-white border-r border-gray-100 transition-all duration-300 ease-in-out shrink-0 overflow-hidden font-[var(--font-nunito)]
         lg:relative lg:translate-x-0 lg:z-auto lg:h-auto
         fixed inset-y-0 left-0 z-50 h-full
         ${isCollapsed ? "lg:w-14" : "lg:w-60 w-72"}
         ${isMobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"}`}
+      style={{ fontFamily: "var(--font-nunito), 'Nunito', system-ui, sans-serif" }}
     >
       {/* Collapse Toggle Button (Desktop only) */}
       {onToggleCollapse && (
@@ -72,8 +73,8 @@ export default function LearningPathPanel({
             </div>
             {!isCollapsed && (
               <div className="min-w-0">
-                <h2 className="font-semibold text-gray-900 text-sm truncate">{currentTopic || "Your Journey"}</h2>
-                <p className="text-xs text-gray-500 truncate">{headerSummary}</p>
+                <h2 className="font-semibold text-gray-900 text-base truncate">{currentTopic || "Your Journey"}</h2>
+                <p className="text-sm text-gray-500 truncate">{headerSummary}</p>
               </div>
             )}
           </div>
@@ -94,10 +95,10 @@ export default function LearningPathPanel({
       <div className={`flex-1 overflow-auto scrollbar-thin ${isCollapsed ? "p-1.5" : "p-3"}`}>
         {!isCollapsed && (
           <div className="flex items-center justify-between mb-3 px-1">
-            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
               Learning Path
             </span>
-            <span className="text-[10px] text-gray-400 font-medium">{progressLabel}</span>
+            <span className="text-xs text-gray-400 font-medium">{progressLabel}</span>
           </div>
         )}
         <div className="space-y-0.5">
@@ -159,7 +160,7 @@ export default function LearningPathPanel({
                       }`} />
                     ) : (
                       <div
-                        className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-semibold flex-shrink-0 ${
+                        className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
                           node.status === "completed"
                             ? "bg-gray-200 text-gray-600"
                             : isActive
@@ -180,7 +181,7 @@ export default function LearningPathPanel({
                       <div className="flex-1 min-w-0">
                         <span
                           className={`block truncate ${
-                            isSubtopic ? "text-xs" : "text-sm"
+                            isSubtopic ? "text-sm" : "text-base"
                           } ${
                             isActive && !isSubtopic
                               ? "font-medium"
@@ -194,7 +195,7 @@ export default function LearningPathPanel({
                           {displayTitle}
                         </span>
                         {!isSubtopic && isActive && (
-                          <span className="text-[10px] text-gray-400">In Progress</span>
+                          <span className="text-xs text-gray-400">In Progress</span>
                         )}
                       </div>
                     )}
@@ -226,8 +227,8 @@ export default function LearningPathPanel({
           {!isCollapsed && (
             <>
               <div className="flex-1 min-w-0">
-                <span className="text-sm text-gray-700 group-hover:text-gray-900">Analytics</span>
-                <p className="text-[10px] text-gray-400">View your progress</p>
+                <span className="text-base text-gray-700 group-hover:text-gray-900">Analytics</span>
+                <p className="text-xs text-gray-400">View your progress</p>
               </div>
               <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />
             </>
@@ -247,8 +248,8 @@ export default function LearningPathPanel({
           {!isCollapsed && (
             <>
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-gray-900 truncate block">{userName || "User"}</span>
-                <span className="text-[10px] text-gray-400">Student</span>
+                <span className="text-base font-medium text-gray-900 truncate block">{userName || "User"}</span>
+                <span className="text-xs text-gray-400">Student</span>
               </div>
               <button
                 onClick={onLogout}

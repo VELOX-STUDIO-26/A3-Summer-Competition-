@@ -578,7 +578,7 @@ export default function LecturePlayer({ data, topic }: Props) {
           </div>
 
           {/* Header */}
-          <h2 className="text-lg md:text-xl font-bold text-gray-900 text-center mb-4 leading-tight tracking-tight">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 text-center mb-5 leading-tight tracking-tight">
             {highlightTerms(slide.header, slide.highlight_terms || [], activeTerms)}
           </h2>
 
@@ -591,7 +591,7 @@ export default function LecturePlayer({ data, topic }: Props) {
                 style={{ animationDelay: `${i * 150}ms` }}
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2 shrink-0" />
-                <span className="text-sm text-gray-700 leading-relaxed">
+                <span className="text-base text-gray-700 leading-relaxed">
                   {highlightTerms(bullet, slide.highlight_terms || [], activeTerms)}
                 </span>
               </div>
@@ -600,7 +600,7 @@ export default function LecturePlayer({ data, topic }: Props) {
 
           {/* Visual hint (if present) */}
           {slide.visual_hint && (
-            <div className="mt-4 px-3 py-2 rounded-lg bg-gray-100 border border-gray-200 text-[10px] text-gray-600 italic">
+            <div className="mt-4 px-4 py-2.5 rounded-lg bg-gray-100 border border-gray-200 text-sm text-gray-600 italic">
               <span className="font-semibold text-gray-500">Visual: </span>
               {slide.visual_hint}
             </div>
@@ -608,7 +608,7 @@ export default function LecturePlayer({ data, topic }: Props) {
 
           {/* Pause prompt (if present) */}
           {slide.pause_prompt && isPlaying && (
-            <div className="mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-[10px] text-amber-700 flex items-center gap-2 animate-pulse">
+            <div className="mt-3 px-4 py-2.5 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-700 flex items-center gap-2 animate-pulse">
               <span className="w-4 h-4 rounded-full bg-amber-200 flex items-center justify-center text-[8px]">⏸</span>
               {slide.pause_prompt}
             </div>
@@ -632,11 +632,11 @@ export default function LecturePlayer({ data, topic }: Props) {
         <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-t-lg border border-gray-200 border-b-0">
           <div className="flex items-center gap-2">
             <ScrollText className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Transcript
             </span>
           </div>
-          <span className="text-[9px] text-gray-400">
+          <span className="text-xs text-gray-400">
             Slide {currentSlide + 1} of {slides.length}
           </span>
         </div>
@@ -649,7 +649,7 @@ export default function LecturePlayer({ data, topic }: Props) {
             <button
               key={idx}
               onClick={() => goToSlide(idx)}
-              className={`w-full text-left p-2 rounded-lg border transition-all duration-200 ${
+              className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${
                 idx === currentSlide
                   ? "bg-gray-900 text-white border-gray-900"
                   : idx < currentSlide
@@ -657,9 +657,9 @@ export default function LecturePlayer({ data, topic }: Props) {
                     : "bg-white border-transparent opacity-50 hover:opacity-70 hover:bg-gray-50"
               }`}
             >
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-2">
                 <span
-                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                  className={`text-sm font-bold px-2 py-1 rounded ${
                     idx === currentSlide
                       ? "bg-white text-gray-900"
                       : "bg-gray-200 text-gray-600"
@@ -667,7 +667,7 @@ export default function LecturePlayer({ data, topic }: Props) {
                 >
                   {s.number}
                 </span>
-                <span className={`text-[10px] font-medium truncate ${idx === currentSlide ? "text-white" : "text-gray-700"}`}>
+                <span className={`text-base font-medium truncate ${idx === currentSlide ? "text-white" : "text-gray-700"}`}>
                   {s.header}
                 </span>
                 {idx === currentSlide && isPlaying && (
@@ -677,7 +677,7 @@ export default function LecturePlayer({ data, topic }: Props) {
                   </span>
                 )}
               </div>
-              <p className={`text-[11px] leading-relaxed ${idx === currentSlide ? "text-white/80" : "text-gray-600"}`}>
+              <p className={`text-base leading-relaxed ${idx === currentSlide ? "text-white/80" : "text-gray-600"}`}>
                 {highlightTerms(s.script, s.highlight_terms || [],
                   idx === currentSlide ? activeTerms : new Set()
                 )}

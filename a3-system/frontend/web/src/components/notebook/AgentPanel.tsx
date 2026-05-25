@@ -25,6 +25,8 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Trash2,
+  SplitSquareHorizontal,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -62,6 +64,8 @@ interface AgentPanelProps {
   refreshGate: () => void;
   onAgentClick: (agentId: string) => void;
   onMarkConsumed: (id: string) => void;
+  onDeleteResource?: (id: string) => void;
+  onSplitView?: (id: string) => void;
   rightPanelWidth: number;
   setRightPanelWidth: (width: number) => void;
   isRightPanelOpen: boolean;
@@ -98,6 +102,8 @@ export default function AgentPanel({
   refreshGate,
   onAgentClick,
   onMarkConsumed,
+  onDeleteResource,
+  onSplitView,
   rightPanelWidth,
   setRightPanelWidth,
   isRightPanelOpen,
@@ -190,47 +196,27 @@ export default function AgentPanel({
       <div className={`p-5 border-b border-gray-200 ${!isPreviewExpanded && !selectedResource ? "lg:hidden" : ""}`}>
         <div className="flex items-center justify-between">
           {isPreviewExpanded && selectedResource ? (
-            // Expanded preview header with back button
+            // Expanded preview header - title and close button
             <>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    setIsPreviewExpanded(false);
-                    setSelectedResource(null);
-                    setRightPanelWidth(320);
-                  }}
-                  className="w-8 h-8 rounded-lg bg-[#D6CFC2]/50 hover:bg-[#D6CFC2] flex items-center justify-center transition-all"
-                >
-                  <ChevronRight className="w-4 h-4 text-[#666] rotate-180" />
-                </button>
-                <div>
-                  <h2 className="font-semibold text-[#2a2a2a]">{activeItem?.topic || "Preview"}</h2>
-                  <p className="text-xs text-[#666]">
-                    {activeItem?.type.charAt(0).toUpperCase()}
-                    {activeItem?.type.slice(1)}
-                    {activeItem?.isRemedial && <span className="text-amber-600 ml-1">(Targeted)</span>}
-                  </p>
-                </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">{activeItem?.topic || "Preview"}</h2>
+                <p className="text-sm text-gray-500">
+                  {activeItem?.type.charAt(0).toUpperCase()}
+                  {activeItem?.type.slice(1)}
+                  {activeItem?.isRemedial && <span className="text-amber-600 ml-1">(Targeted)</span>}
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={onCloseRightPanel}
-                  className="lg:hidden p-2 rounded-lg hover:bg-[#D6CFC2]/50 text-[#666] transition-colors"
-                  aria-label="Close panel"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => {
-                    setIsPreviewExpanded(false);
-                    setSelectedResource(null);
-                    setRightPanelWidth(320);
-                  }}
-                  className="p-2 rounded-lg hover:bg-[#D6CFC2]/50 text-[#888] hover:text-[#555] transition-all"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setIsPreviewExpanded(false);
+                  setSelectedResource(null);
+                  setRightPanelWidth(320);
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all"
+                aria-label="Close preview"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </>
           ) : (
             // Normal header - just close button for mobile
@@ -257,7 +243,7 @@ export default function AgentPanel({
         >
 
           {/* Resources List */}
-          <div className="flex-1 p-6 overflow-auto scrollbar-hide flex flex-col" style={{ scrollbarWidth: "none" }}>
+          <div className={`flex-1 overflow-auto scrollbar-hide flex flex-col ${expandedAgentId ? 'p-0' : 'p-6'}`} style={{ scrollbarWidth: "none" }}>
             {/* Header - Glassmorphism style (hidden when detail panel is open) */}
             {!expandedAgentId && (
             <div className="flex items-center justify-between mb-6 flex-shrink-0">
@@ -283,19 +269,19 @@ export default function AgentPanel({
                   <Plus className="w-4 h-4" />
                   <span className="hidden sm:inline">Generate</span>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200 shadow-lg rounded-lg">
+                <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200 shadow-lg rounded-lg" style={{ fontFamily: "var(--font-nunito), 'Nunito', system-ui, sans-serif" }}>
                   {AGENTS.map((agent) => (
                     <DropdownMenuItem
                       key={agent.id}
                       onClick={() => onAgentClick(agent.id)}
-                      className="cursor-pointer py-2.5 px-3 hover:bg-gray-50"
+                      className="cursor-pointer py-3 px-3 hover:bg-gray-50"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
-                        <agent.icon className="w-4 h-4 text-gray-700" />
+                      <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
+                        <agent.icon className="w-4.5 h-4.5 text-gray-700" />
                       </div>
                       <div className="flex-1">
-                        <span className="text-sm font-medium text-gray-900 block">{agent.label}</span>
-                        <span className="text-xs text-gray-500">{agent.desc}</span>
+                        <span className="text-base font-medium text-gray-900 block">{agent.label}</span>
+                        <span className="text-sm text-gray-500">{agent.desc}</span>
                       </div>
                     </DropdownMenuItem>
                   ))}
@@ -326,19 +312,19 @@ export default function AgentPanel({
                       <Plus className="w-4 h-4" />
                       Get Started
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="center" className="w-56 bg-white border border-gray-200 shadow-lg rounded-lg">
+                    <DropdownMenuContent align="center" className="w-56 bg-white border border-gray-200 shadow-lg rounded-lg" style={{ fontFamily: "var(--font-nunito), 'Nunito', system-ui, sans-serif" }}>
                       {AGENTS.map((agent) => (
                         <DropdownMenuItem
                           key={agent.id}
                           onClick={() => onAgentClick(agent.id)}
-                          className="cursor-pointer py-2.5 hover:bg-gray-50"
+                          className="cursor-pointer py-3 px-3 hover:bg-gray-50"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
-                            <agent.icon className="w-4 h-4 text-gray-700" />
+                          <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
+                            <agent.icon className="w-4.5 h-4.5 text-gray-700" />
                           </div>
                           <div className="flex-1">
-                            <span className="text-sm font-medium text-gray-900 block">{agent.label}</span>
-                            <span className="text-xs text-gray-500">{agent.desc}</span>
+                            <span className="text-base font-medium text-gray-900 block">{agent.label}</span>
+                            <span className="text-sm text-gray-500">{agent.desc}</span>
                           </div>
                         </DropdownMenuItem>
                       ))}
@@ -352,6 +338,8 @@ export default function AgentPanel({
                   items={generatedResources.filter((r) => r.type === expandedAgentId)}
                   selectedResource={selectedResource}
                   onResourceClick={handleResourceClick}
+                  onDeleteResource={onDeleteResource}
+                  onSplitView={onSplitView}
                   onClose={() => setExpandedAgentId(null)}
                   gateStatus={gateStatus}
                 />
@@ -496,35 +484,35 @@ function ResourceTypeGroup({
       {/* Clean White Card */}
       <div className="relative rounded-xl bg-white border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-gray-200">
         {/* Card Content */}
-        <div className="p-4 sm:p-5">
+        <div className="p-5 sm:p-6">
           {/* Header Row */}
-          <div className="flex items-start justify-between mb-3 sm:mb-4">
+          <div className="flex items-start justify-between mb-5 sm:mb-6">
             {/* Icon */}
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gray-100 flex items-center justify-center">
-              <AgentIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gray-100 flex items-center justify-center">
+              <AgentIcon className="w-6 h-6 sm:w-7 sm:h-7 text-gray-700" />
             </div>
             
             {/* Progress */}
             {gateStatus && (
-              <span className="text-xs sm:text-sm font-medium text-gray-400">{percentage}%</span>
+              <span className="text-sm sm:text-base font-medium text-gray-400">{percentage}%</span>
             )}
           </div>
 
           {/* Title & Description */}
-          <div className="mb-3 sm:mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-0.5">{agent.label}</h3>
-            <p className="text-xs text-gray-500 line-clamp-1">{agent.desc}</p>
+          <div className="mb-5 sm:mb-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-1">{agent.label}</h3>
+            <p className="text-sm text-gray-500 line-clamp-1">{agent.desc}</p>
           </div>
 
           {/* Items Count & Arrow */}
-          <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-gray-100">
-            <div className="inline-flex items-center gap-1.5 sm:gap-2">
-              <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${items.length > 0 ? 'bg-gray-900' : 'bg-gray-300'}`} />
-              <span className="text-xs sm:text-sm text-gray-600">
+          <div className="flex items-center justify-between pt-4 sm:pt-5 border-t border-gray-100">
+            <div className="inline-flex items-center gap-2 sm:gap-2.5">
+              <span className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${items.length > 0 ? 'bg-gray-900' : 'bg-gray-300'}`} />
+              <span className="text-sm sm:text-base text-gray-600">
                 {items.length} {items.length === 1 ? "item" : "items"}
               </span>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-400 group-hover/card:text-gray-600 group-hover/card:translate-x-0.5 transition-all" />
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover/card:text-gray-600 group-hover/card:translate-x-0.5 transition-all" />
           </div>
         </div>
       </div>
@@ -540,6 +528,8 @@ function ResourceCard({
   isDragging,
   onMouseDown,
   onClick,
+  onDelete,
+  onSplit,
 }: {
   item: GeneratedResource;
   colors: typeof AGENT_COLORS.notes;
@@ -547,6 +537,8 @@ function ResourceCard({
   isDragging: boolean;
   onMouseDown: (e: React.MouseEvent) => void;
   onClick: () => void;
+  onDelete?: () => void;
+  onSplit?: () => void;
 }) {
   const getResourcePreview = () => {
     switch (item.type) {
@@ -800,7 +792,7 @@ function ResourceCard({
       data-card
       onMouseDown={onMouseDown}
       onClick={onClick}
-      className={`group w-72 cursor-grab active:cursor-grabbing transition-all duration-200 select-none ${
+      className={`group/card w-72 cursor-grab active:cursor-grabbing transition-all duration-200 select-none ${
         isDragging ? 'z-50 scale-[1.02]' : isSelected ? 'z-40' : 'z-10 hover:z-30'
       }`}
       style={{ touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
@@ -809,6 +801,34 @@ function ResourceCard({
       <div className={`relative rounded-xl overflow-hidden bg-white border transition-shadow duration-200 ${
         isDragging ? 'shadow-xl border-gray-200' : isSelected ? 'shadow-lg border-gray-200' : 'shadow-sm border-gray-100 hover:shadow-md hover:border-gray-200'
       }`}>
+        {/* Action buttons - show on hover */}
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+          {onSplit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSplit();
+              }}
+              className="w-7 h-7 rounded-lg bg-white/90 border border-gray-200 hover:bg-blue-50 hover:border-blue-300 flex items-center justify-center transition-colors shadow-sm"
+              title="Open with chat panel"
+            >
+              <SplitSquareHorizontal className="w-3.5 h-3.5 text-gray-500 hover:text-blue-600" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="w-7 h-7 rounded-lg bg-white/90 border border-gray-200 hover:bg-red-50 hover:border-red-300 flex items-center justify-center transition-colors shadow-sm"
+              title="Delete resource"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-gray-500 hover:text-red-600" />
+            </button>
+          )}
+        </div>
+        
         {/* Content */}
         <div className="p-5">
           {getResourcePreview()}
@@ -824,6 +844,8 @@ function ResourceDetailPanel({
   items,
   selectedResource,
   onResourceClick,
+  onDeleteResource,
+  onSplitView,
   onClose,
   gateStatus,
 }: {
@@ -831,6 +853,8 @@ function ResourceDetailPanel({
   items: GeneratedResource[];
   selectedResource: string | null;
   onResourceClick: (item: GeneratedResource) => void;
+  onDeleteResource?: (id: string) => void;
+  onSplitView?: (id: string) => void;
   onClose: () => void;
   gateStatus: any;
 }) {
@@ -868,8 +892,8 @@ function ResourceDetailPanel({
         const col = index % cols;
         const row = Math.floor(index / cols);
         positionsRef.current[item.id] = {
-          x: col * (cardWidth + gap) + 40,
-          y: row * (cardHeight + gap) + 40,
+          x: col * (cardWidth + gap) + 80,
+          y: row * (cardHeight + gap) + 80,
         };
         hasNew = true;
       }
@@ -984,24 +1008,25 @@ function ResourceDetailPanel({
       {/* Full Canvas Area */}
       <div 
         ref={canvasRef}
-        className="flex-1 relative rounded-xl overflow-hidden border border-gray-200 cursor-grab"
+        className="flex-1 relative overflow-hidden cursor-grab"
         onWheel={handleWheel}
         onMouseDown={handleCanvasMouseDown}
         onMouseMove={handleCanvasMouseMove}
         onMouseUp={handleCanvasMouseUp}
         onMouseLeave={handleCanvasMouseUp}
       >
-        {/* Back button - floating */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 left-4 z-20 w-9 h-9 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 flex items-center justify-center transition-colors shadow-sm"
-        >
-          <ChevronDown className="w-4 h-4 text-gray-600 rotate-90" />
-        </button>
-        
-        {/* Zoom indicator - floating */}
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1 shadow-sm">
-          <span className="text-xs text-gray-500">{Math.round(zoom * 100)}%</span>
+        {/* Floating controls bar - back button and zoom in one row */}
+        <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 flex items-center justify-center transition-colors shadow-sm pointer-events-auto"
+          >
+            <ChevronDown className="w-4 h-4 text-gray-600 rotate-90" />
+          </button>
+          
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm pointer-events-auto">
+            <span className="text-sm font-medium text-gray-600">{Math.round(zoom * 100)}%</span>
+          </div>
         </div>
         
         {/* Canvas background - clean white with subtle dots */}
@@ -1049,6 +1074,8 @@ function ResourceDetailPanel({
                       isDragging={draggingIdRef.current === item.id}
                       onMouseDown={(e) => handleCardMouseDown(e, item.id)}
                       onClick={() => handleCardClick(item)}
+                      onDelete={onDeleteResource ? () => onDeleteResource(item.id) : undefined}
+                      onSplit={onSplitView ? () => onSplitView(item.id) : undefined}
                     />
                   </div>
                 );

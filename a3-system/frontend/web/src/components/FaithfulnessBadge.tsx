@@ -67,8 +67,9 @@ export function FaithfulnessBadge({
           </span>
         </div>
 
-        {/* Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
+        {/* Tooltip - appears below to avoid header overlap */}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block z-50">
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-[-1px] border-4 border-transparent border-b-white" />
           <div className="px-3 py-2 rounded-lg bg-white border border-green-200 shadow-lg shadow-black/10 whitespace-nowrap">
             <p className="text-[11px] font-medium text-green-700">
               {supported_claims} of {total_claims} claims verified
@@ -80,7 +81,6 @@ export function FaithfulnessBadge({
               </p>
             )}
           </div>
-          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-white" />
         </div>
       </div>
     );
@@ -104,8 +104,9 @@ export function FaithfulnessBadge({
         </span>
       </div>
 
-      {/* Tooltip */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
+      {/* Tooltip - appears below to avoid header overlap */}
+      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block z-50">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-[-1px] border-4 border-transparent border-b-white" />
         <div
           className={`px-3 py-2 rounded-lg bg-white border ${
             isLowScore ? "border-red-200" : "border-amber-200"
@@ -126,7 +127,6 @@ export function FaithfulnessBadge({
             </p>
           )}
         </div>
-        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-white" />
       </div>
 
       {/* Expanded details (optional) */}

@@ -65,21 +65,21 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
                   : "border-red-400 bg-red-50"
                 : isWeakPointQuestion
                 ? "border-amber-300 bg-amber-50/30"
-                : "border-[#D6CFC2] bg-[#F7F5F0]"
+                : "border-gray-200 bg-gray-50"
             }`}
           >
             {/* Question Header with Type Badge */}
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <p className="text-xs font-semibold text-[#2a2a2a] flex gap-2">
+            <div className="flex items-start justify-between gap-2 mb-4">
+              <p className="text-base font-semibold text-[#2a2a2a] flex gap-2">
                 <span
-                  className={`inline-flex items-center justify-center w-5 h-5 rounded-md text-[10px] font-black shrink-0 ${
+                  className={`inline-flex items-center justify-center w-7 h-7 rounded-md text-sm font-black shrink-0 ${
                     hasAnswered
                       ? isCorrect
                         ? "bg-green-200 text-green-700"
                         : "bg-red-200 text-red-700"
                       : isWeakPointQuestion
                       ? "bg-amber-200 text-amber-700"
-                      : "bg-[#B8C3C9]/30 text-[#4a5568]"
+                      : "bg-gray-200 text-gray-600"
                   }`}
                 >
                   {hasAnswered ? (isCorrect ? "✓" : "✗") : i + 1}
@@ -95,7 +95,7 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
                     <Target className="w-2.5 h-2.5" /> Focus
                   </span>
                 )}
-                <span className="px-1.5 py-0.5 rounded bg-[#E7E2D7] text-[#666] text-[9px] font-medium">
+                <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[9px] font-medium">
                   {questionTypeLabels[questionType] || "Question"}
                 </span>
               </div>
@@ -104,23 +104,23 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
             {/* Confidence Rating (before answering) */}
             {!hasAnswered && (
               <div className="mb-3 ml-7">
-                <p className="text-[10px] text-[#888] mb-1">How confident are you?</p>
+                <p className="text-sm text-[#555] mb-2">How confident are you?</p>
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((level) => (
                     <button
                       key={level}
                       onClick={() => setConfidenceLevel(ansKey, level)}
-                      className={`w-6 h-6 rounded text-[9px] font-bold transition-all ${
+                      className={`w-8 h-8 rounded text-sm font-bold transition-all ${
                         confLevel >= level
                           ? "bg-violet-100 text-violet-700 border border-violet-400"
-                          : "bg-[#E7E2D7] text-[#999] border border-transparent hover:bg-[#D6CFC2]"
+                          : "bg-gray-100 text-gray-400 border border-transparent hover:bg-gray-200"
                       }`}
                       title={level === 1 ? "Not confident" : level === 5 ? "Very confident" : ""}
                     >
                       {level}
                     </button>
                   ))}
-                  <span className="text-[9px] text-[#888] ml-1">
+                  <span className="text-sm text-[#555] ml-2">
                     {confLevel === 0 ? "Select confidence" : confLevel <= 2 ? "Low" : confLevel <= 4 ? "Medium" : "High"}
                   </span>
                 </div>
@@ -131,19 +131,19 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
             {!hasAnswered && hints.length > 0 && (
               <div className="mb-3 ml-7">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-[10px] text-[#888]">Need a hint?</span>
+                  <span className="text-sm text-[#555]">Need a hint?</span>
                   <div className="flex items-center gap-1">
                     {hints.slice(0, 3).map((_: any, hintIdx: number) => (
                       <button
                         key={hintIdx}
                         onClick={() => revealHint(ansKey, hintIdx + 1)}
                         disabled={hintsRevealed > hintIdx}
-                        className={`px-2 py-0.5 rounded text-[9px] font-medium transition-all ${
+                        className={`px-3 py-1.5 rounded text-sm font-medium transition-all ${
                           hintsRevealed > hintIdx
                             ? "bg-violet-100 text-violet-700"
                             : hintsRevealed === hintIdx
-                            ? "bg-[#B8C3C9]/30 text-[#4a5568] hover:bg-[#B8C3C9]/50"
-                            : "bg-[#E7E2D7] text-[#999]"
+                            ? "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                            : "bg-gray-100 text-gray-400"
                         }`}
                       >
                         {hintsRevealed > hintIdx ? "✓" : `Hint ${hintIdx + 1}`}
@@ -154,8 +154,8 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
                 {hintsRevealed > 0 && (
                   <div className="space-y-1">
                     {hints.slice(0, hintsRevealed).map((hint: string, idx: number) => (
-                      <div key={idx} className="px-2 py-1.5 rounded bg-violet-50 border border-violet-200">
-                        <p className="text-[10px] text-violet-700">
+                      <div key={idx} className="px-4 py-2.5 rounded bg-violet-50 border border-violet-200">
+                        <p className="text-base text-violet-700">
                           <span className="font-semibold">Hint {idx + 1}:</span> {hint}
                         </p>
                       </div>
@@ -175,18 +175,18 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
                   distractorExplanations[distractorKey] ||
                   distractorExplanations[opt.replace(/^[A-Da-d][.)]\s*/, "")];
 
-                let btnClass = "w-full text-left px-3 py-1.5 text-[11px] rounded-lg border transition-all ";
+                let btnClass = "w-full text-left px-4 py-3 text-base rounded-lg border transition-all ";
                 if (hasAnswered) {
                   if (isCorrectOpt) {
                     btnClass += "bg-green-100 border-green-400 text-green-700";
                   } else if (isThis) {
                     btnClass += "bg-red-100 border-red-400 text-red-700";
                   } else {
-                    btnClass += "bg-[#F7F5F0] border-[#E7E2D7] text-[#999]";
+                    btnClass += "bg-gray-50 border-gray-200 text-gray-400";
                   }
                 } else {
                   btnClass +=
-                    "bg-[#e9e4da] border-[#D6CFC2] text-[#555] hover:border-[#B8C3C9] hover:bg-[#E7E2D7] cursor-pointer";
+                    "bg-gray-100 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-200 cursor-pointer";
                 }
 
                 return (
@@ -204,7 +204,7 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
                     {/* Distractor Explanation (only for wrong answers after answering) */}
                     {hasAnswered && isThis && !isCorrectOpt && hasDistractorExp && (
                       <div className="ml-4 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
-                        <p className="text-[10px] text-red-700">
+                        <p className="text-sm text-red-700">
                           <span className="font-semibold">Why this is wrong:</span> {hasDistractorExp}
                         </p>
                       </div>
@@ -221,24 +221,24 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleEli5(ansKey)}
-                    className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
                       eli5On
                         ? "bg-blue-100 text-blue-700 border border-blue-300"
-                        : "bg-[#E7E2D7] text-[#666] hover:bg-[#D6CFC2]"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
                     {eli5On ? "🧒 ELI5 Mode On" : "🧒 ELI5 Mode"}
                   </button>
                   {confLevel > 0 && (
-                    <span className="text-[10px] text-[#888]">
+                    <span className="text-xs text-[#666]">
                       Your confidence: {"★".repeat(confLevel)}{"☆".repeat(5 - confLevel)}
                     </span>
                   )}
                 </div>
 
                 {/* Explanation */}
-                <div className="px-3 py-2 rounded-lg bg-[#C9D2D6]/20 border border-[#B8C3C9]/30">
-                  <p className="text-[10px] text-[#4a5568] leading-relaxed">
+                <div className="px-4 py-3 rounded-lg bg-gray-100 border border-gray-200">
+                  <p className="text-sm text-[#4a5568] leading-relaxed">
                     <span className="font-semibold">
                       {eli5On && q.eli5_explanation ? "Simple Explanation:" : "Explanation:"}
                     </span>{" "}
@@ -248,11 +248,11 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
 
                 {/* Common Misconceptions */}
                 {q.common_misconceptions && q.common_misconceptions.length > 0 && (
-                  <div className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
-                    <p className="text-[10px] font-semibold text-amber-700 mb-1">Common Misconceptions:</p>
-                    <ul className="space-y-0.5">
+                  <div className="px-4 py-3 rounded-lg bg-amber-50 border border-amber-200">
+                    <p className="text-sm font-semibold text-amber-700 mb-1.5">Common Misconceptions:</p>
+                    <ul className="space-y-1">
                       {q.common_misconceptions.map((m: string, mi: number) => (
-                        <li key={mi} className="text-[10px] text-amber-700 flex items-start gap-1">
+                        <li key={mi} className="text-sm text-amber-700 flex items-start gap-1.5">
                           <span>•</span> {m}
                         </li>
                       ))}
@@ -266,13 +266,13 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
       })}
 
       {/* Quiz Summary */}
-      <div className="mt-4 p-3 rounded-xl bg-[#E7E2D7]/50 border border-[#D6CFC2]">
+      <div className="mt-4 p-4 rounded-xl bg-gray-100 border border-gray-200">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-semibold text-[#4a5568]">
+            <p className="text-base font-semibold text-[#4a5568]">
               Score: {score} / {questions.length}
             </p>
-            <p className="text-[10px] text-[#888]">
+            <p className="text-sm text-[#666]">
               {metadata?.weak_point_coverage
                 ? `${Math.round(metadata.weak_point_coverage * 100)}% targeting weak areas`
                 : ""}
@@ -280,7 +280,7 @@ export default function QuizRenderer({ resourceId, questions, metadata, quizStat
           </div>
           <button
             onClick={() => resetQuiz(resourceId, questions.length)}
-            className="px-3 py-1.5 rounded-lg bg-[#B8C3C9]/30 text-[#4a5568] text-[10px] font-medium hover:bg-[#B8C3C9]/50 transition-all"
+            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-300 transition-all"
           >
             Retake Quiz
           </button>

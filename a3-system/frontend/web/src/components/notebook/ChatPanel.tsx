@@ -246,8 +246,8 @@ export default function ChatPanel({
             <MessageSquare className="w-4 h-4 text-gray-600" />
           </div>
           <div className="min-w-0">
-            <h2 className="font-medium text-gray-900 text-sm">NoboGyan</h2>
-            <p className="text-xs text-gray-500 truncate max-w-[200px]">
+            <h2 className="font-medium text-gray-900 text-xl">NoboGyan</h2>
+            <p className="text-lg text-gray-500 truncate max-w-[200px]">
               {currentTopic}
             </p>
           </div>
@@ -324,8 +324,8 @@ export default function ChatPanel({
               <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center mb-4">
                 <MessageSquare className="w-7 h-7 text-gray-400" />
               </div>
-              <h3 className="text-base font-medium text-gray-800 mb-1">Start a conversation</h3>
-              <p className="text-sm text-gray-500 max-w-xs">
+              <h3 className="text-2xl font-medium text-gray-800 mb-2">Start a conversation</h3>
+              <p className="text-xl text-gray-500 max-w-xs">
                 Ask me anything about {currentTopic}
               </p>
             </div>
@@ -352,8 +352,8 @@ export default function ChatPanel({
           {quotedText && (
             <div className="mb-2 flex items-start gap-2 p-2 bg-gray-50 rounded-lg border-l-2 border-gray-300">
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-500 mb-0.5">Asking about:</p>
-                <p className="text-sm text-gray-700 line-clamp-2">"{quotedText}"</p>
+                <p className="text-lg text-gray-500 mb-1">Asking about:</p>
+                <p className="text-xl text-gray-700 line-clamp-2">"{quotedText}"</p>
               </div>
               <button
                 onClick={onClearQuote}
@@ -454,7 +454,7 @@ export default function ChatPanel({
                   : "Ask anything..."
               }
               disabled={isSending || isLoading}
-              className="chat-input-no-focus flex-1 bg-transparent border-0 focus-visible:ring-0 focus:ring-0 focus:outline-none ring-0 outline-none shadow-none focus:border-0 text-gray-900 placeholder:text-gray-400 text-sm disabled:opacity-60 h-8"
+              className="chat-input-no-focus flex-1 bg-transparent border-0 focus-visible:ring-0 focus:ring-0 focus:outline-none ring-0 outline-none shadow-none focus:border-0 text-gray-900 placeholder:text-gray-400 text-xl disabled:opacity-60 h-12"
             />
 
             {/* Send / Stop Button */}
@@ -502,7 +502,7 @@ export default function ChatPanel({
           <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-sm mx-4 max-h-[70vh] flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900">Chat Sessions</h3>
+              <h3 className="text-base font-semibold text-gray-900">Chat Sessions</h3>
               <button
                 onClick={() => setShowSessionsModal(false)}
                 className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500"
@@ -737,28 +737,30 @@ function MessageBubble({ message }: { message: Message }) {
           
           // Enhanced markdown rendering (skip table HTML)
           html = html
-            .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold text-[#4a5568] mt-3 mb-1">$1</h3>')
-            .replace(/^## (.+)$/gm, '<h2 class="text-lg font-semibold text-[#4a5568] mt-4 mb-2">$1</h2>')
-            .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold text-[#4a5568] mt-4 mb-2">$1</h1>')
+            .replace(/^### (.+)$/gm, '<h3 class="text-xl font-semibold text-[#4a5568] mt-4 mb-2">$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2 class="text-2xl font-semibold text-[#4a5568] mt-5 mb-3">$1</h2>')
+            .replace(/^# (.+)$/gm, '<h1 class="text-3xl font-bold text-[#4a5568] mt-5 mb-3">$1</h1>')
             .replace(/\*\*\*(.*?)\*\*\*/g, '<strong class="text-[#4a5568] italic">$1</strong>')
             .replace(/\*\*(.*?)\*\*/g, '<strong class="text-[#4a5568]">$1</strong>')
             .replace(/\*(.*?)\*/g, '<em class="text-[#555]">$1</em>')
-            .replace(/`([^`]+)`/g, '<code class="bg-[#E7E2D7] text-[#4a5568] px-1.5 py-0.5 rounded text-xs font-mono">$1</code>')
-            .replace(/^[-•]\s+(.+)$/gm, '<li class="flex items-start gap-2 py-0.5 leading-snug"><span class="text-[#8a9ba3] mt-1">•</span><span class="text-[#444]">$1</span></li>')
-            .replace(/^(\d+)\.\s+(.+)$/gm, '<li class="flex items-start gap-2 py-0.5 leading-snug"><span class="text-[#8a9ba3] font-semibold min-w-[1.2rem]">$1.</span><span class="text-[#444]">$2</span></li>');
+            .replace(/`([^`]+)`/g, '<code class="bg-[#E7E2D7] text-[#4a5568] px-2 py-1 rounded text-lg font-mono">$1</code>')
+            .replace(/^[-•]\s+(.+)$/gm, '<li class="flex items-start gap-2.5 leading-relaxed text-lg"><span class="text-[#8a9ba3]">•</span><span class="text-[#444]">$1</span></li>')
+            .replace(/^(\d+)\.\s+(.+)$/gm, '<li class="flex items-start gap-2.5 leading-relaxed text-lg"><span class="text-[#8a9ba3] font-semibold min-w-[1.75rem]">$1.</span><span class="text-[#444]">$2</span></li>');
 
-          // Handle paragraphs and line breaks (but not inside table HTML)
-          if (!html.includes('<table')) {
-            html = html
-              .replace(/\n\n/g, '</p><p class="mt-2">')
-              .replace(/\n/g, "<br/>");
-          } else {
-            // For content with tables, be more careful with line breaks
-            html = html.replace(/\n\n(?![^<]*<\/table>)/g, '</p><p class="mt-2">');
+          // Wrap consecutive list items in ul before handling line breaks
+          if (html.includes("<li")) {
+            html = html.replace(/((?:<li[\s\S]*?<\/li>\s*)+)/g, '<ul class="space-y-0.5 my-1 pl-0">$&</ul>');
           }
 
-          if (html.includes("<li")) {
-            html = html.replace(/((?:<li[\s\S]*?<\/li>\s*)+)/g, '<ul class="space-y-0 my-1">$&</ul>');
+          // Handle paragraphs and line breaks (but not inside table HTML or lists)
+          if (!html.includes('<table')) {
+            // Remove line breaks between list items (they're already in a ul)
+            html = html.replace(/<\/li>\s*\n+\s*<li/g, '</li><li');
+            html = html
+              .replace(/\n\n/g, '</p><p class="mt-1.5">')
+              .replace(/\n(?!<)/g, "<br/>");
+          } else {
+            html = html.replace(/\n\n(?![^<]*<\/table>)/g, '</p><p class="mt-1.5">');
           }
 
           return <span key={i} dangerouslySetInnerHTML={{ __html: html }} />;
@@ -773,27 +775,27 @@ function MessageBubble({ message }: { message: Message }) {
   return (
     <div className={`flex gap-2 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
       <div
-        className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
+        className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
           message.role === "user"
             ? "bg-gray-200"
             : "bg-gray-100"
         }`}
       >
         {message.role === "user" ? (
-          <User className="w-3 h-3 text-gray-600" />
+          <User className="w-5 h-5 text-gray-600" />
         ) : (
-          <GraduationCap className="w-3 h-3 text-gray-600" />
+          <GraduationCap className="w-5 h-5 text-gray-600" />
         )}
       </div>
       <div
         className={cn(
-          "px-2.5 py-1.5 rounded-lg min-w-0 overflow-hidden",
+          "px-5 py-4 rounded-xl min-w-0 overflow-hidden",
           message.role === "user"
             ? "bg-gray-100 ml-6"
             : "bg-white border border-gray-100 mr-6"
         )}
       >
-        <div className="text-xs prose prose-xs max-w-none chat-message text-gray-700 min-h-[1em] break-words overflow-wrap-anywhere leading-relaxed">
+        <div className="text-lg prose prose-lg max-w-none chat-message text-gray-700 min-h-[1em] break-words overflow-wrap-anywhere leading-relaxed">
           {renderContent()}
         </div>
         {/* Faithfulness Badge for assistant messages */}

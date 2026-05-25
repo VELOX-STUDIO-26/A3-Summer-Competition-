@@ -128,14 +128,14 @@ export function GateStatusPanel({
             <div className="absolute inset-0 rounded-2xl border border-white/50" />
             
             {/* Card Content */}
-            <div className="relative p-5">
+            <div className="relative p-5 sm:p-6">
               {/* Header Row */}
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between mb-5 sm:mb-6">
                 {/* Icon with glow */}
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-slate-400 to-slate-500 rounded-2xl blur-lg opacity-40 group-hover/card:opacity-60 transition-opacity" />
-                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform duration-300">
-                    <Lock className="w-7 h-7 text-white" />
+                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform duration-300">
+                    <Lock className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   </div>
                 </div>
                 
@@ -143,8 +143,8 @@ export function GateStatusPanel({
                 <div className="relative">
                   <div className="absolute inset-0 bg-slate-500/10 rounded-full blur-sm" />
                   <div className="relative">
-                    <ProgressRing percentage={gatePercentage} color="#64748b" size={44} />
-                    <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700">
+                    <ProgressRing percentage={gatePercentage} color="#64748b" size={48} />
+                    <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-gray-700">
                       {gatePercentage}%
                     </span>
                   </div>
@@ -152,20 +152,18 @@ export function GateStatusPanel({
               </div>
 
               {/* Title & Status */}
-              <div className="mb-3">
+              <div className="mb-5 sm:mb-6">
                 <h3 className="text-base font-semibold text-gray-900 mb-1">Milestone</h3>
                 <p className="text-sm text-gray-500">Quiz Locked</p>
               </div>
 
               {/* Progress Badge & Arrow */}
-              <div className="flex items-center justify-between">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-500/10 backdrop-blur-sm">
-                  <span className="w-2 h-2 rounded-full bg-gradient-to-br from-slate-400 to-slate-500" />
-                  <span className="text-sm font-medium text-gray-700">{gatePercentage}% of 80%</span>
+              <div className="flex items-center justify-between pt-4 sm:pt-5 border-t border-gray-100">
+                <div className="inline-flex items-center gap-2 sm:gap-2.5">
+                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-gradient-to-br from-slate-400 to-slate-500" />
+                  <span className="text-sm sm:text-base font-medium text-gray-700">{gatePercentage}% of 80%</span>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-500/10 flex items-center justify-center group-hover/card:bg-gradient-to-br group-hover/card:from-slate-400 group-hover/card:to-slate-500 transition-all duration-300">
-                  <ChevronRight className="w-4 h-4 text-gray-500 group-hover/card:text-white group-hover/card:translate-x-0.5 transition-all" />
-                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover/card:text-gray-600 group-hover/card:translate-x-0.5 transition-all" />
               </div>
             </div>
           </div>

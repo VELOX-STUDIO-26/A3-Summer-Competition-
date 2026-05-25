@@ -409,7 +409,7 @@ export default function NotebookPage() {
       setMessages([
         {
           role: "assistant",
-          content: `Hey${userName ? ` ${userName}` : ""}! I'm NoboGyan 👋 ${progressText}\n\nI see you're diving into **${currentTopic}** right now — that's a fantastic topic! 🚀\n\nI'm here to make learning cloud computing fun and approachable. Whether you want me to:\n• 🧠 **Explain concepts** in a way that clicks for you\n• 🎯 **Walk through examples** step by step\n• 💡 **Connect ideas** to what you've already learned\n• ❓ **Answer specific questions** — no question is too small!\n\nWhat would you like to explore first?`,
+          content: `Hey${userName ? ` ${userName}` : ""}! I'm NoboGyan 👋 ${progressText}\n\nI see you're diving into **${currentTopic}** right now — that's a fantastic topic! 🚀\n\nI'm here to make learning **${currentTopic}** fun and approachable. Whether you want me to:\n\n- 🧠 **Explain concepts** in a way that clicks for you\n- 🎯 **Walk through examples** step by step\n- 💡 **Connect ideas** to what you've already learned\n- ❓ **Answer specific questions** — no question is too small!\n\nWant me to start with **what ${currentTopic} actually means** or jump into **why it matters in real-world applications**?`,
         },
       ]);
     }
@@ -599,6 +599,8 @@ export default function NotebookPage() {
 
   const handleMindMapNodeClick = (nodeLabel: string) => {
     const prompt = `Give me a brief introduction to "${nodeLabel}" and suggest 2-3 follow-up questions I could ask.`;
+    // Open the chat panel so user can see the message being sent
+    setIsRightPanelCollapsed(false);
     sendMessageToTutor(prompt, nodeLabel);
   };
 
@@ -669,6 +671,27 @@ export default function NotebookPage() {
     }
   };
 
+  const handleDeleteResource = (resourceId: string) => {
+    // Remove from generated resources
+    setGeneratedResources((prev) => prev.filter((r) => r.id !== resourceId));
+    // Remove from remedial resources if present
+    setRemedialResources((prev) => prev.filter((r) => r.id !== resourceId));
+    // Clear selection if this resource was selected
+    if (selectedResource === resourceId) {
+      setSelectedResource(null);
+      setIsPreviewExpanded(false);
+    }
+  };
+
+  const handleSplitView = (resourceId: string) => {
+    // Select the resource and expand preview
+    setSelectedResource(resourceId);
+    setIsPreviewExpanded(true);
+    if (rightPanelWidth < 480) setRightPanelWidth(480);
+    // Open the chat panel
+    setIsRightPanelCollapsed(false);
+  };
+
   const handleLogout = () => {
     logout();
     router.push("/login");
@@ -678,7 +701,7 @@ export default function NotebookPage() {
   const activeResource = generatedResources.find((r) => r.id === selectedResource) || remedialResources.find((r) => r.id === selectedResource);
 
   return (
-    <div className="h-screen flex bg-white text-[#2a2a2a] overflow-hidden relative isolate">
+    <div className="h-screen flex bg-white text-[#2a2a2a] overflow-hidden relative isolate font-creator-notes">
 
       {/* Mobile Backdrop */}
       {(isMobileMenuOpen || isRightPanelOpen) && (
@@ -727,6 +750,8 @@ export default function NotebookPage() {
         refreshGate={refreshGate}
         onAgentClick={handleAgentClick}
         onMarkConsumed={handleMarkConsumed}
+        onDeleteResource={handleDeleteResource}
+        onSplitView={handleSplitView}
         rightPanelWidth={rightPanelWidth}
         setRightPanelWidth={setRightPanelWidth}
         isRightPanelOpen={isRightPanelOpen}
