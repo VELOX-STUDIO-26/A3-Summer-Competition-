@@ -22,8 +22,13 @@ class VisionLLMClient:
     def __init__(self):
         # Kimi API for vision (Kimi 2.6 is multimodal)
         self.api_key = os.getenv("KIMI_API_KEY", "sk-xJuTUc3KAhsnnrtRTuNjewyaorAGCwtPaSe2pyogHdTHm4Wb")
-        self.base_url = os.getenv("KIMI_BASE_URL", "https://api.xixixixi.cloud")
-        self.model = "kimi-2.6"
+        self.base_url = os.getenv("KIMI_BASE_URL", "https://api.moonshot.cn")
+        self.model = "kimi-k2.6"
+        # kimi-k2.* require temperature=1.0 with reasoning ON, 0.6 with it OFF
+        from core.llm_client import KIMI_DISABLE_REASONING
+        self.disable_reasoning = KIMI_DISABLE_REASONING
+        self.temperature = 0.6 if self.disable_reasoning else 1.0
+        self.max_tokens = int(os.getenv("KIMI_VISION_MAX_TOKENS", "4000"))
         
         if self.api_key:
             logger.info(f"VisionLLMClient initialized with Kimi: {self.model}")
@@ -177,11 +182,13 @@ Be thorough but concise. Use markdown formatting.""",
             payload = {
                 "model": self.model,
                 "messages": messages,
-                "temperature": 0.3,
-                "max_tokens": 2000,
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens,
             }
+            if self.disable_reasoning:
+                payload["thinking"] = {"type": "disabled"}
             
-            async with httpx.AsyncClient(timeout=180.0) as client:
+            async with httpx.AsyncClient(timeout=float(os.getenv("KIMI_TIMEOUT_SECONDS", "600"))) as client:
                 response = await client.post(
                     f"{self.base_url}/v1/chat/completions",
                     headers=headers,

@@ -973,17 +973,67 @@ class GeminiClient:
 # Kimi Client (OpenAI-compatible API)
 # ============================================================================
 
+def _env_bool(name: str, default: bool) -> bool:
+    return os.getenv(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
+
+
+# kimi-k2.* are hybrid reasoning models. With reasoning ON they emit hidden
+# "thinking" tokens (slow, and only temperature=1 is accepted). Sending
+# thinking.disabled turns reasoning OFF (fast, and temperature must be 0.6).
+# Default OFF: reasoning was causing 180s timeouts -> silent template fallbacks.
+KIMI_DISABLE_REASONING = _env_bool("KIMI_DISABLE_REASONING", True)
+KIMI_REASONING_TEMPERATURE = 1.0
+KIMI_NONREASONING_TEMPERATURE = 0.6
+
+# With reasoning ON, completion tokens include hidden reasoning, so a low
+# max_tokens can exhaust the budget before any answer is produced. When
+# reasoning is ON every call is clamped up to this floor.
+KIMI_MIN_MAX_TOKENS = int(os.getenv("KIMI_MIN_MAX_TOKENS", "8000"))
+
+# kimi-k2.* reasoning generations can run several minutes; the old 180s timeout
+# made slow calls fail with ReadTimeout and silently fall back to templates.
+KIMI_TIMEOUT_SECONDS = float(os.getenv("KIMI_TIMEOUT_SECONDS", "600"))
+# Number of times to retry a transient network failure (timeout / dropped conn).
+KIMI_MAX_RETRIES = int(os.getenv("KIMI_MAX_RETRIES", "2"))
+_KIMI_RETRY_EXCEPTIONS = (
+    httpx.ReadTimeout,
+    httpx.ConnectTimeout,
+    httpx.ConnectError,
+    httpx.RemoteProtocolError,
+)
+
+
+def _is_kimi_reasoning_model(model: Optional[str]) -> bool:
+    """kimi-k2.* models have a constrained temperature and a reasoning toggle."""
+    return bool(model) and model.startswith("kimi-k2")
+
+
+def _apply_kimi_reasoning(payload: Dict[str, Any], model: str, max_tokens: int) -> int:
+    """Set temperature / thinking on the payload for kimi-k2.* models.
+
+    Returns the (possibly adjusted) max_tokens.
+    """
+    if not _is_kimi_reasoning_model(model):
+        return max_tokens
+    if KIMI_DISABLE_REASONING:
+        payload["temperature"] = KIMI_NONREASONING_TEMPERATURE
+        payload["thinking"] = {"type": "disabled"}
+        return max_tokens
+    payload["temperature"] = KIMI_REASONING_TEMPERATURE
+    return max(max_tokens, KIMI_MIN_MAX_TOKENS)
+
+
 class KimiClient:
     """
     Kimi LLM Client - OpenAI-compatible API.
-    
-    Uses the kimi-2.6 model via OpenAI-compatible endpoint.
+
+    Uses the kimi-k2.6 reasoning model via the Moonshot general endpoint.
     """
 
     def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
         self.api_key = api_key or os.getenv("KIMI_API_KEY", "sk-xJuTUc3KAhsnnrtRTuNjewyaorAGCwtPaSe2pyogHdTHm4Wb")
-        self.base_url = base_url or os.getenv("KIMI_BASE_URL", "https://api.xixixixi.cloud")
-        self.model = "kimi-k2.5"
+        self.base_url = base_url or os.getenv("KIMI_BASE_URL", "https://api.moonshot.cn")
+        self.model = "kimi-k2.6"
         
         if self.api_key:
             logger.info(f"KimiClient initialized with base URL: {self.base_url}")
@@ -993,15 +1043,11 @@ class KimiClient:
         messages: List[Dict[str, str]],
         model: str = None,
         temperature: float = 0.7,
-        max_tokens: int = 2000,
+        max_tokens: int = 8000,
         stream: bool = False
     ) -> Dict[str, Any]:
         """Generate text completion using Kimi API (OpenAI-compatible)."""
         model = model or self.model
-
-        # kimi-k2.5 only accepts temperature=1.0
-        if model == "kimi-k2.5":
-            temperature = 1.0
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -1015,33 +1061,40 @@ class KimiClient:
             "max_tokens": max_tokens,
             "stream": stream
         }
-        
+        # kimi-k2.* require a specific temperature and support a reasoning toggle
+        payload["max_tokens"] = _apply_kimi_reasoning(payload, model, max_tokens)
+
         url = f"{self.base_url}/v1/chat/completions"
-        
-        async with httpx.AsyncClient(timeout=180.0) as client:
-            response = await client.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-            
-            return {
-                "choices": data.get("choices", []),
-                "usage": data.get("usage", {}),
-                "provider": "kimi"
-            }
+
+        last_exc: Optional[Exception] = None
+        for attempt in range(1, KIMI_MAX_RETRIES + 2):
+            try:
+                async with httpx.AsyncClient(timeout=KIMI_TIMEOUT_SECONDS) as client:
+                    response = await client.post(url, headers=headers, json=payload)
+                    response.raise_for_status()
+                    data = response.json()
+
+                return {
+                    "choices": data.get("choices", []),
+                    "usage": data.get("usage", {}),
+                    "provider": "kimi"
+                }
+            except _KIMI_RETRY_EXCEPTIONS as e:
+                last_exc = e
+                logger.warning(
+                    f"Kimi request {type(e).__name__} (attempt {attempt}/{KIMI_MAX_RETRIES + 1}); retrying"
+                )
+        raise last_exc
 
     async def generate_stream(
         self,
         messages: List[Dict[str, str]],
         model: str = None,
         temperature: float = 0.7,
-        max_tokens: int = 2000
+        max_tokens: int = 8000
     ) -> AsyncGenerator[str, None]:
         """Stream text completion using Kimi API."""
         model = model or self.model
-
-        # kimi-k2.5 only accepts temperature=1.0
-        if model == "kimi-k2.5":
-            temperature = 1.0
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -1055,10 +1108,12 @@ class KimiClient:
             "max_tokens": max_tokens,
             "stream": True
         }
-        
+        # kimi-k2.* require a specific temperature and support a reasoning toggle
+        payload["max_tokens"] = _apply_kimi_reasoning(payload, model, max_tokens)
+
         url = f"{self.base_url}/v1/chat/completions"
         
-        async with httpx.AsyncClient(timeout=180.0) as client:
+        async with httpx.AsyncClient(timeout=KIMI_TIMEOUT_SECONDS) as client:
             async with client.stream("POST", url, headers=headers, json=payload) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
