@@ -10,6 +10,7 @@ Generates personalized quizzes that adapt based on:
 
 import json
 import random
+import re
 from typing import Any, Dict, List, Optional
 
 from agents.base_agent import BaseAgent
@@ -274,7 +275,7 @@ class QuizAgent(BaseAgent):
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.7 if attempt_number > 1 else 0.5,  # More variation on retries
-                max_tokens=2000
+                max_tokens=4000
             )
 
             content = response["choices"][0]["message"].get("content")
@@ -283,22 +284,7 @@ class QuizAgent(BaseAgent):
                 logger.warning(f"LLM returned empty content")
                 raise ValueError("LLM returned empty content")
 
-            # Parse JSON
-            try:
-                quiz_data = json.loads(content)
-            except (json.JSONDecodeError, TypeError) as e:
-                logger.warning(f"JSON parse error: {e}")
-                # Try to extract JSON from markdown
-                import re
-                json_match = re.search(r'\{.*\}', content, re.DOTALL)
-                if json_match:
-                    try:
-                        quiz_data = json.loads(json_match.group())
-                    except (json.JSONDecodeError, TypeError) as e2:
-                        logger.warning(f"Regex JSON parse also failed: {e2}")
-                        raise ValueError("Could not parse quiz JSON")
-                else:
-                    raise ValueError("Could not parse quiz JSON")
+            quiz_data = self._parse_quiz_json(content)
 
             questions = quiz_data.get("questions", [])
 
@@ -350,7 +336,7 @@ class QuizAgent(BaseAgent):
             }
 
         except Exception as e:
-            logger.error(f"Quiz generation failed for {topic}: {e}. Using fallback quiz.")
+            logger.exception(f"Quiz generation failed for {topic}: {e!r}. Using fallback quiz.")
             questions = self._generate_fallback_questions(topic, num_questions, question_types)
             return {
                 "questions": questions,
@@ -542,6 +528,45 @@ Content to base questions on:
 Return ONLY valid JSON with all questions."""
 
         return prompt
+
+    @staticmethod
+    def _parse_quiz_json(content: str) -> Dict[str, Any]:
+        """Parse the quiz JSON from an LLM response.
+
+        Reasoning models often wrap the JSON in ```json fences or emit a short
+        preamble, so direct json.loads fails. Fall back to stripping fences and
+        balanced-brace matching before giving up.
+        """
+        # 1. Direct parse
+        try:
+            return json.loads(content)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        # 2. Strip markdown code fences, then retry
+        fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", content, re.DOTALL)
+        if fenced:
+            try:
+                return json.loads(fenced.group(1))
+            except json.JSONDecodeError:
+                pass
+
+        # 3. Balanced-brace match from the first '{' (tolerates trailing prose)
+        start = content.find("{")
+        if start != -1:
+            depth = 0
+            for i, ch in enumerate(content[start:], start):
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        try:
+                            return json.loads(content[start:i + 1])
+                        except json.JSONDecodeError:
+                            break
+
+        raise ValueError("Could not parse quiz JSON")
 
     def _validate_questions(
         self,
