@@ -3,14 +3,17 @@
 @import "shadcn/tailwind.css";
 
 /* Creator Notes Font - for notebook pages */
-@font-face {
+/* NOTE: CreatorNotes.woff/.ttf font files are missing from the repo, which
+   breaks the build. Disabled locally so the app runs; .font-creator-notes
+   falls back to var(--font-sans). Restore once the font files are committed. */
+/* @font-face {
   font-family: 'Creator Notes';
   src: url('./fonts/creator-notes/CreatorNotes.woff') format('woff'),
        url('./fonts/creator-notes/CreatorNotes.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
-}
+} */
 
 @custom-variant dark (&:is(.dark *));
 
