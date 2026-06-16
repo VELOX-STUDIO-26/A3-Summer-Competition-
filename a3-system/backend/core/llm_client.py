@@ -983,7 +983,7 @@ class KimiClient:
     def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
         self.api_key = api_key or os.getenv("KIMI_API_KEY", "sk-xJuTUc3KAhsnnrtRTuNjewyaorAGCwtPaSe2pyogHdTHm4Wb")
         self.base_url = base_url or os.getenv("KIMI_BASE_URL", "https://api.xixixixi.cloud")
-        self.model = "kimi-2.6"
+        self.model = "kimi-k2.5"
         
         if self.api_key:
             logger.info(f"KimiClient initialized with base URL: {self.base_url}")
@@ -998,12 +998,16 @@ class KimiClient:
     ) -> Dict[str, Any]:
         """Generate text completion using Kimi API (OpenAI-compatible)."""
         model = model or self.model
-        
+
+        # kimi-k2.5 only accepts temperature=1.0
+        if model == "kimi-k2.5":
+            temperature = 1.0
+
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        
+
         payload = {
             "model": model,
             "messages": messages,
@@ -1034,12 +1038,16 @@ class KimiClient:
     ) -> AsyncGenerator[str, None]:
         """Stream text completion using Kimi API."""
         model = model or self.model
-        
+
+        # kimi-k2.5 only accepts temperature=1.0
+        if model == "kimi-k2.5":
+            temperature = 1.0
+
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        
+
         payload = {
             "model": model,
             "messages": messages,

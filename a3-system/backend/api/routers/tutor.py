@@ -8,6 +8,7 @@ Endpoints:
 - POST /api/tutor/analyze-image : Analyze an uploaded image (equation, diagram)
 """
 
+import asyncio
 import json
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional
@@ -138,14 +139,8 @@ async def ask_tutor_stream(
 ):
     """
     Ask the AI tutor with streaming response (Server-Sent Events).
-
-    Events:
-    - sources: Retrieved RAG chunks
-    - start: Generation started
-    - delta: Next token chunk
-    - complete: Generation complete
-    - error: Error occurred
     """
+    logger.info(f"[tutor] Streaming request from {request.student_id}: {request.question[:50]}...")
     # Detect client disconnection so we can stop the LLM stream early
     disconnect_event = asyncio.Event()
 

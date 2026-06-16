@@ -65,8 +65,11 @@ export default function ProfileChatPage() {
   useEffect(() => {
     const initSession = async () => {
       // Don't initialize if no studentId (layout will redirect to login)
-      if (!studentId) return;
-      
+      if (!studentId) {
+        setIsInitializing(false);
+        return;
+      }
+
       try {
         const data = await startChat(studentId);
         setSessionId(data.session_id);
