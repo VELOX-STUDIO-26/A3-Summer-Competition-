@@ -13,6 +13,32 @@ Format:
 
 ---
 
+## 2026-06-17 - Fix mermaid "Syntax error" bombs in AI tutor diagrams
+
+### Changes Made
+- `ChatPanel` rendered every fenced code block as a `MermaidRenderer` on each
+  streamed token, so an unterminated ` ```mermaid ` fence (still streaming) was
+  parsed as a partial/invalid diagram repeatedly, and mermaid injected its
+  built-in "Syntax error in text" bomb SVG each time. Now a mermaid block is only
+  handed to the renderer once its fence is closed; while streaming the partial is
+  shown as plain code.
+- `MermaidRenderer` now validates input with `mermaid.parse(chart, { suppressErrors: true })`
+  before `mermaid.render`, so invalid input never triggers the bomb SVG, and
+  cleans up any orphaned mermaid error nodes left on the body.
+
+### Reason
+- User reported a stack of "Syntax error in text — mermaid version 11.15.0" bombs
+  when the AI tutor generated a mermaid diagram.
+
+### Files
+- `frontend/web/src/components/notebook/ChatPanel.tsx`
+- `frontend/web/src/components/MermaidRenderer.tsx`
+
+### Impact / Testing
+- AI tutor diagrams render cleanly once streaming completes; no bomb graphics.
+
+---
+
 ## 2026-06-17 - Fix quiz results page 422 (missing student_id)
 
 ### Changes Made

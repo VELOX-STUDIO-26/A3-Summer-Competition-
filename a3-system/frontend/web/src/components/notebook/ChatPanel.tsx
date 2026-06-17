@@ -630,14 +630,31 @@ function MessageBubble({ message }: { message: Message }) {
           </div>
         )}
 
-        {message.content.split("```").map((part, i) => {
+        {message.content.split("```").map((part, i, parts) => {
           if (i % 2 === 1) {
             const firstNewline = part.indexOf("\n");
             const lang = firstNewline > -1 ? part.substring(0, firstNewline).trim().toLowerCase() : "";
             const code = firstNewline > -1 ? part.substring(firstNewline + 1) : part;
 
+            // A code fence is only complete once a closing ``` produced a
+            // following part. While streaming, the last open fence is partial,
+            // so don't hand incomplete mermaid to the renderer (it would inject
+            // mermaid's "Syntax error" bomb on every token).
+            const isFenceClosed = i < parts.length - 1;
+
             // Handle mermaid diagrams
             if (lang === "mermaid") {
+              if (!isFenceClosed) {
+                return (
+                  <pre
+                    key={i}
+                    className="bg-gray-900 rounded-md p-2 my-1.5 overflow-x-auto text-[10px]"
+                    style={{ scrollbarWidth: "thin" }}
+                  >
+                    <code className="text-gray-100 font-mono whitespace-pre-wrap break-all">{code}</code>
+                  </pre>
+                );
+              }
               return <MermaidRenderer key={i} chart={code.trim()} />;
             }
 

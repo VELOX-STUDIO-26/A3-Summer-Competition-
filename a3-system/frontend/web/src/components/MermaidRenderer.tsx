@@ -137,6 +137,16 @@ export default function MermaidRenderer({ chart, className = "" }: MermaidRender
         // Generate unique ID for this diagram
         const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+        // Validate first with suppressErrors so invalid/partial input never
+        // causes mermaid to inject its default "Syntax error" bomb SVG.
+        const isValid = await mermaid.parse(cleanChart, { suppressErrors: true });
+        if (!isValid) {
+          setError("Syntax error in diagram. Check for special characters or malformed syntax.");
+          setSvg("");
+          setIsRendering(false);
+          return;
+        }
+
         // Render the chart
         const result = await mermaid.render(id, cleanChart);
         setSvg(result.svg);
@@ -155,6 +165,16 @@ export default function MermaidRenderer({ chart, className = "" }: MermaidRender
         
         setError(errorMsg);
         setSvg("");
+
+        // mermaid can leave an orphaned error ("bomb") node attached to the
+        // body when render() throws; remove it so it doesn't pile up in the DOM.
+        document
+          .querySelectorAll('[id^="dmermaid-"], [id^="mermaid-"]')
+          .forEach((node) => {
+            if (!containerRef.current?.contains(node)) {
+              node.remove();
+            }
+          });
       } finally {
         setIsRendering(false);
       }
