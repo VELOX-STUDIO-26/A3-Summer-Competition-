@@ -12,10 +12,11 @@ Endpoints:
 """
 
 import asyncio
+import re
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +27,14 @@ from agents.quiz_agent import QuizAgent
 from agents.short_answer_grader import ShortAnswerGrader
 from core.llm_client import llm_client
 from core.logging import get_logger
-from models.database import GeneratedQuiz, GeneratedResource, QuizAttempt, StudentProfile, get_db
+from models.database import (
+    GeneratedQuiz,
+    GeneratedResource,
+    MilestoneProgress,
+    QuizAttempt,
+    StudentProfile,
+    get_db,
+)
 from models.schemas import (
     GenerateQuizRequest,
     QuizAnswerSubmission,
@@ -35,6 +43,140 @@ from models.schemas import (
 
 logger = get_logger(__name__)
 router = APIRouter()
+
+
+def topic_to_milestone_id(topic: str) -> str:
+    """Derive the milestone id the frontend/gate uses from a topic title.
+
+    Must match the frontend slug: collapse whitespace runs to a single
+    underscore and lowercase (see notebook/page.tsx currentMilestoneId).
+    """
+    return re.sub(r"\s+", "_", topic or "").lower()
+
+
+async def persist_milestone_progress(
+    db: AsyncSession,
+    student_id: str,
+    topic: str,
+    score: float,
+    outcome: str,
+) -> None:
+    """Record the quiz result against the student's milestone progress.
+
+    On a passing outcome (accelerate/continue) the milestone is marked
+    completed so the learning path can advance to the next milestone.
+    """
+    milestone_id = topic_to_milestone_id(topic)
+    try:
+        result = await db.execute(
+            select(MilestoneProgress)
+            .where(
+                MilestoneProgress.student_id == student_id,
+                MilestoneProgress.milestone_id == milestone_id,
+            )
+            .order_by(MilestoneProgress.updated_at.desc())
+            .limit(1)
+        )
+        progress = result.scalars().first()
+        if not progress:
+            progress = MilestoneProgress(
+                student_id=student_id,
+                milestone_id=milestone_id,
+                status="in_progress",
+            )
+            db.add(progress)
+
+        progress.quiz_score = score
+        progress.quiz_outcome = outcome
+        progress.attempt_count = (progress.attempt_count or 0) + 1
+
+        if outcome in ("accelerate", "continue"):
+            progress.status = "completed"
+            progress.completed_at = datetime.utcnow()
+            progress.consecutive_low_scores = 0
+        else:
+            progress.consecutive_low_scores = (progress.consecutive_low_scores or 0) + 1
+
+        await db.commit()
+    except Exception as exc:
+        logger.error(f"Failed to persist milestone progress for {milestone_id}: {exc}")
+        await db.rollback()
+
+
+async def generate_remedial_resources(
+    student_id: str,
+    topic: str,
+    weak_topics: List[str],
+    regen_profile: Dict[str, Any],
+    outcome: str,
+) -> None:
+    """Generate and persist remedial resources after a failed quiz.
+
+    Runs as a FastAPI background task with its own DB session so the quiz
+    submit response can return immediately instead of blocking on several
+    LLM calls.
+    """
+    from models.database import db_manager
+
+    type_map = {
+        "content": "notes",
+        "mindmap": "mindmap",
+        "quiz": "quiz",
+        "media": "video",
+        "code": "code",
+    }
+    try:
+        agents = (
+            ["content", "quiz", "mindmap", "media", "code"]
+            if outcome == "replan"
+            else ["content", "quiz", "mindmap"]
+        )
+        context = (
+            f"TARGETED REMEDIATION for: {topic}\n\n"
+            f"STUDENT WEAK CONCEPTS: {', '.join(weak_topics)}\n\n"
+            "Generate simpler explanations with more examples."
+        )
+
+        orchestrator = Orchestrator(llm_client)
+        regen_result = await orchestrator.generate_resources(
+            topic=topic,
+            profile=regen_profile,
+            context=context,
+            agent_selection=agents,
+            agent_kwargs={
+                "complexity_override": "simpler",
+                "focus_concepts": weak_topics,
+            },
+        )
+
+        saved_resources = []
+        async with await db_manager.get_async_session() as session:
+            for agent_name, resource_content in regen_result.get("resources", {}).items():
+                if not resource_content:
+                    continue
+                resource_type = type_map.get(agent_name, agent_name)
+                session.add(
+                    GeneratedResource(
+                        student_id=student_id,
+                        topic=topic,
+                        resource_type=resource_type,
+                        content=resource_content
+                        if isinstance(resource_content, dict)
+                        else {"data": resource_content},
+                        source="remedial",
+                        weak_concepts_targeted=weak_topics,
+                        is_remedial=True,
+                        consumed=False,
+                    )
+                )
+                saved_resources.append(resource_type)
+            await session.commit()
+
+        logger.info(
+            f"[background] Remedial resources generated for {student_id} / {topic}: {saved_resources}"
+        )
+    except Exception as exc:
+        logger.error(f"[background] Remedial generation failed for {topic}: {exc}")
 
 
 @router.post("/generate")
@@ -419,6 +561,7 @@ async def start_quiz(
 @router.post("/{quiz_id}/submit")
 async def submit_quiz(
     quiz_id: str,
+    background_tasks: BackgroundTasks,
     student_id: str = Query(..., description="Student ID"),
     submission: Optional[QuizSubmissionRequest] = None,
     db: AsyncSession = Depends(get_db),
@@ -755,73 +898,42 @@ async def submit_quiz(
         await db.commit()
         await db.refresh(attempt)
 
-        # Trigger resource regeneration for remediate/replan outcomes
+        # Persist milestone progress so a pass advances the learning path
+        # and a fail is recorded against the milestone.
+        await persist_milestone_progress(db, student_id, quiz.topic, score, outcome)
+
+        # Schedule resource regeneration for remediate/replan outcomes as a
+        # background task so the response returns immediately instead of
+        # blocking the student on several LLM calls.
         regenerated = None
         if outcome in ["remediate", "replan"]:
-            try:
-                # Build simplified profile for orchestrator
-                regen_profile = {
-                    "knowledge_base": profile.knowledge_base or {} if profile else {},
-                    "cognitive_style": profile.cognitive_style or "mixed" if profile else "mixed",
-                    "learning_pace": profile.learning_pace or 0.5 if profile else 0.5,
-                    "weak_points": attempt.weak_topics or [],
-                    "content_preferences": profile.content_preferences or [] if profile else [],
-                }
-
-                agents = ["content", "quiz", "mindmap", "media", "code"] if outcome == "replan" else ["content", "quiz", "mindmap"]
-                context = f"TARGETED REMEDIATION for: {quiz.topic}\n\nSTUDENT WEAK CONCEPTS: {', '.join(attempt.weak_topics or [])}\n\nGenerate simpler explanations with more examples."
-
-                orchestrator = Orchestrator(llm_client)
-                regen_result = await orchestrator.generate_resources(
-                    topic=quiz.topic,
-                    profile=regen_profile,
-                    context=context,
-                    agent_selection=agents,
-                    agent_kwargs={
-                        "complexity_override": "simpler",
-                        "focus_concepts": attempt.weak_topics or [],
-                    }
-                )
-
-                # Persist regenerated resources to database
-                saved_resources = []
-                for agent_name, resource_content in regen_result.get("resources", {}).items():
-                    if not resource_content:
-                        continue
-                    # Map orchestrator agent names to resource types
-                    type_map = {
-                        "content": "notes",
-                        "mindmap": "mindmap",
-                        "quiz": "quiz",
-                        "media": "video",
-                        "code": "code",
-                    }
-                    resource_type = type_map.get(agent_name, agent_name)
-                    new_resource = GeneratedResource(
-                        student_id=student_id,
-                        topic=quiz.topic,
-                        resource_type=resource_type,
-                        content=resource_content if isinstance(resource_content, dict) else {"data": resource_content},
-                        source="remedial",
-                        weak_concepts_targeted=attempt.weak_topics or [],
-                        is_remedial=True,
-                        consumed=False,
-                    )
-                    db.add(new_resource)
-                    saved_resources.append(resource_type)
-
-                await db.commit()
-
-                regenerated = {
-                    "success": True,
-                    "resource_types": saved_resources,
-                    "target_concepts": attempt.weak_topics or [],
-                }
-                logger.info(f"Regenerated and saved resources for {quiz_id}: {saved_resources}")
-
-            except Exception as regen_err:
-                logger.error(f"Auto-regeneration failed: {regen_err}")
-                regenerated = {"success": False, "error": str(regen_err)}
+            regen_profile = {
+                "knowledge_base": profile.knowledge_base or {} if profile else {},
+                "cognitive_style": profile.cognitive_style or "mixed" if profile else "mixed",
+                "learning_pace": profile.learning_pace or 0.5 if profile else 0.5,
+                "weak_points": attempt.weak_topics or [],
+                "content_preferences": profile.content_preferences or [] if profile else [],
+            }
+            expected_types = (
+                ["notes", "quiz", "mindmap", "video", "code"]
+                if outcome == "replan"
+                else ["notes", "quiz", "mindmap"]
+            )
+            background_tasks.add_task(
+                generate_remedial_resources,
+                student_id,
+                quiz.topic,
+                attempt.weak_topics or [],
+                regen_profile,
+                outcome,
+            )
+            regenerated = {
+                "success": True,
+                "status": "generating",
+                "resource_types": expected_types,
+                "target_concepts": attempt.weak_topics or [],
+            }
+            logger.info(f"Scheduled remedial regeneration for {quiz_id}: {expected_types}")
 
         # Build response with evaluation
         response = {
@@ -852,10 +964,14 @@ async def submit_quiz(
     except Exception as e:
         logger.error(f"Evaluator failed: {e}")
         # Fallback to simple response without evaluation
-        attempt.outcome = "continue" if passed else "remediate"
+        fallback_outcome = "continue" if passed else "remediate"
+        attempt.outcome = fallback_outcome
         attempt.rushed_through = rushed_through
         await db.commit()
         await db.refresh(attempt)
+
+        # Persist milestone progress even when the evaluator agent failed.
+        await persist_milestone_progress(db, student_id, quiz.topic, score, fallback_outcome)
 
         return {
             "attempt_id": attempt.attempt_id,
@@ -867,7 +983,7 @@ async def submit_quiz(
             "correct": correct,
             "total": len(questions),
             "passed": passed,
-            "outcome": "continue" if passed else "remediate",
+            "outcome": fallback_outcome,
             "next_milestone_unlocked": passed,
             "student_message": {
                 "tone": "neutral",

@@ -27,7 +27,7 @@ interface UseNotesTrackingProps {
   resourceId: string;
   totalSections: number;
   wordCount: number;
-  containerRef: React.RefObject<HTMLElement>;
+  containerRef: React.RefObject<HTMLElement | null>;
   enabled?: boolean;
 }
 

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAppStore } from "@/lib/store";
 import { getLearningPath, generateResources, generateResourcesStream, getRemedialResources, markResourceConsumed, analyzeImage, getHierarchicalGraph } from "@/lib/api";
 import { useGateStatus } from "@/hooks/useTracking";
+import { getMilestoneProgress } from "@/lib/tracking";
 import { useVoiceStream } from "@/hooks/useVoiceStream";
 import { useTutorSessions } from "@/hooks/useTutorSessions";
 import { useQuizState } from "@/hooks/useQuizState";
@@ -65,10 +66,16 @@ const DEFAULT_PATH: PathNode[] = [
 export default function NotebookPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { profile, userName, studentId, logout } = useAppStore();
+  const { profile, userName, studentId, logout, setActiveGraphId } = useAppStore();
 
   // Hierarchical graph ID from URL (for rating)
   const graphId = searchParams.get("graph");
+
+  // Remember the active graph so quiz/results pages can navigate back to the
+  // correct course (otherwise they drop the ?graph= param).
+  useEffect(() => {
+    if (graphId) setActiveGraphId(graphId);
+  }, [graphId, setActiveGraphId]);
   const [graphSubject, setGraphSubject] = useState<string>("");
 
   // Learning path state
@@ -196,44 +203,58 @@ export default function NotebookPage() {
         if (graphId) {
           const graph = await getHierarchicalGraph(graphId);
           if (graph?.main_topics && graph.main_topics.length > 0) {
-            // Convert hierarchical graph to path nodes
-            // Progress through subtopics one by one within each main topic
+            // Pull persisted milestone completion so the path advances past
+            // milestones the student has already passed the quiz for.
+            const slugify = (t: string) => t.replace(/\s+/g, "_").toLowerCase();
+            const progress = await getMilestoneProgress(studentId);
+            const completedSet = new Set(
+              progress
+                .filter((p) => p.status === "completed")
+                .map((p) => p.milestone_id)
+            );
+
+            // Convert hierarchical graph to path nodes.
+            // A subtopic is "completed" if its milestone is recorded complete;
+            // the first not-yet-completed subtopic becomes "current".
             const convertedPath: PathNode[] = [];
-            let isFirstMainTopic = true;
             let foundCurrentSubtopic = false;
             let currentSubtopicTitle = "";
-            
+
             for (const mainTopic of graph.main_topics) {
               const hasSubtopics = mainTopic.subtopics && mainTopic.subtopics.length > 0;
-              
-              // Determine main topic status based on its subtopics
-              let mainTopicStatus: "completed" | "current" | "locked" = "locked";
-              if (isFirstMainTopic) {
-                mainTopicStatus = "current"; // First main topic is in progress
-              }
-              
-              // Add main topic as a header node
+
+              // Add main topic as a header node (status filled in after subtopics)
+              const mainHeaderIndex = convertedPath.length;
               convertedPath.push({
                 id: mainTopic.id,
                 title: mainTopic.title,
-                status: mainTopicStatus,
+                status: "locked",
                 isSubtopic: false,
                 parentId: undefined,
               });
-              
-              // Add subtopics - first subtopic of first main topic is current
+
+              let allSubsCompleted = hasSubtopics;
+              let mainHasCurrent = false;
+
               if (hasSubtopics) {
                 for (let i = 0; i < mainTopic.subtopics.length; i++) {
                   const subtopic = mainTopic.subtopics[i];
-                  let subtopicStatus: "completed" | "current" | "locked" = "locked";
-                  
-                  // First subtopic of first main topic is current
-                  if (isFirstMainTopic && i === 0 && !foundCurrentSubtopic) {
+                  const isCompleted = completedSet.has(slugify(subtopic.title));
+                  let subtopicStatus: "completed" | "current" | "locked";
+
+                  if (isCompleted) {
+                    subtopicStatus = "completed";
+                  } else if (!foundCurrentSubtopic) {
                     subtopicStatus = "current";
                     foundCurrentSubtopic = true;
                     currentSubtopicTitle = subtopic.title;
+                    mainHasCurrent = true;
+                  } else {
+                    subtopicStatus = "locked";
                   }
-                  
+
+                  if (!isCompleted) allSubsCompleted = false;
+
                   convertedPath.push({
                     id: subtopic.id,
                     title: subtopic.title,
@@ -243,10 +264,15 @@ export default function NotebookPage() {
                   });
                 }
               }
-              
-              isFirstMainTopic = false;
+
+              // Derive main topic status from its subtopics
+              if (hasSubtopics && allSubsCompleted) {
+                convertedPath[mainHeaderIndex].status = "completed";
+              } else if (mainHasCurrent) {
+                convertedPath[mainHeaderIndex].status = "current";
+              }
             }
-            
+
             setLearningPath(convertedPath);
             setTotalEstimatedMinutes(graph.total_estimated_minutes || 180);
             setGraphSubject(graph.subject);
