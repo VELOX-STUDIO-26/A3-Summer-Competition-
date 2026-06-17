@@ -11,7 +11,7 @@ Supports: Python, Java, C++, Go, JavaScript
 
 import json
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from agents.base_agent import BaseAgent
 from core.faithfulness_checker import faithfulness_checker
@@ -263,6 +263,8 @@ Context:
 {rag_context if rag_context else 'Create a practical exercise related to this topic.'}
 
 Generate the complete 3-tier exercise with all mandatory fields including common_bugs and complexity_analysis.
+
+KEEP IT COMPACT: each starter_code and solution must be at most ~15 lines; explanations 1-2 sentences. Brevity matters so the full JSON fits in the response.
 Return ONLY valid JSON."""
 
         try:
@@ -272,7 +274,9 @@ Return ONLY valid JSON."""
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.4,
-                max_tokens=4000
+                # The 3-tier schema is large; 4000 tokens truncated mid-JSON
+                # (finish_reason=length) and parsing fell back to templates.
+                max_tokens=8000
             )
 
             content = response["choices"][0]["message"]["content"]
@@ -388,7 +392,118 @@ Return ONLY valid JSON."""
                     except json.JSONDecodeError:
                         pass
 
+        # 4. Repair truncated JSON (response cut off at max_tokens). Close any
+        #    unterminated string and balance open brackets/braces, then retry.
+        repaired = CodeAgent._repair_truncated_json(content[start:])
+        if repaired is not None:
+            return repaired
+
         raise ValueError("Could not parse code JSON from response")
+
+    @staticmethod
+    def _repair_truncated_json(snippet: str) -> Optional[Dict[str, Any]]:
+        """Best-effort repair of JSON truncated mid-stream.
+
+        A truncated response (finish_reason=length) leaves an unterminated
+        string and/or unbalanced brackets, and may end on a dangling key. We
+        scan once with a small state machine, recording every index where a
+        *value* has just completed together with the open-bracket stack at that
+        point. Cutting at such a point and appending the matching closing
+        brackets always yields structurally valid JSON. We try the latest such
+        cut first and walk backwards until one parses.
+        """
+        # Each checkpoint: (index_after_value, closing_suffix_for_that_point).
+        checkpoints: List[tuple] = []
+        stack: List[str] = []
+        # context per frame: 'obj' or 'arr'. expect: what token comes next.
+        expect = "value"          # value | key | colon | comma
+        in_string = False
+        escape = False
+        in_literal = False        # number / true / false / null
+
+        def closing_for(stk: List[str]) -> str:
+            return "".join("}" if f == "obj" else "]" for f in reversed(stk))
+
+        def value_completed(idx: int) -> None:
+            checkpoints.append((idx + 1, closing_for(stack)))
+
+        i = 0
+        n = len(snippet)
+        while i < n:
+            ch = snippet[i]
+
+            if in_string:
+                if escape:
+                    escape = False
+                elif ch == "\\":
+                    escape = True
+                elif ch == '"':
+                    in_string = False
+                    if expect == "key":
+                        expect = "colon"
+                    else:  # was a value
+                        value_completed(i)
+                        expect = "comma"
+                i += 1
+                continue
+
+            if in_literal:
+                if ch in "0123456789+-.eEtruefalsn":
+                    i += 1
+                    continue
+                # literal ended on the previous char
+                in_literal = False
+                value_completed(i - 1)
+                expect = "comma"
+                # fall through to handle current char without advancing
+
+            if ch in " \t\r\n":
+                i += 1
+                continue
+
+            if ch == '"':
+                in_string = True
+                i += 1
+                continue
+            if ch == "{":
+                stack.append("obj")
+                expect = "key"
+                i += 1
+                continue
+            if ch == "[":
+                stack.append("arr")
+                expect = "value"
+                i += 1
+                continue
+            if ch == "}" or ch == "]":
+                if stack:
+                    stack.pop()
+                value_completed(i)
+                expect = "comma"
+                i += 1
+                continue
+            if ch == ":":
+                expect = "value"
+                i += 1
+                continue
+            if ch == ",":
+                expect = "key" if (stack and stack[-1] == "obj") else "value"
+                i += 1
+                continue
+            if ch in "0123456789+-tfn":
+                in_literal = True
+                i += 1
+                continue
+            i += 1
+
+        # Try latest checkpoints first.
+        for cut, closing in reversed(checkpoints):
+            attempt = snippet[:cut].rstrip().rstrip(",") + closing
+            try:
+                return json.loads(attempt)
+            except json.JSONDecodeError:
+                continue
+        return None
 
     def _ensure_three_exercises(self, exercises: List[Dict], topic: str, language: str) -> List[Dict]:
         """Ensure we have exactly 3 exercises with proper tier structure."""

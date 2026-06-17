@@ -13,6 +13,53 @@ Format:
 
 ---
 
+## 2026-06-17 - Stream resources to the frontend, fix code agent, speed up grading
+
+### Changes Made
+- **Frontend incremental resource generation.** Added `generateResourcesStream()`
+  (SSE consumer) to `frontend/web/src/lib/api.ts` and wired the notebook
+  auto-generate flow to it. Each resource card now renders the moment its
+  `agent_complete` event arrives instead of waiting for all 5 agents. Cards are
+  de-duplicated by `topic + type`; on stream error it falls back to the blocking
+  `/api/resources/generate` endpoint.
+- **Code agent reliability.** Raised the code agent `max_tokens` 4000 → 8000,
+  added a truncation-tolerant JSON repair (`CodeAgent._repair_truncated_json`)
+  that closes unterminated strings / balances brackets back to the last complete
+  value, and tightened the prompt to request compact code so the full 3-tier
+  JSON fits in the response.
+- **Faster grading.** Quiz short-answer questions are now graded concurrently
+  (`asyncio.gather`) instead of one sequential LLM call at a time. Judge0 test
+  cases for code grading also run concurrently, and the poll interval was lowered
+  (1.0s → 0.5s, max polls 10 → 20) so fast submissions return sooner.
+
+### Reason
+- Resource generation is dominated by Kimi token-generation latency (~30 tok/s),
+  not reasoning mode (already disabled). Per-agent calls take ~100s+, so the
+  blocking endpoint made the UI wait minutes before showing anything. Streaming
+  fixes the perceived latency.
+- The code agent's large 3-tier JSON was truncated at the 4000-token ceiling
+  (`finish_reason=length`), so parsing failed and it silently returned a generic
+  template after wasting ~150s. Verified fixed: real exercises, no fallback.
+- Grading latency was the sum of sequential per-question LLM calls and
+  sequential Judge0 polling; parallelizing makes it ~one call/test.
+
+### Files
+- `frontend/web/src/lib/api.ts`
+- `frontend/web/src/app/(dashboard)/notebook/page.tsx`
+- `backend/agents/code_agent.py`
+- `backend/api/routers/quiz.py`
+- `backend/core/judge0_client.py`
+- `AI_CONTEXT/docs/FEATURE_02_RESOURCE_GENERATION.md`
+
+### Impact / Testing
+- Code agent: ran the agent against a live topic — returns 3 valid tiers with
+  full solutions/hints/tests, `fallback=False`, in ~106s.
+- Repair function: unit-tested on a known mid-string truncated payload.
+- Frontend: `tsc --noEmit` passes; no new eslint errors introduced.
+- Backend: `py_compile` passes; modules import cleanly.
+
+---
+
 ## 2026-06-16 - Migrate all AI work to Kimi k2.6 (Moonshot) + add reasoning toggle
 
 ### Changes Made

@@ -323,6 +323,12 @@ event: complete       → {"topic": "Docker", "resources": {...}, "metadata": {.
 - Failed agent results appear in final bundle as `{"error": "...", "agent": "name"}`
 - Stream continues until all agents complete or fail
 
+**Frontend consumption:** The notebook page consumes this SSE endpoint via
+`generateResourcesStream()` (`frontend/web/src/lib/api.ts`) and renders each
+resource card the moment its `agent_complete` event arrives, instead of waiting
+for the whole bundle. If the stream errors it falls back to the blocking
+`/api/resources/generate` endpoint. Cards are de-duplicated by `topic + type`.
+
 ## Faithfulness Verification
 
 **File:** `backend/core/faithfulness_checker.py`
@@ -506,7 +512,12 @@ student: relationship("StudentProfile")
 - **Streaming overhead**: ~5% slower but significantly better UX
 - **TTS cache hit rate**: ~80% for repeated content
 - **RAG retrieval**: 3 chunks per agent (configurable via `max_rag_chunks`)
-- **Max tokens**: Content (4000), Quiz (2000), MindMap (2500), Media (8000), Code (4000)
+- **Max tokens**: Content (4000), Quiz (2000), MindMap (2500), Media (8000), Code (8000)
+  - Code raised 4000 → 8000: the 3-tier exercise JSON is large and was being
+    truncated at `finish_reason=length`, which made parsing fail and silently
+    fall back to a generic template. The agent now also runs a
+    truncation-tolerant JSON repair (`CodeAgent._repair_truncated_json`) as a
+    safety net and asks the model for compact code so the full bundle fits.
 
 ## Future Enhancements
 
