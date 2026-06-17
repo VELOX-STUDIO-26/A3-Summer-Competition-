@@ -64,6 +64,10 @@ class MainTopicNode:
     subtopics: List[SubtopicNode]
     topic_tags: List[str] = field(default_factory=list)
     order_index: int = 0
+    # Planned subtopic count used when subtopics are generated lazily (two-pass
+    # generation): the first pass plans how many subtopics a milestone will have
+    # without generating their full detail yet.
+    planned_subtopic_count: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -193,6 +197,103 @@ Return ONLY valid JSON (no markdown, no explanation):
           "content_types": ["text", "code", "quiz"]
         }}
       ]
+    }}
+  ]
+}}"""
+
+
+# Pass 1 of two-pass generation: plan the milestones (main topics) only, with no
+# subtopic detail. This response is small and fast, letting the UI render the
+# learning path immediately.
+MAIN_TOPICS_PROMPT = """You are an expert curriculum designer. Plan the MILESTONES (main topics) for learning {subject}.
+
+Student Context:
+- Goals: {goals}
+- Current Knowledge: {knowledge_base}
+- Learning Style: {cognitive_style}
+- Pace: {learning_pace}
+
+Generate 5-12 MAIN TOPICS (major milestones) ONLY. Do NOT generate subtopics.
+
+MAIN TOPIC Requirements:
+- node_id: Unique ID in snake_case (e.g., "python_fundamentals")
+- title: Clear milestone name (e.g., "Python Fundamentals")
+- description: 1-2 sentences about this milestone
+- difficulty: Score 0.0 (beginner) to 1.0 (expert)
+- prerequisites: List of OTHER main topic node_ids that must come before
+- topic_tags: Relevant tags
+- planned_subtopic_count: How many subtopics this milestone will have (3-8)
+
+RULES:
+1. Main topics ordered logically (basics -> advanced)
+2. No cycles in prerequisites
+3. At least 1 main topic with no prerequisites (entry point)
+4. Be SPECIFIC about milestone scope
+
+Return ONLY valid JSON (no markdown, no explanation):
+{{
+  "subject": "{subject}",
+  "difficulty_level": "beginner|intermediate|advanced",
+  "estimated_weeks": 8,
+  "tags": ["tag1", "tag2"],
+  "main_topics": [
+    {{
+      "node_id": "python_fundamentals",
+      "title": "Python Fundamentals",
+      "description": "Core Python skills needed for this subject",
+      "difficulty": 0.2,
+      "prerequisites": [],
+      "topic_tags": ["python", "programming"],
+      "planned_subtopic_count": 5
+    }}
+  ]
+}}"""
+
+
+# Pass 2 of two-pass generation: expand a single milestone into its subtopics.
+# Called lazily, only for the milestone the student is about to study.
+SUBTOPICS_PROMPT = """You are an expert curriculum designer. Generate the SUBTOPICS (learnable units) for ONE milestone in a {subject} course.
+
+Milestone: {main_title}
+Milestone description: {main_description}
+Student Context:
+- Goals: {goals}
+- Current Knowledge: {knowledge_base}
+- Learning Style: {cognitive_style}
+- Pace: {learning_pace}
+
+Generate {target_count} SUBTOPICS (between 3 and 8) for THIS milestone only.
+
+SUBTOPIC Requirements:
+- node_id: Unique ID in snake_case (e.g., "python_functions")
+- title: Specific topic name (e.g., "Functions & Lambdas")
+- description: What the student will learn
+- difficulty: Score 0.0 (beginner) to 1.0 (expert)
+- estimated_minutes: Time to learn (15-60 minutes per subtopic)
+- learning_points: 3-5 key concepts covered
+- prerequisites: List of subtopic node_ids WITHIN THIS milestone
+- topic_tags: Relevant tags
+- content_types: ["text", "video", "code", "quiz"] - what content to generate
+
+RULES:
+1. Subtopics ordered logically (basics -> advanced)
+2. No cycles in prerequisites
+3. Be SPECIFIC - "Linear Regression" not "ML Basics"
+4. Each subtopic learnable in 15-60 minutes
+
+Return ONLY valid JSON (no markdown, no explanation):
+{{
+  "subtopics": [
+    {{
+      "node_id": "python_variables",
+      "title": "Variables & Data Types",
+      "description": "Learn Python variables, strings, numbers, and basic data types",
+      "difficulty": 0.1,
+      "estimated_minutes": 25,
+      "learning_points": ["Variables", "Strings", "Numbers", "Type conversion"],
+      "prerequisites": [],
+      "topic_tags": ["python", "basics"],
+      "content_types": ["text", "code", "quiz"]
     }}
   ]
 }}"""
@@ -662,6 +763,242 @@ Use this as inspiration but adapt to the student's specific goals and knowledge 
             validation_errors=[last_error or "Unknown error"],
             raw_response=raw_content
         )
+
+    async def generate_main_topics(
+        self,
+        subject: str,
+        goals: List[str] = None,
+        knowledge_base: Dict[str, float] = None,
+        cognitive_style: str = "mixed",
+        learning_pace: float = 0.5,
+        template_structure: Dict[str, Any] = None,
+    ) -> HierarchicalGraph:
+        """
+        Pass 1 of two-pass generation: plan the milestones (main topics) only.
+
+        Returns a HierarchicalGraph whose main topics have an empty ``subtopics``
+        list and a ``planned_subtopic_count`` hint. The detailed subtopics are
+        generated lazily per milestone via :meth:`generate_subtopics`.
+
+        This call is much smaller/faster than :meth:`generate` because it does
+        not emit any subtopic detail.
+        """
+        goals = goals or []
+        knowledge_base = knowledge_base or {}
+
+        kb_str = ", ".join(f"{k}: {v:.0%}" for k, v in knowledge_base.items()) if knowledge_base else "None"
+        goals_str = ", ".join(goals) if goals else "General understanding"
+
+        template_guidance = ""
+        if template_structure:
+            template_guidance = f"""
+
+TEMPLATE GUIDANCE (from a highly-rated learning path):
+- Recommended main topics: {', '.join(template_structure.get('main_topic_titles', []))}
+- Number of main topics: {template_structure.get('main_topic_count', 'N/A')}
+
+Use this as inspiration but adapt to the student's specific goals and knowledge level.
+"""
+
+        prompt = MAIN_TOPICS_PROMPT.format(
+            subject=subject,
+            goals=goals_str,
+            knowledge_base=kb_str,
+            cognitive_style=cognitive_style,
+            learning_pace=f"{learning_pace:.0%}",
+        ) + template_guidance
+
+        max_retries = 2
+        last_error = None
+        raw_content = ""
+
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Planning main topics for '{subject}' (attempt {attempt + 1}/{max_retries})")
+
+                response = await self.llm.generate(
+                    messages=[
+                        {"role": "system", "content": "You are an expert curriculum designer. Return ONLY valid JSON with no markdown formatting. The JSON must be complete and properly closed."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.5 if attempt == 0 else 0.3,
+                    max_tokens=3000,  # Main topics only -> small output
+                )
+
+                raw_content = response["choices"][0]["message"].get("content") or ""
+                if not raw_content.strip():
+                    last_error = "LLM returned empty response"
+                    logger.warning(f"Attempt {attempt + 1}: {last_error}")
+                    continue
+
+                try:
+                    data = _parse_json_response(raw_content)
+                except json.JSONDecodeError as e:
+                    last_error = f"Invalid JSON response: {str(e)}"
+                    logger.warning(f"Attempt {attempt + 1}: {last_error}")
+                    continue
+
+                raw_main_topics = data.get("main_topics", [])
+                if not raw_main_topics:
+                    last_error = "No main topics returned"
+                    logger.warning(f"Attempt {attempt + 1}: {last_error}")
+                    continue
+
+                main_topics: List[MainTopicNode] = []
+                for i, main_data in enumerate(raw_main_topics):
+                    planned = main_data.get("planned_subtopic_count", 5)
+                    try:
+                        planned = int(planned)
+                    except (TypeError, ValueError):
+                        planned = 5
+                    planned = min(8, max(3, planned))
+
+                    main_topics.append(MainTopicNode(
+                        node_id=main_data.get("node_id", f"main_{i}"),
+                        title=main_data.get("title") or f"Topic {i + 1}",
+                        description=main_data.get("description", ""),
+                        difficulty=min(1.0, max(0.0, main_data.get("difficulty", 0.5))),
+                        estimated_minutes=0,  # filled in when subtopics are generated
+                        prerequisites=main_data.get("prerequisites", []),
+                        subtopics=[],
+                        topic_tags=main_data.get("topic_tags", []),
+                        order_index=i,
+                        planned_subtopic_count=planned,
+                    ))
+
+                logger.info(f"Planned {len(main_topics)} main topics for '{subject}' (subtopics deferred)")
+                return HierarchicalGraph(
+                    subject=subject,
+                    subject_normalized=normalize_subject(subject),
+                    difficulty_level=data.get("difficulty_level", "intermediate"),
+                    estimated_weeks=data.get("estimated_weeks", 8),
+                    main_topics=main_topics,
+                    tags=data.get("tags", []),
+                    total_subtopic_count=0,
+                    total_estimated_minutes=0,
+                    is_valid=True,
+                    validation_errors=[],
+                    raw_response=raw_content,
+                )
+
+            except Exception as e:
+                last_error = f"Main topic planning failed: {str(e)}"
+                logger.warning(f"Attempt {attempt + 1}: {last_error}")
+                continue
+
+        logger.error(f"All {max_retries} main-topic attempts failed. Last error: {last_error}")
+        return HierarchicalGraph(
+            subject=subject,
+            subject_normalized=normalize_subject(subject),
+            difficulty_level="intermediate",
+            estimated_weeks=8,
+            main_topics=[],
+            tags=[],
+            is_valid=False,
+            validation_errors=[last_error or "Unknown error"],
+            raw_response=raw_content,
+        )
+
+    async def generate_subtopics(
+        self,
+        subject: str,
+        main_title: str,
+        main_description: str = "",
+        target_count: int = 5,
+        goals: List[str] = None,
+        knowledge_base: Dict[str, float] = None,
+        cognitive_style: str = "mixed",
+        learning_pace: float = 0.5,
+    ) -> List[SubtopicNode]:
+        """
+        Pass 2 of two-pass generation: expand a single milestone into subtopics.
+
+        Returns a list of :class:`SubtopicNode`. Raises ``ValueError`` if the
+        model cannot produce valid subtopics after retries, so callers can fall
+        back or surface the error.
+        """
+        goals = goals or []
+        knowledge_base = knowledge_base or {}
+
+        kb_str = ", ".join(f"{k}: {v:.0%}" for k, v in knowledge_base.items()) if knowledge_base else "None"
+        goals_str = ", ".join(goals) if goals else "General understanding"
+        target_count = min(8, max(3, target_count or 5))
+
+        prompt = SUBTOPICS_PROMPT.format(
+            subject=subject,
+            main_title=main_title,
+            main_description=main_description or main_title,
+            goals=goals_str,
+            knowledge_base=kb_str,
+            cognitive_style=cognitive_style,
+            learning_pace=f"{learning_pace:.0%}",
+            target_count=target_count,
+        )
+
+        max_retries = 2
+        last_error = None
+
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Generating subtopics for milestone '{main_title}' (attempt {attempt + 1}/{max_retries})")
+
+                response = await self.llm.generate(
+                    messages=[
+                        {"role": "system", "content": "You are an expert curriculum designer. Return ONLY valid JSON with no markdown formatting. The JSON must be complete and properly closed."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.5 if attempt == 0 else 0.3,
+                    max_tokens=4000,  # One milestone's subtopics -> moderate output
+                )
+
+                raw_content = response["choices"][0]["message"].get("content") or ""
+                if not raw_content.strip():
+                    last_error = "LLM returned empty response"
+                    logger.warning(f"Attempt {attempt + 1}: {last_error}")
+                    continue
+
+                try:
+                    data = _parse_json_response(raw_content)
+                except json.JSONDecodeError as e:
+                    last_error = f"Invalid JSON response: {str(e)}"
+                    logger.warning(f"Attempt {attempt + 1}: {last_error}")
+                    continue
+
+                raw_subs = data.get("subtopics", []) if isinstance(data, dict) else data
+                if not raw_subs:
+                    last_error = "No subtopics returned"
+                    logger.warning(f"Attempt {attempt + 1}: {last_error}")
+                    continue
+
+                subtopics: List[SubtopicNode] = []
+                for j, sub_data in enumerate(raw_subs):
+                    node_id = sub_data.get("node_id", f"subtopic_{j}")
+                    title = sub_data.get("title") or node_id.replace("_", " ").title()
+                    est_min = sub_data.get("estimated_minutes", 30)
+                    if not isinstance(est_min, (int, float)) or est_min < 15 or est_min > 60:
+                        est_min = 30
+                    subtopics.append(SubtopicNode(
+                        node_id=node_id,
+                        title=title,
+                        description=sub_data.get("description", ""),
+                        difficulty=min(1.0, max(0.0, sub_data.get("difficulty", 0.5))),
+                        estimated_minutes=int(est_min),
+                        learning_points=sub_data.get("learning_points", []) or ["Key concepts"],
+                        prerequisites=sub_data.get("prerequisites", []),
+                        topic_tags=sub_data.get("topic_tags", []),
+                        content_types=sub_data.get("content_types", ["text", "quiz"]),
+                        order_index=j,
+                    ))
+
+                logger.info(f"Generated {len(subtopics)} subtopics for milestone '{main_title}'")
+                return subtopics
+
+            except Exception as e:
+                last_error = f"Subtopic generation failed: {str(e)}"
+                logger.warning(f"Attempt {attempt + 1}: {last_error}")
+                continue
+
+        raise ValueError(f"Subtopic generation failed for '{main_title}': {last_error}")
 
 
 # ============================================================================

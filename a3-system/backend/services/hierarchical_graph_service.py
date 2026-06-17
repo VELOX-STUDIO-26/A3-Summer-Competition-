@@ -66,6 +66,7 @@ class HierarchicalGraphService:
         is_premium: bool = False,
         use_template: bool = True,
         validate_quality: bool = True,
+        lazy_subtopics: bool = True,
     ) -> Tuple[HierarchicalKnowledgeGraph, bool]:
         """
         Generate a new hierarchical knowledge graph.
@@ -80,6 +81,13 @@ class HierarchicalGraphService:
             is_premium: Premium user flag
             use_template: If True, try to use highly-rated paths as templates
             validate_quality: If True, run quality validation on generated graph
+            lazy_subtopics: If True (default), use two-pass generation -- plan
+                the main topics (milestones) first and only materialize the
+                first milestone's subtopics synchronously. The remaining
+                milestones' subtopics are generated on demand via
+                :meth:`ensure_subtopics_for_topic`. This makes the path appear
+                far faster. If False, the full graph (all subtopics) is
+                generated in a single call.
 
         Returns:
             Tuple of (graph, is_new) where is_new indicates if a new graph was created
@@ -104,17 +112,30 @@ class HierarchicalGraphService:
             if template_path:
                 logger.info(f"Using template path {template_path.id} (rating: {template_path.avg_rating})")
 
+        template_structure = self._extract_template_structure(template_path) if template_path else None
+
         # Generate new graph
-        logger.info(f"Generating new graph for subject: '{subject}'")
+        logger.info(f"Generating new graph for subject: '{subject}' (lazy_subtopics={lazy_subtopics})")
         try:
-            generated = await self.generator.generate(
-                subject=subject,
-                goals=goals,
-                knowledge_base=knowledge_base,
-                cognitive_style=cognitive_style,
-                learning_pace=learning_pace,
-                template_structure=self._extract_template_structure(template_path) if template_path else None,
-            )
+            if lazy_subtopics:
+                # Pass 1: plan the milestones only (small, fast).
+                generated = await self.generator.generate_main_topics(
+                    subject=subject,
+                    goals=goals,
+                    knowledge_base=knowledge_base,
+                    cognitive_style=cognitive_style,
+                    learning_pace=learning_pace,
+                    template_structure=template_structure,
+                )
+            else:
+                generated = await self.generator.generate(
+                    subject=subject,
+                    goals=goals,
+                    knowledge_base=knowledge_base,
+                    cognitive_style=cognitive_style,
+                    learning_pace=learning_pace,
+                    template_structure=template_structure,
+                )
         except Exception as e:
             logger.error(f"Graph generation failed with exception: {e}")
             raise ValueError(f"Graph generation failed: {str(e)}")
@@ -125,8 +146,9 @@ class HierarchicalGraphService:
                 logger.debug(f"Raw LLM response (first 500 chars): {generated.raw_response[:500]}")
             raise ValueError(f"Generated graph is invalid: {', '.join(generated.validation_errors)}")
 
-        # Run quality validation
-        if validate_quality:
+        # Run quality validation (skipped for lazy plans -- there are no
+        # subtopics to validate yet, and the validator expects them).
+        if validate_quality and not lazy_subtopics:
             validation_result = await self.validator.validate(generated, quick_mode=True)
             logger.info(f"Validation result: quality_score={validation_result.get('quality_score', 'N/A')}, "
                        f"overall_quality={validation_result.get('overall_quality', 'N/A')}")
@@ -142,6 +164,27 @@ class HierarchicalGraphService:
 
         # Update quota
         await self.increment_quota(student_id, subject)
+
+        # In lazy mode, materialize the first milestone's subtopics so the
+        # student can start learning immediately. The rest are filled in on
+        # demand as the student reaches each milestone.
+        if lazy_subtopics and graph.main_topics:
+            first_main = min(graph.main_topics, key=lambda mt: mt.order_index)
+            try:
+                await self.ensure_subtopics_for_topic(
+                    graph_id=graph.id,
+                    main_topic_node_id=first_main.node_id,
+                    student_id=None,  # progress is initialized on /accept
+                    goals=goals,
+                    knowledge_base=knowledge_base,
+                    cognitive_style=cognitive_style,
+                    learning_pace=learning_pace,
+                )
+                graph = await self.get_graph(graph.id)
+            except Exception as e:
+                # A failure here shouldn't lose the whole path -- the student can
+                # still trigger materialization from the notebook.
+                logger.error(f"Failed to materialize first milestone subtopics: {e}")
 
         return graph, True
 
@@ -187,7 +230,14 @@ class HierarchicalGraphService:
         created_by: str,
     ) -> HierarchicalKnowledgeGraph:
         """Store a generated hierarchical graph in the database."""
-        
+
+        # For two-pass (lazy) plans the milestones carry no subtopics yet, only
+        # a planned count -- surface that as the graph's expected total so the
+        # UI shows a meaningful lesson count before subtopics are materialized.
+        planned_total_subtopics = generated.total_subtopic_count or sum(
+            getattr(m, "planned_subtopic_count", 0) for m in generated.main_topics
+        )
+
         # Create the main graph record
         graph = HierarchicalKnowledgeGraph(
             id=uuid.uuid4(),
@@ -198,7 +248,7 @@ class HierarchicalGraphService:
             difficulty_level=generated.difficulty_level,
             estimated_duration_weeks=generated.estimated_weeks,
             main_topic_count=len(generated.main_topics),
-            total_subtopic_count=generated.total_subtopic_count,
+            total_subtopic_count=planned_total_subtopics,
             total_estimated_minutes=generated.total_estimated_minutes,
             times_used=0,
             times_accepted=0,
@@ -225,7 +275,7 @@ class HierarchicalGraphService:
                 order_index=main_node.order_index,
                 difficulty=main_node.difficulty,
                 estimated_minutes=main_node.estimated_minutes,
-                subtopic_count=len(main_node.subtopics),
+                subtopic_count=len(main_node.subtopics) or getattr(main_node, "planned_subtopic_count", 0),
                 prerequisites=main_node.prerequisites,
                 topic_tags=main_node.topic_tags,
             )
@@ -263,6 +313,157 @@ class HierarchicalGraphService:
 
         logger.info(f"Created hierarchical graph {graph.id} for '{generated.subject}' with {len(graph.main_topics)} main topics")
         return graph
+
+    async def ensure_subtopics_for_topic(
+        self,
+        graph_id: uuid.UUID,
+        main_topic_node_id: str,
+        student_id: Optional[str] = None,
+        goals: List[str] = None,
+        knowledge_base: Dict[str, float] = None,
+        cognitive_style: str = "mixed",
+        learning_pace: float = 0.5,
+    ) -> Optional[MainTopic]:
+        """
+        Pass 2 of two-pass generation: materialize a milestone's subtopics.
+
+        Idempotent -- if the milestone already has subtopics this is a no-op and
+        returns the existing main topic. Otherwise the subtopics are generated
+        via the LLM, persisted, and the milestone/graph counts are updated. When
+        ``student_id`` is given and the student already has progress for this
+        graph, locked progress rows are created for the new subtopics so the
+        existing progression logic keeps working.
+        """
+        graph = await self.get_graph(graph_id)
+        if not graph:
+            raise ValueError(f"Graph {graph_id} not found")
+
+        main_topic = next(
+            (mt for mt in graph.main_topics if mt.node_id == main_topic_node_id),
+            None,
+        )
+        if not main_topic:
+            raise ValueError(f"Main topic '{main_topic_node_id}' not found in graph {graph_id}")
+
+        # Already materialized -> nothing to do.
+        if main_topic.subtopics:
+            return main_topic
+
+        # Personalization context: prefer explicit args, fall back to the graph's
+        # stored goals.
+        goals = goals if goals is not None else (graph.goals or [])
+        knowledge_base = knowledge_base or {}
+
+        target_count = main_topic.subtopic_count or 5
+        subnodes = await self.generator.generate_subtopics(
+            subject=graph.subject,
+            main_title=main_topic.title,
+            main_description=main_topic.description or "",
+            target_count=target_count,
+            goals=goals,
+            knowledge_base=knowledge_base,
+            cognitive_style=cognitive_style,
+            learning_pace=learning_pace,
+        )
+
+        if not subnodes:
+            raise ValueError(f"No subtopics generated for milestone '{main_topic.title}'")
+
+        new_subtopics: List[Subtopic] = []
+        main_minutes = 0
+        difficulty_sum = 0.0
+        for sub_node in subnodes:
+            subtopic = Subtopic(
+                id=uuid.uuid4(),
+                main_topic_id=main_topic.id,
+                node_id=sub_node.node_id,
+                title=sub_node.title,
+                description=sub_node.description,
+                order_index=sub_node.order_index,
+                difficulty=sub_node.difficulty,
+                estimated_minutes=sub_node.estimated_minutes,
+                learning_points=sub_node.learning_points,
+                topic_tags=sub_node.topic_tags,
+                content_types=sub_node.content_types,
+                prerequisites=sub_node.prerequisites,
+            )
+            self.db.add(subtopic)
+            new_subtopics.append(subtopic)
+            main_minutes += sub_node.estimated_minutes
+            difficulty_sum += sub_node.difficulty
+
+        # Update milestone + graph aggregates. subtopic_count previously held the
+        # planned estimate; replace it with the actual count.
+        delta_count = len(new_subtopics) - (main_topic.subtopic_count or 0)
+        delta_minutes = main_minutes - (main_topic.estimated_minutes or 0)
+        main_topic.subtopic_count = len(new_subtopics)
+        main_topic.estimated_minutes = main_minutes
+        main_topic.difficulty = difficulty_sum / len(new_subtopics)
+        graph.total_subtopic_count = (graph.total_subtopic_count or 0) + delta_count
+        graph.total_estimated_minutes = (graph.total_estimated_minutes or 0) + delta_minutes
+
+        await self.db.flush()
+
+        # If the student has already accepted this graph, create locked progress
+        # rows for the freshly materialized subtopics.
+        if student_id:
+            await self._materialize_progress_for_subtopics(
+                student_id, graph_id, main_topic.id, new_subtopics
+            )
+
+        await self.db.commit()
+        logger.info(
+            f"Materialized {len(new_subtopics)} subtopics for milestone "
+            f"'{main_topic.title}' in graph {graph_id}"
+        )
+
+        # Re-fetch with relationships for a consistent return value.
+        refreshed = await self.get_graph(graph_id)
+        return next(
+            (mt for mt in refreshed.main_topics if mt.node_id == main_topic_node_id),
+            None,
+        )
+
+    async def _materialize_progress_for_subtopics(
+        self,
+        student_id: str,
+        graph_id: uuid.UUID,
+        main_topic_id: uuid.UUID,
+        subtopics: List[Subtopic],
+    ) -> None:
+        """Create locked progress rows for lazily-generated subtopics.
+
+        Only runs if the student already has progress for this graph (i.e. they
+        accepted it). New subtopics start locked; the existing unlock logic
+        promotes them when the student reaches the milestone.
+        """
+        existing = await self.db.execute(
+            select(StudentSubtopicProgress.subtopic_id).where(
+                StudentSubtopicProgress.student_id == student_id,
+                StudentSubtopicProgress.graph_id == graph_id,
+            )
+        )
+        existing_ids = {row[0] for row in existing.all()}
+        if not existing_ids:
+            # Student hasn't accepted the graph yet -- progress is initialized on
+            # /accept, which will pick up these subtopics.
+            return
+
+        for subtopic in subtopics:
+            if subtopic.id in existing_ids:
+                continue
+            self.db.add(StudentSubtopicProgress(
+                id=uuid.uuid4(),
+                student_id=student_id,
+                graph_id=graph_id,
+                main_topic_id=main_topic_id,
+                subtopic_id=subtopic.id,
+                status="locked",
+                gate_score=0.0,
+                quiz_unlocked=False,
+                quiz_passed=False,
+                bypass_mode=False,
+            ))
 
     async def find_best_match(
         self,
@@ -559,6 +760,21 @@ class HierarchicalGraphService:
 
         if not next_main:
             return None  # Learning path complete!
+
+        # Two-pass (lazy) generation: the next milestone may not have its
+        # subtopics materialized yet. Generate them on demand before unlocking.
+        next_subtopic_count_q = select(Subtopic).where(Subtopic.main_topic_id == next_main.id)
+        has_subs = (await self.db.execute(next_subtopic_count_q)).first() is not None
+        if not has_subs:
+            try:
+                await self.ensure_subtopics_for_topic(
+                    graph_id=next_main.graph_id,
+                    main_topic_node_id=next_main.node_id,
+                    student_id=student_id,
+                )
+            except Exception as e:
+                logger.error(f"Failed to lazily materialize next milestone '{next_main.node_id}': {e}")
+                return None
 
         # Get first subtopic of next main topic
         first_subtopic_query = select(Subtopic).where(

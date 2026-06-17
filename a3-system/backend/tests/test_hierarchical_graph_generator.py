@@ -525,3 +525,115 @@ class TestHierarchicalGraphValidator:
         
         assert result["is_valid"] is True
         assert result["overall_quality"] == "good"
+
+
+# ============================================================================
+# Two-Pass (Lazy) Generation Tests
+# ============================================================================
+
+class TestTwoPassGeneration:
+    """Tests for two-pass generation: main topics first, subtopics on demand."""
+
+    @pytest.fixture
+    def mock_llm(self):
+        return MagicMock()
+
+    @pytest.fixture
+    def generator(self, mock_llm):
+        return HierarchicalGraphGenerator(llm=mock_llm)
+
+    @pytest.mark.asyncio
+    async def test_generate_main_topics_only(self, generator, mock_llm):
+        """Pass 1 returns main topics with no subtopics, only a planned count."""
+        response_data = {
+            "subject": "Linux",
+            "difficulty_level": "beginner",
+            "estimated_weeks": 8,
+            "tags": ["linux"],
+            "main_topics": [
+                {
+                    "node_id": f"topic_{i}",
+                    "title": f"Topic {i}",
+                    "description": f"Desc {i}",
+                    "difficulty": 0.2 + i * 0.1,
+                    "prerequisites": [] if i == 0 else [f"topic_{i-1}"],
+                    "topic_tags": ["linux"],
+                    "planned_subtopic_count": 5,
+                }
+                for i in range(6)
+            ],
+        }
+        mock_llm.generate = AsyncMock(return_value={
+            "choices": [{"message": {"content": json.dumps(response_data)}}]
+        })
+
+        result = await generator.generate_main_topics("Linux")
+
+        assert result.is_valid is True
+        assert len(result.main_topics) == 6
+        # No subtopics generated in pass 1
+        assert all(len(mt.subtopics) == 0 for mt in result.main_topics)
+        assert all(mt.planned_subtopic_count == 5 for mt in result.main_topics)
+        assert result.total_subtopic_count == 0
+
+    @pytest.mark.asyncio
+    async def test_generate_main_topics_clamps_planned_count(self, generator, mock_llm):
+        """Planned subtopic count is clamped to the 3-8 range."""
+        response_data = {
+            "subject": "Linux",
+            "main_topics": [
+                {"node_id": "a", "title": "A", "description": "d", "planned_subtopic_count": 99},
+                {"node_id": "b", "title": "B", "description": "d", "planned_subtopic_count": 1},
+            ],
+        }
+        mock_llm.generate = AsyncMock(return_value={
+            "choices": [{"message": {"content": json.dumps(response_data)}}]
+        })
+
+        result = await generator.generate_main_topics("Linux")
+
+        assert result.main_topics[0].planned_subtopic_count == 8
+        assert result.main_topics[1].planned_subtopic_count == 3
+
+    @pytest.mark.asyncio
+    async def test_generate_subtopics_for_milestone(self, generator, mock_llm):
+        """Pass 2 expands one milestone into subtopics."""
+        response_data = {
+            "subtopics": [
+                {
+                    "node_id": f"sub_{j}",
+                    "title": f"Sub {j}",
+                    "description": f"Desc {j}",
+                    "difficulty": 0.3,
+                    "estimated_minutes": 30,
+                    "learning_points": ["a", "b"],
+                    "prerequisites": [] if j == 0 else [f"sub_{j-1}"],
+                    "content_types": ["text", "quiz"],
+                }
+                for j in range(5)
+            ]
+        }
+        mock_llm.generate = AsyncMock(return_value={
+            "choices": [{"message": {"content": json.dumps(response_data)}}]
+        })
+
+        subs = await generator.generate_subtopics(
+            subject="Linux", main_title="Fundamentals", target_count=5
+        )
+
+        assert len(subs) == 5
+        assert subs[0].node_id == "sub_0"
+        assert all(15 <= s.estimated_minutes <= 60 for s in subs)
+        assert [s.order_index for s in subs] == [0, 1, 2, 3, 4]
+
+    @pytest.mark.asyncio
+    async def test_generate_subtopics_raises_on_failure(self, generator, mock_llm):
+        """Pass 2 raises (rather than returning empty) when the LLM fails."""
+        mock_llm.generate = AsyncMock(return_value={
+            "choices": [{"message": {"content": "not valid json"}}]
+        })
+
+        with pytest.raises(ValueError):
+            await generator.generate_subtopics(
+                subject="Linux", main_title="Fundamentals", target_count=5
+            )
