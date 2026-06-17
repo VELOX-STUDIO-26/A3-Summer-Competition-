@@ -901,10 +901,12 @@ async def get_quiz_results(
             select(QuizAttempt).where(
                 QuizAttempt.quiz_id == quiz_id,
                 QuizAttempt.student_id == student_id
-            ).order_by(QuizAttempt.started_at.desc())
+            ).order_by(QuizAttempt.started_at.desc()).limit(1)
         )
 
-    attempt = attempt_result.scalar_one_or_none()
+    # A student can have multiple attempts at the same quiz (e.g. fail then
+    # retake), so take the most recent one rather than requiring exactly one.
+    attempt = attempt_result.scalars().first()
 
     if not attempt:
         raise HTTPException(
@@ -956,14 +958,14 @@ async def regenerate_resources_after_quiz(
     """
     logger.info(f"Regenerating resources for quiz {quiz_id}, student {student_id}")
 
-    # Get latest attempt
+    # Get latest attempt (a student may have several attempts at one quiz)
     attempt_result = await db.execute(
         select(QuizAttempt).where(
             QuizAttempt.quiz_id == quiz_id,
             QuizAttempt.student_id == student_id
-        ).order_by(QuizAttempt.started_at.desc())
+        ).order_by(QuizAttempt.started_at.desc()).limit(1)
     )
-    attempt = attempt_result.scalar_one_or_none()
+    attempt = attempt_result.scalars().first()
 
     if not attempt:
         raise HTTPException(
