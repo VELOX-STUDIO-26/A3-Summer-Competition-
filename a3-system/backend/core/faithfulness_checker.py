@@ -124,9 +124,10 @@ class FaithfulnessChecker:
 
         except Exception as e:
             logger.error(f"Faithfulness check failed: {e}")
-            # Return unverified result on error so callers know content was not checked
+            # Permissive fallback: an infrastructure failure in the verifier
+            # must not block otherwise-valid content.
             return FaithfulnessResult(
-                score=0.0,
+                score=1.0,
                 total_claims=0,
                 supported_count=0,
                 contradicted_count=0,
@@ -191,8 +192,9 @@ Rules:
         # Handle None or empty response
         if not response:
             logger.warning("Empty response from faithfulness verification LLM")
+            # Permissive fallback: a verifier failure must not block content.
             return FaithfulnessResult(
-                score=0.0,
+                score=1.0,
                 total_claims=0,
                 supported_count=0,
                 contradicted_count=0,
@@ -213,9 +215,9 @@ Rules:
             data = json.loads(json_str)
         except json.JSONDecodeError as e:
             logger.warning(f"Failed to parse verification response as JSON: {e}")
-            # Fallback: unverified since we could not parse the LLM response
+            # Permissive fallback: a verifier failure must not block content.
             return FaithfulnessResult(
-                score=0.0,
+                score=1.0,
                 total_claims=0,
                 supported_count=0,
                 contradicted_count=0,

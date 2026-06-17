@@ -3,9 +3,13 @@ Integration test for the full learning path flow.
 Tests: Generation -> Validation -> Rating -> Analytics
 """
 
+import pytest
 import requests
 import time
 import json
+
+# Requires a live backend at BASE_URL; excluded from the default unit run.
+pytestmark = pytest.mark.integration
 
 BASE_URL = "http://localhost:8000"
 TEST_STUDENT_ID = "test_integration_student"
