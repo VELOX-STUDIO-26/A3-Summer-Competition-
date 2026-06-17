@@ -13,6 +13,29 @@ Format:
 
 ---
 
+## 2026-06-17 - Fix quiz results page 422 (missing student_id)
+
+### Changes Made
+- The quiz results page fetched `GET /api/quiz/{quizId}/results` without the
+  `student_id` query param, which the backend requires (`quiz.py:884-888`),
+  so every results load returned HTTP 422 ("Failed to load quiz results").
+  Now reads `studentId` from the app store and passes it as a query param,
+  and waits for `studentId` before fetching.
+
+### Reason
+- E2E testing showed both fail and pass quiz attempts could never display
+  results, and the milestone-unlock state (`next_milestone_unlocked`) never
+  reflected in the UI because the results response never loaded.
+
+### Files
+- `frontend/web/src/app/(dashboard)/quiz/[quizId]/results/page.tsx`
+
+### Impact / Testing
+- Results page now loads score / outcome / remediation and milestone-unlock
+  state. Verified backend returns correct data when `student_id` is supplied.
+
+---
+
 ## 2026-06-17 - Stream resources to the frontend, fix code agent, speed up grading
 
 ### Changes Made
