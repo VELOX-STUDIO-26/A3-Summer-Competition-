@@ -13,6 +13,31 @@ Format:
 
 ---
 
+## 2026-06-17 - Fix quiz results 500 (MultipleResultsFound) for repeated attempts
+
+### Changes Made
+- `get_quiz_results` and `regenerate_resources_after_quiz` selected the latest
+  attempt with `.order_by(started_at desc)` but read it via `scalar_one_or_none()`,
+  which raises `MultipleResultsFound` whenever a student has more than one attempt
+  at the same quiz (the normal fail -> retake -> pass flow).
+- Added `.limit(1)` to the queries and switched to `.scalars().first()`.
+
+### Reason
+After the frontend started sending `student_id` (the earlier 422 fix), the results
+endpoint began returning HTTP 500 for any student with multiple attempts, so the
+results page still showed "Failed to load quiz results" and the milestone-unlock
+state never appeared.
+
+### Files
+- `a3-system/backend/api/routers/quiz.py`
+
+### Impact / Testing
+- `GET /api/quiz/{quiz_id}/results?student_id=...` now returns 200 with the most
+  recent attempt for students who have multiple attempts (verified: score 92.5,
+  7/8, outcome `accelerate`, `next_milestone_unlocked=true`).
+
+---
+
 ## 2026-06-17 - Fix mermaid "Syntax error" bombs in AI tutor diagrams
 
 ### Changes Made
