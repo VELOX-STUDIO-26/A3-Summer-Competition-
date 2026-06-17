@@ -6,6 +6,8 @@ import CodeExercise from "@/components/code/CodeExercise";
 import LecturePlayer from "@/components/video/LecturePlayer";
 import { FaithfulnessBadge } from "@/components/FaithfulnessBadge";
 import QuizRenderer from "./QuizRenderer";
+import { useAppStore } from "@/lib/store";
+import { useNotesTracking } from "@/hooks/useTracking";
 import { renderMarkdown } from "@/lib/markdown";
 import MermaidRenderer from "@/components/MermaidRenderer";
 import TextSelectionPopup from "./TextSelectionPopup";
@@ -97,6 +99,29 @@ export default function ResourcePreview({
     const wordCount = rawContent.split(/\s+/).length;
     return Math.max(1, Math.ceil(wordCount / 200));
   }, [res]);
+
+  // Engagement tracking for notes so the milestone gate is reachable by
+  // actually reading (not just video/code). Fires notes_opened / notes_scroll
+  // and notes_closed (on unmount) which the backend gate aggregates.
+  const { studentId } = useAppStore();
+  const wordCount = useMemo(() => {
+    const rawContent = res?.content || res?.code || res?.text || "";
+    return rawContent.split(/\s+/).filter(Boolean).length;
+  }, [res]);
+  const milestoneId = useMemo(
+    () => (currentTopic || "").replace(/\s+/g, "_").toLowerCase(),
+    [currentTopic]
+  );
+
+  useNotesTracking({
+    studentId: studentId || "anonymous",
+    milestoneId,
+    resourceId: resource.id,
+    totalSections: Math.max(1, sections.length),
+    wordCount,
+    containerRef: scrollContainerRef,
+    enabled: resType === "notes" && !!studentId,
+  });
 
   // Track reading progress with throttling for performance
   useEffect(() => {

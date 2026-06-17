@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Brain, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { useAppStore } from "@/lib/store";
+import { useMindMapTracking } from "@/hooks/useTracking";
 
 // ─────────────────────────────────────────────
 // TYPES (compatible with existing props)
@@ -255,17 +257,44 @@ export default function InteractiveMindMap({
   const [isPanning, setIsPanning] = useState(false);
   const lastMouse = useRef({ x: 0, y: 0 });
 
-  const toggle = useCallback((id: string) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
+  // Engagement tracking so mindmap interaction counts toward the gate.
+  const { studentId } = useAppStore();
+  const milestoneId = useMemo(
+    () => (topic || "").replace(/\s+/g, "_").toLowerCase(),
+    [topic]
+  );
+  const { trackNodeClick, trackNodeExpand } = useMindMapTracking({
+    studentId: studentId || "anonymous",
+    milestoneId,
+    resourceId: `mindmap_${milestoneId}`,
+    totalNodes: Math.max(1, nodes.length),
+    totalBranches: edges.length,
+    enabled: !!studentId,
+  });
+
+  const toggle = useCallback(
+    (id: string) => {
+      setCollapsed((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        return next;
+      });
+      trackNodeExpand(id, 0);
+    },
+    [trackNodeExpand]
+  );
+
+  const handleLeafClick = useCallback(
+    (leafId: string, leafLabel: string) => {
+      trackNodeClick(leafId, leafLabel, 2);
+      onNodeClick?.(leafLabel);
+    },
+    [trackNodeClick, onNodeClick]
+  );
 
   const { rootLabel, branches } = useMemo(
     () => computeLayout(nodes, edges, collapsed),
@@ -535,7 +564,7 @@ export default function InteractiveMindMap({
                 <g
                   key={leaf.id}
                   style={{ cursor: "pointer" }}
-                  onClick={() => onNodeClick?.(leaf.label)}
+                  onClick={() => handleLeafClick(leaf.id, leaf.label)}
                 >
                   <rect
                     x={leaf.x - LEAF_W / 2}

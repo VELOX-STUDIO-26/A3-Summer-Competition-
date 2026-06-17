@@ -154,8 +154,13 @@ function getSeverityColor(severity: string) {
 export default function QuizResultsPage() {
   const params = useParams();
   const router = useRouter();
-  const { studentId } = useAppStore();
+  const { studentId, activeGraphId } = useAppStore();
   const quizId = params.quizId as string;
+
+  // Preserve the active course graph so we return to the right path.
+  const notebookHref = activeGraphId
+    ? `/notebook?graph=${activeGraphId}`
+    : "/notebook";
 
   const [result, setResult] = useState<QuizResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -219,7 +224,7 @@ export default function QuizResultsPage() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-[#666]">{error || "Results not found"}</p>
           <Button
-            onClick={() => router.push("/notebook")}
+            onClick={() => router.push(notebookHref)}
             className="mt-4 bg-[#B8C3C9] hover:bg-[#8a9ba3]"
           >
             Back to Notebook
@@ -312,7 +317,7 @@ export default function QuizResultsPage() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
-              onClick={() => router.push("/notebook")}
+              onClick={() => router.push(notebookHref)}
               variant="outline"
               className="border-[#D6CFC2] text-[#555]"
             >
@@ -320,7 +325,7 @@ export default function QuizResultsPage() {
             </Button>
             {result.next_milestone_unlocked ? (
               <Button
-                onClick={() => router.push("/notebook")}
+                onClick={() => router.push(notebookHref)}
                 className={`${config.bgColor.replace("bg-", "bg-").replace("100", "500")} hover:opacity-90 text-white`}
               >
                 {config.cta}
@@ -365,7 +370,7 @@ export default function QuizResultsPage() {
                   </div>
                 )}
                 <Button
-                  onClick={() => router.push("/notebook")}
+                  onClick={() => router.push(notebookHref)}
                   className="bg-blue-500 hover:bg-blue-600 text-white text-sm"
                 >
                   View New Resources

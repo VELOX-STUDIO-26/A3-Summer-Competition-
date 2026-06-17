@@ -58,8 +58,13 @@ interface Answer {
 export default function QuizPage() {
   const params = useParams();
   const router = useRouter();
-  const { studentId } = useAppStore();
+  const { studentId, activeGraphId } = useAppStore();
   const quizId = params.quizId as string;
+
+  // Preserve the active course graph when returning to the notebook.
+  const notebookHref = activeGraphId
+    ? `/notebook?graph=${activeGraphId}`
+    : "/notebook";
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
@@ -348,7 +353,7 @@ export default function QuizPage() {
               {retryCount >= 3 ? "Max retries reached" : "Try Again"}
             </Button>
             <Button
-              onClick={() => router.push("/notebook")}
+              onClick={() => router.push(notebookHref)}
               className="bg-[#B8C3C9] hover:bg-[#8a9ba3] text-white"
             >
               Back to Notebook

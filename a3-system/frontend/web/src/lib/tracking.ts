@@ -89,6 +89,32 @@ export async function getGateStatus(
   }
 }
 
+export interface MilestoneProgressItem {
+  milestone_id: string;
+  status: string;
+  quiz_score: number | null;
+  quiz_outcome: string | null;
+  completed_at: string | null;
+}
+
+/**
+ * Get all milestone progress rows for a student.
+ *
+ * Used by the notebook to advance the learning path past completed
+ * milestones to the next current one.
+ */
+export async function getMilestoneProgress(
+  studentId: string
+): Promise<MilestoneProgressItem[]> {
+  try {
+    const response = await api.get(`/api/tracking/milestones/${studentId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get milestone progress:", error);
+    return [];
+  }
+}
+
 /**
  * Request gate bypass ("I already know this").
  */

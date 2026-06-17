@@ -748,3 +748,47 @@ async def evaluate_quiz(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Quiz evaluation failed: {str(e)}"
         )
+
+
+class MilestoneProgressItem(BaseModel):
+    """A single milestone's progress for a student."""
+    milestone_id: str
+    status: str
+    quiz_score: Optional[float] = None
+    quiz_outcome: Optional[str] = None
+    completed_at: Optional[str] = None
+
+
+@router.get("/milestones/{student_id}", response_model=List[MilestoneProgressItem])
+async def get_milestone_progress(
+    student_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Return all milestone progress rows for a student.
+
+    The frontend uses this to know which milestones are completed so the
+    learning path can advance past them to the next current milestone.
+    """
+    try:
+        result = await db.execute(
+            select(MilestoneProgress).where(
+                MilestoneProgress.student_id == student_id
+            )
+        )
+        rows = result.scalars().all()
+        return [
+            MilestoneProgressItem(
+                milestone_id=row.milestone_id,
+                status=row.status,
+                quiz_score=row.quiz_score,
+                quiz_outcome=row.quiz_outcome,
+                completed_at=row.completed_at.isoformat() if row.completed_at else None,
+            )
+            for row in rows
+        ]
+    except Exception as e:
+        logger.error(f"Failed to fetch milestone progress: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch milestone progress: {str(e)}"
+        )

@@ -8,6 +8,7 @@ interface AppState {
   userName: string | null;
   userEmail: string | null;
   currentTopic: string | null;
+  activeGraphId: string | null;
   chatMessages: ChatMessage[];
   isHydrated: boolean;
   setStudentId: (id: string) => void;
@@ -15,6 +16,7 @@ interface AppState {
   setUserName: (name: string | null) => void;
   setUserEmail: (email: string | null) => void;
   setCurrentTopic: (topic: string | null) => void;
+  setActiveGraphId: (graphId: string | null) => void;
   addChatMessage: (msg: ChatMessage) => void;
   clearChat: () => void;
   logout: () => void;
@@ -28,6 +30,7 @@ export const useAppStore = create<AppState>()(
       userName: null,
       userEmail: null,
       currentTopic: null,
+      activeGraphId: null,
       chatMessages: [],
       isHydrated: false,
       setStudentId: (id) => set({ studentId: id }),
@@ -35,6 +38,7 @@ export const useAppStore = create<AppState>()(
       setUserName: (name) => set({ userName: name }),
       setUserEmail: (email) => set({ userEmail: email }),
       setCurrentTopic: (topic) => set({ currentTopic: topic }),
+      setActiveGraphId: (graphId) => set({ activeGraphId: graphId }),
       addChatMessage: (msg) =>
         set((state) => ({ chatMessages: [...state.chatMessages, msg] })),
       clearChat: () => set({ chatMessages: [] }),
@@ -45,6 +49,7 @@ export const useAppStore = create<AppState>()(
           userName: null,
           userEmail: null,
           currentTopic: null,
+          activeGraphId: null,
           chatMessages: [],
         }),
     }),
@@ -55,6 +60,7 @@ export const useAppStore = create<AppState>()(
         profile: state.profile,
         userName: state.userName,
         userEmail: state.userEmail,
+        activeGraphId: state.activeGraphId,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
