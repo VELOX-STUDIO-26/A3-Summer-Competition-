@@ -20,6 +20,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from analytics.analytics_engine import AnalyticsEngine, INSIGHTS_CACHE_DURATION_HOURS
 from models.database import AnalyticsInsightsCache, db_manager
 
+# Requires a live database; excluded from the default unit run.
+pytestmark = pytest.mark.integration
+
 
 # Test student ID (use existing test student)
 TEST_STUDENT_ID = "5e1f405d94c96d8f"

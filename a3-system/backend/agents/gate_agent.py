@@ -154,9 +154,15 @@ class GateAgent:
             min_read_time = estimated_read_time * threshold.get("min_read_time_ratio", 0.60)
             time_met = time_spent >= min_read_time
 
+            # Partial credit uses half the full thresholds, consistent with the
+            # mindmap/video branches below.
+            scroll_depth_threshold = threshold.get("scroll_depth", 0.80)
+            scroll_partial = scroll >= scroll_depth_threshold * 0.5
+            completion_partial = completion >= scroll_depth_threshold * 0.5
+
             if scroll_met and completion_met and time_met:
                 return 1.0
-            elif (scroll_met or completion_met) and time_spent >= min_read_time * 0.5:  # Partial credit
+            elif (scroll_partial or completion_partial) and time_spent >= min_read_time * 0.5:  # Partial credit
                 return 0.5
             return 0.0
 

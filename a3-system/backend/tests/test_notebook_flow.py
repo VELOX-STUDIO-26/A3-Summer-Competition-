@@ -1,7 +1,11 @@
 """Test the flow from path generation to notebook page functionality."""
 
+import pytest
 import requests
 import json
+
+# Requires a live backend at BASE_URL; excluded from the default unit run.
+pytestmark = pytest.mark.integration
 
 BASE_URL = "http://localhost:8000"
 

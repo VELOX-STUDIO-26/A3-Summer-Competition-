@@ -13,6 +13,8 @@ import asyncio
 import random
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 from sqlalchemy import select, delete
 
 from models.database import (
@@ -24,6 +26,9 @@ from models.database import (
     StudentProfile,
 )
 from analytics.comparative_analytics import ComparativeAnalyticsEngine
+
+# Requires a live database; excluded from the default unit run.
+pytestmark = pytest.mark.integration
 
 
 # Test constants
