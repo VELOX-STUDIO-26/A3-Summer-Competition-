@@ -161,6 +161,64 @@ export async function generateResources(request: unknown) {
   return res.data;
 }
 
+export interface ResourceStreamEvent {
+  event: "plan" | "agent_started" | "agent_complete" | "agent_failed" | "complete" | "error";
+  // plan
+  agents?: string[];
+  // agent_started / agent_complete / agent_failed
+  agent?: string;
+  result?: unknown;
+  error?: string;
+  // plan / complete
+  topic?: string;
+  // complete
+  resources?: Record<string, unknown>;
+  metadata?: unknown;
+}
+
+/**
+ * Stream multi-agent resource generation over SSE so each resource can be
+ * rendered the moment its agent finishes, instead of waiting for the whole
+ * batch. Mirrors the askTutorStream SSE-parsing pattern.
+ */
+export async function* generateResourcesStream(
+  request: unknown
+): AsyncGenerator<ResourceStreamEvent> {
+  const res = await fetch(`${API_BASE_URL}/api/resources/generate/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+
+  if (!res.body) throw new Error("No response body");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("data: ")) {
+        const jsonStr = trimmed.slice(6);
+        if (jsonStr === "[DONE]") continue;
+        try {
+          yield JSON.parse(jsonStr) as ResourceStreamEvent;
+        } catch {
+          // ignore malformed lines
+        }
+      }
+    }
+  }
+}
+
 export async function getRemedialResources(studentId: string, topic: string) {
   // 3 min: backend may be busy with concurrent generation requests
   const res = await api.get(`/api/resources/remedial/${studentId}/${topic}`, {

@@ -147,8 +147,8 @@ class Judge0Client:
         language: str,
         stdin: str = "",
         timeout: int = DEFAULT_TIMEOUT,
-        max_polls: int = 10,
-        poll_interval: float = 1.0,
+        max_polls: int = 20,
+        poll_interval: float = 0.5,
     ) -> Dict[str, Any]:
         """
         Submit code and poll for results.
@@ -248,16 +248,14 @@ class Judge0Client:
                 "error": "Judge0 API key not configured",
             }
 
-        results = []
-        passed = 0
-        failed = 0
-        total_time = 0
-        total_memory = 0
-
-        for test_case in test_cases:
-            test_id = test_case.get("id", f"tc{len(results)}")
+        # Each test case is an independent Judge0 submission+poll (each up to a
+        # few seconds). Run them concurrently instead of sequentially so total
+        # grading latency is ~one test rather than the sum of all tests.
+        async def _run_one(index: int, test_case: Dict[str, Any]) -> Dict[str, Any]:
+            test_id = test_case.get("id", f"tc{index}")
             test_input = test_case.get("input", "")
             expected_output = self._normalize_output(test_case.get("expected_output", ""))
+            is_visible = test_case.get("is_visible", True)
 
             try:
                 result = await self.execute_with_poll(
@@ -274,45 +272,40 @@ class Judge0Client:
                 time_taken = result.get("time", "0") or "0"
                 memory_used = result.get("memory", 0) or 0
 
-                total_time += float(time_taken) * 1000  # Convert to ms
-                total_memory += memory_used
+                test_passed = status_id == 3 and actual_output == expected_output
 
-                # Determine if test passed
-                if status_id == 3 and actual_output == expected_output:
-                    test_passed = True
-                else:
-                    test_passed = False
-
-                if test_passed:
-                    passed += 1
-                else:
-                    failed += 1
-
-                results.append({
+                return {
                     "test_id": test_id,
                     "passed": test_passed,
-                    "input": test_case.get("input", "") if test_case.get("is_visible", True) else "[hidden]",
-                    "expected_output": expected_output if test_case.get("is_visible", True) else "[hidden]",
-                    "actual_output": actual_output if test_case.get("is_visible", True) else "[hidden]",
-                    "is_visible": test_case.get("is_visible", True),
+                    "input": test_case.get("input", "") if is_visible else "[hidden]",
+                    "expected_output": expected_output if is_visible else "[hidden]",
+                    "actual_output": actual_output if is_visible else "[hidden]",
+                    "is_visible": is_visible,
                     "status_id": status_id,
                     "status_description": result.get("status", {}).get("description", "Unknown"),
                     "error": stderr if stderr else compile_output if compile_output else None,
                     "execution_time_ms": float(time_taken) * 1000,
                     "memory_kb": memory_used,
                     "description": test_case.get("description", ""),
-                })
-
+                }
             except Exception as e:
                 logger.error(f"Test case {test_id} execution failed: {e}")
-                failed += 1
-                results.append({
+                return {
                     "test_id": test_id,
                     "passed": False,
                     "error": str(e),
-                    "is_visible": test_case.get("is_visible", True),
+                    "is_visible": is_visible,
                     "description": test_case.get("description", ""),
-                })
+                }
+
+        results = list(await asyncio.gather(
+            *(_run_one(i, tc) for i, tc in enumerate(test_cases))
+        ))
+
+        passed = sum(1 for r in results if r.get("passed"))
+        failed = len(results) - passed
+        total_time = sum(r.get("execution_time_ms", 0) or 0 for r in results)
+        total_memory = sum(r.get("memory_kb", 0) or 0 for r in results)
 
         num_tests = len(test_cases) if test_cases else 1
         return {

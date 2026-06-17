@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { useAppStore } from "@/lib/store";
 import { FaithfulnessBadge } from "@/components/FaithfulnessBadge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -153,6 +154,7 @@ function getSeverityColor(severity: string) {
 export default function QuizResultsPage() {
   const params = useParams();
   const router = useRouter();
+  const { studentId } = useAppStore();
   const quizId = params.quizId as string;
 
   const [result, setResult] = useState<QuizResult | null>(null);
@@ -164,7 +166,9 @@ export default function QuizResultsPage() {
     async function fetchResults() {
       try {
         setLoading(true);
-        const response = await api.get(`/api/quiz/${quizId}/results`);
+        const response = await api.get(`/api/quiz/${quizId}/results`, {
+          params: { student_id: studentId },
+        });
         setResult(response.data);
       } catch (err) {
         setError("Failed to load quiz results");
@@ -174,10 +178,10 @@ export default function QuizResultsPage() {
       }
     }
 
-    if (quizId) {
+    if (quizId && studentId) {
       fetchResults();
     }
-  }, [quizId]);
+  }, [quizId, studentId]);
 
   const toggleQuestion = (questionId: string) => {
     setExpandedQuestions((prev) => {

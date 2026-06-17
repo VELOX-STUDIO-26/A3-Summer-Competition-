@@ -11,6 +11,7 @@ Endpoints:
 - GET /api/quiz/stats : Get quiz statistics
 """
 
+import asyncio
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -483,6 +484,28 @@ async def submit_quiz(
     # Initialize short answer grader
     short_answer_grader = ShortAnswerGrader(llm_client)
 
+    def _student_answer(answer_data: Any) -> str:
+        if isinstance(answer_data, dict):
+            return answer_data.get("answer", "") or ""
+        return getattr(answer_data, "answer", "") or ""
+
+    # Short-answer questions each need a (slow) LLM grading call. Grade them all
+    # concurrently up front instead of sequentially in the loop below, so total
+    # submission latency is ~one LLM call rather than the sum of them.
+    short_answer_qs = [q for q in questions if q.get("type") == "short_answer"]
+    short_answer_grades: Dict[Any, Dict[str, Any]] = {}
+    if short_answer_qs:
+        async def _grade_one(q: Dict[str, Any]) -> Dict[str, Any]:
+            return await short_answer_grader.grade(
+                question=q.get("question", ""),
+                student_answer=_student_answer(answer_map.get(q.get("id"), {})),
+                expected_concepts=q.get("expected_concepts", [q.get("topic_tested", "")]),
+                correct_answer_notes=q.get("expected_response_guide", q.get("correct_answer", "") or ""),
+            )
+
+        grades = await asyncio.gather(*[_grade_one(q) for q in short_answer_qs])
+        short_answer_grades = {q.get("id"): g for q, g in zip(short_answer_qs, grades)}
+
     for question in questions:
         qid = question.get("id")
         answer_data = answer_map.get(qid, {})
@@ -514,13 +537,16 @@ async def submit_quiz(
 
         # Grade based on question type
         if question_type == "short_answer":
-            # Grade using LLM
-            grading_result = await short_answer_grader.grade(
-                question=question.get("question", ""),
-                student_answer=student_answer,
-                expected_concepts=question.get("expected_concepts", [question.get("topic_tested", "")]),
-                correct_answer_notes=question.get("expected_response_guide", correct_answer or ""),
-            )
+            # Use the result graded concurrently above (falls back to a direct
+            # call if somehow missing, e.g. duplicate question ids).
+            grading_result = short_answer_grades.get(qid)
+            if grading_result is None:
+                grading_result = await short_answer_grader.grade(
+                    question=question.get("question", ""),
+                    student_answer=student_answer,
+                    expected_concepts=question.get("expected_concepts", [question.get("topic_tested", "")]),
+                    correct_answer_notes=question.get("expected_response_guide", correct_answer or ""),
+                )
             question_score = grading_result["score"] * weight
             result["score"] = grading_result["score"]
             result["max_score"] = grading_result["max_score"]

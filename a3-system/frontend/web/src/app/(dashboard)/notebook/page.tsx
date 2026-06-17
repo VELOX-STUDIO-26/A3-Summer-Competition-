@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppStore } from "@/lib/store";
-import { getLearningPath, generateResources, getRemedialResources, markResourceConsumed, analyzeImage, getHierarchicalGraph } from "@/lib/api";
+import { getLearningPath, generateResources, generateResourcesStream, getRemedialResources, markResourceConsumed, analyzeImage, getHierarchicalGraph } from "@/lib/api";
 import { useGateStatus } from "@/hooks/useTracking";
 import { useVoiceStream } from "@/hooks/useVoiceStream";
 import { useTutorSessions } from "@/hooks/useTutorSessions";
@@ -336,36 +336,63 @@ export default function NotebookPage() {
       );
       const backendAgents = ["notes", "mindmap", "quiz", "video", "code"].map((a) => agentMap[a] || a);
 
+      // Add a single resource to state, de-duplicating by topic+type so a retry
+      // or overlapping effect run can't create duplicate cards.
+      const addResource = (backendAgent: string, data: unknown) => {
+        if (!data || (typeof data === "object" && "error" in (data as Record<string, unknown>))) return;
+        const uiId = uiIdByBackend[backendAgent] || backendAgent;
+        setGeneratedResources((prev) => {
+          if (prev.some((r) => r.topic === currentTopic && r.type === (uiId as GeneratedResource["type"]))) {
+            return prev;
+          }
+          const item: GeneratedResource = {
+            id: `${uiId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+            type: uiId as GeneratedResource["type"],
+            topic: currentTopic,
+            data,
+            timestamp: Date.now(),
+          };
+          return [item, ...prev];
+        });
+      };
+
       try {
-        const result = await generateResources({
+        // Stream resources so each card appears as soon as its agent finishes,
+        // rather than waiting for the whole batch.
+        for await (const evt of generateResourcesStream({
           topic: currentTopic,
           student_id: studentId || "anonymous",
           profile: profile || {},
           context: "",
           agents: backendAgents,
           agent_kwargs: { num_questions: 5, difficulty_override: 0.5 },
-        });
-
-        const resources = result?.resources || {};
-        const newItems: GeneratedResource[] = [];
-
-        for (const [backendAgent, data] of Object.entries(resources)) {
-          const uiId = uiIdByBackend[backendAgent] || backendAgent;
-          if (data && typeof data === "object" && "error" in (data as any)) continue;
-          newItems.push({
-            id: `${uiId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-            type: uiId as GeneratedResource["type"],
-            topic: currentTopic,
-            data,
-            timestamp: Date.now(),
-          });
-        }
-
-        if (newItems.length > 0) {
-          setGeneratedResources((prev) => [...newItems, ...prev]);
+        })) {
+          if (evt.event === "agent_complete" && evt.agent) {
+            addResource(evt.agent, evt.result);
+          } else if (evt.event === "complete" && evt.resources) {
+            // Safety net: ensure nothing was missed if an event was dropped.
+            for (const [backendAgent, data] of Object.entries(evt.resources)) {
+              addResource(backendAgent, data);
+            }
+          }
         }
       } catch (error) {
-        console.error("Batched auto-generate failed:", error);
+        console.error("Streaming auto-generate failed, falling back to batch:", error);
+        try {
+          const result = await generateResources({
+            topic: currentTopic,
+            student_id: studentId || "anonymous",
+            profile: profile || {},
+            context: "",
+            agents: backendAgents,
+            agent_kwargs: { num_questions: 5, difficulty_override: 0.5 },
+          });
+          for (const [backendAgent, data] of Object.entries(result?.resources || {})) {
+            addResource(backendAgent, data);
+          }
+        } catch (fallbackError) {
+          console.error("Batched auto-generate fallback failed:", fallbackError);
+        }
       } finally {
         setIsAutoGenerating(false);
       }
