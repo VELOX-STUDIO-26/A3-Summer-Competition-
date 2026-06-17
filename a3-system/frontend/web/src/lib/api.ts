@@ -925,6 +925,30 @@ export async function getHierarchicalGraph(
   return res.data;
 }
 
+/**
+ * Materialize a milestone's subtopics on demand (two-pass generation).
+ *
+ * The path is generated in two passes: milestones first (fast), then each
+ * milestone's subtopics are filled in lazily when the student reaches it. This
+ * call triggers generation for one milestone and returns it with its subtopics.
+ * Idempotent on the backend.
+ */
+export async function ensureSubtopicsForTopic(
+  graphId: string,
+  nodeId: string,
+  studentId?: string
+): Promise<MainTopicInfo> {
+  const res = await api.post(
+    `/api/hierarchical/${graphId}/topics/${nodeId}/subtopics`,
+    null,
+    {
+      params: studentId ? { student_id: studentId } : {},
+      timeout: 180000, // one milestone's subtopics; LLM can be slow
+    }
+  );
+  return res.data;
+}
+
 export async function acceptHierarchicalGraph(
   graphId: string,
   studentId: string

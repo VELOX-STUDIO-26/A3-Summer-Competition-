@@ -236,6 +236,74 @@ async def get_graph(
         )
 
 
+@router.post("/{graph_id}/topics/{node_id}/subtopics", response_model=MainTopicInfo)
+async def ensure_topic_subtopics(
+    graph_id: str,
+    node_id: str,
+    student_id: Optional[str] = Query(None, description="Student ID (creates progress rows if accepted)"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Materialize a milestone's subtopics on demand (two-pass generation).
+
+    Used by the notebook when the student reaches a milestone whose subtopics
+    haven't been generated yet. Idempotent: returns the existing milestone if
+    its subtopics already exist.
+    """
+    try:
+        service = HierarchicalGraphService(db)
+        main_topic = await service.ensure_subtopics_for_topic(
+            graph_id=uuid.UUID(graph_id),
+            main_topic_node_id=node_id,
+            student_id=student_id,
+        )
+        if not main_topic:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Main topic '{node_id}' not found in graph {graph_id}",
+            )
+
+        return MainTopicInfo(
+            id=str(main_topic.id),
+            node_id=main_topic.node_id,
+            title=main_topic.title,
+            description=main_topic.description,
+            order_index=main_topic.order_index,
+            difficulty=main_topic.difficulty,
+            estimated_minutes=main_topic.estimated_minutes,
+            subtopic_count=main_topic.subtopic_count,
+            prerequisites=main_topic.prerequisites or [],
+            topic_tags=main_topic.topic_tags or [],
+            subtopics=[
+                SubtopicInfo(
+                    id=str(st.id),
+                    node_id=st.node_id,
+                    title=st.title,
+                    description=st.description,
+                    order_index=st.order_index,
+                    difficulty=st.difficulty,
+                    estimated_minutes=st.estimated_minutes,
+                    learning_points=st.learning_points or [],
+                    topic_tags=st.topic_tags or [],
+                    content_types=st.content_types or [],
+                    prerequisites=st.prerequisites or [],
+                )
+                for st in sorted(main_topic.subtopics, key=lambda x: x.order_index)
+            ],
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to materialize subtopics: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate subtopics: {str(e)}",
+        )
+
+
 @router.post("/{graph_id}/accept")
 async def accept_graph(
     graph_id: str,

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppStore } from "@/lib/store";
-import { getLearningPath, generateResources, generateResourcesStream, getRemedialResources, markResourceConsumed, analyzeImage, getHierarchicalGraph } from "@/lib/api";
+import { getLearningPath, generateResources, generateResourcesStream, getRemedialResources, markResourceConsumed, analyzeImage, getHierarchicalGraph, ensureSubtopicsForTopic } from "@/lib/api";
 import { useGateStatus } from "@/hooks/useTracking";
 import { getMilestoneProgress } from "@/lib/tracking";
 import { useVoiceStream } from "@/hooks/useVoiceStream";
@@ -145,6 +145,9 @@ export default function NotebookPage() {
   const isStreamingRef = useRef(false);
   const resourcesLoaded = useRef(false);
   const initialLoadDone = useRef(false);
+  // Tracks milestones whose lazy subtopic generation has already been attempted
+  // this session, to avoid re-triggering the (slow) LLM call on every refetch.
+  const materializingTopics = useRef<Set<string>>(new Set());
 
   // Image upload state
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -201,7 +204,7 @@ export default function NotebookPage() {
       try {
         // If we have a hierarchical graph ID, load from that
         if (graphId) {
-          const graph = await getHierarchicalGraph(graphId);
+          let graph = await getHierarchicalGraph(graphId);
           if (graph?.main_topics && graph.main_topics.length > 0) {
             // Pull persisted milestone completion so the path advances past
             // milestones the student has already passed the quiz for.
@@ -212,6 +215,34 @@ export default function NotebookPage() {
                 .filter((p) => p.status === "completed")
                 .map((p) => p.milestone_id)
             );
+
+            // Two-pass (lazy) generation: subtopics are filled in per milestone
+            // on demand. Find the active milestone (the first not-yet-completed
+            // main topic) and, if its subtopics haven't been generated yet,
+            // materialize them now so the student has something to study.
+            const sortedMains = [...graph.main_topics].sort(
+              (a, b) => a.order_index - b.order_index
+            );
+            const activeMain = sortedMains.find((mt) => {
+              const subs = mt.subtopics || [];
+              const allDone =
+                subs.length > 0 && subs.every((s) => completedSet.has(slugify(s.title)));
+              return !allDone;
+            });
+            if (
+              activeMain &&
+              (!activeMain.subtopics || activeMain.subtopics.length === 0) &&
+              activeMain.node_id &&
+              !materializingTopics.current.has(activeMain.node_id)
+            ) {
+              materializingTopics.current.add(activeMain.node_id);
+              try {
+                await ensureSubtopicsForTopic(graphId, activeMain.node_id, studentId);
+                graph = await getHierarchicalGraph(graphId);
+              } catch (err) {
+                console.error("Failed to materialize milestone subtopics", err);
+              }
+            }
 
             // Convert hierarchical graph to path nodes.
             // A subtopic is "completed" if its milestone is recorded complete;

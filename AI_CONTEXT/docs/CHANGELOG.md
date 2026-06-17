@@ -13,6 +13,51 @@ Format:
 
 ---
 
+## 2026-06-17 - Two-pass (lazy) learning-path generation for faster first render
+
+### Changes Made
+- Split hierarchical graph generation into two passes:
+  - **Pass 1** (`generate_main_topics`): plans only the milestones (main topics)
+    with a `planned_subtopic_count` hint. Small output (`max_tokens=3000`).
+  - **Pass 2** (`generate_subtopics`): expands one milestone into subtopics on
+    demand (`max_tokens=4000`).
+- `HierarchicalGraphService.generate_graph(lazy_subtopics=True)` now runs Pass 1
+  and synchronously materializes only the **first** milestone's subtopics so the
+  student can start immediately. Remaining milestones are filled in lazily via
+  `ensure_subtopics_for_topic`.
+- Lazy materialization is triggered from two places so progression keeps working:
+  the notebook (when the student reaches a milestone with no subtopics) and the
+  server-side `_unlock_next_subtopic` (defensive, when advancing milestones).
+- New endpoint `POST /api/hierarchical/{graph_id}/topics/{node_id}/subtopics`
+  (idempotent) for on-demand subtopic generation.
+- Frontend: `ensureSubtopicsForTopic` API + notebook fetch-path now materializes
+  the active milestone; new-path preview shows a "generated when you start"
+  note for milestones not yet expanded.
+
+### Reason
+The path was generated as one ~16k-token LLM call on the Kimi reasoning model
+over the Moonshot China endpoint, taking several minutes before anything showed.
+Generating only the milestones first cuts time-to-first-render dramatically.
+
+### Files
+- `a3-system/backend/agents/hierarchical_graph_generator.py`
+- `a3-system/backend/services/hierarchical_graph_service.py`
+- `a3-system/backend/api/routers/hierarchical_graphs.py`
+- `a3-system/frontend/web/src/lib/api.ts`
+- `a3-system/frontend/web/src/app/(dashboard)/notebook/page.tsx`
+- `a3-system/frontend/web/src/app/(dashboard)/new-path/page.tsx`
+- `a3-system/backend/tests/test_hierarchical_graph_generator.py` (new tests)
+
+### Impact / Testing
+- Measured on subject "Linux System Administration" (Kimi, real API):
+  - OLD single-shot full graph: **282.9s** (11 main topics, 54 subtopics)
+  - NEW Pass 1 (path shown): **53.1s** -> ~5.3x faster (81% less)
+  - NEW Pass 1 + first milestone (study-ready): **71.6s** -> ~4.0x faster (75% less)
+- 4 new unit tests for the two-pass methods pass; full non-integration suite
+  unchanged (same 9 pre-existing failures, +4 new passing tests).
+
+---
+
 ## 2026-06-17 - Fix quiz results 500 (MultipleResultsFound) for repeated attempts
 
 ### Changes Made

@@ -709,17 +709,23 @@ function PathPreview({
                 {expandedTopic === topic.id && (
                   <div className="border-t border-[#E7E2D7] bg-[#F7F5F0] p-3">
                     <p className="text-sm text-[#666] mb-3">{topic.description}</p>
-                    <div className="space-y-1.5">
-                      {topic.subtopics.map((sub, j) => (
-                        <div key={sub.id} className="flex items-center gap-2 text-sm">
-                          <div className="w-5 h-5 rounded bg-white border border-[#D6CFC2] flex items-center justify-center text-xs text-[#888]">
-                            {j + 1}
+                    {topic.subtopics.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {topic.subtopics.map((sub, j) => (
+                          <div key={sub.id} className="flex items-center gap-2 text-sm">
+                            <div className="w-5 h-5 rounded bg-white border border-[#D6CFC2] flex items-center justify-center text-xs text-[#888]">
+                              {j + 1}
+                            </div>
+                            <span className="text-[#2a2a2a]">{sub.title}</span>
+                            <span className="text-xs text-[#888] ml-auto">{sub.estimated_minutes}min</span>
                           </div>
-                          <span className="text-[#2a2a2a]">{sub.title}</span>
-                          <span className="text-xs text-[#888] ml-auto">{sub.estimated_minutes}min</span>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-[#888] italic">
+                        {topic.subtopic_count} lessons — generated when you start this milestone.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
