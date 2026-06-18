@@ -27,6 +27,7 @@ from agents.evaluator_agent import EvaluatorAgent
 from agents.orchestrator import Orchestrator
 from agents.quiz_agent import QuizAgent
 from agents.short_answer_grader import ShortAnswerGrader
+from core.auth import get_current_user
 from core.llm_client import llm_client
 from core.logging import get_logger
 from models.database import (
@@ -184,6 +185,7 @@ async def generate_remedial_resources(
 @router.post("/generate")
 async def generate_quiz(
     request: GenerateQuizRequest,
+    current_user: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -192,6 +194,8 @@ async def generate_quiz(
     If a similar quiz exists for this student (same topic/node within 7 days),
     return the existing quiz instead of generating a new one.
     """
+    # Override request student_id with authenticated user
+    request.student_id = current_user
     logger.info(f"Generating quiz for student {request.student_id}, topic: {request.topic}")
 
     # Check for existing quiz within last 7 days (deduplication)
@@ -361,6 +365,7 @@ async def generate_quiz(
 @router.post("/generate/stream")
 async def generate_quiz_stream(
     request: GenerateQuizRequest,
+    current_user: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -370,6 +375,8 @@ async def generate_quiz_stream(
       data: {"event":"question","index":0,"question":{...}}
       data: {"event":"complete","quiz_id":"...","num_questions":5}
     """
+    # Override request student_id with authenticated user
+    request.student_id = current_user
     logger.info(f"Streaming quiz for student {request.student_id}, topic: {request.topic}")
 
     # Check for existing quiz (same dedup as non-streaming)
@@ -510,7 +517,7 @@ async def generate_quiz_stream(
 
 @router.get("")
 async def list_quizzes(
-    student_id: str = Query(..., description="Student ID to filter quizzes"),
+    student_id: str = Depends(get_current_user),
     include_inactive: bool = Query(False, description="Include inactive quizzes"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -564,7 +571,7 @@ async def list_quizzes(
 
 @router.get("/stats")
 async def get_quiz_stats(
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Get quiz statistics for a student."""
@@ -657,7 +664,7 @@ async def get_quiz(
 @router.post("/{quiz_id}/start")
 async def start_quiz(
     quiz_id: str,
-    student_id: str,
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Start a quiz attempt."""
@@ -714,7 +721,7 @@ async def start_quiz(
 async def submit_quiz(
     quiz_id: str,
     background_tasks: BackgroundTasks,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     submission: Optional[QuizSubmissionRequest] = None,
     db: AsyncSession = Depends(get_db),
 ):
@@ -1215,7 +1222,7 @@ async def get_quiz_results(
 @router.post("/{quiz_id}/regenerate")
 async def regenerate_resources_after_quiz(
     quiz_id: str,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """

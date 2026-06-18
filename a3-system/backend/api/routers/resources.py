@@ -16,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from agents.orchestrator import Orchestrator
+from core.auth import get_current_user
 from core.logging import get_logger
 from models.database import GeneratedResource, get_db
 
@@ -60,7 +61,7 @@ class ResourceResponse(BaseModel):
 # ============================================================================
 
 @router.post("/generate", response_model=ResourceResponse)
-async def generate_resources(request: ResourceRequest):
+async def generate_resources(request: ResourceRequest, current_user: str = Depends(get_current_user)):
     """
     Generate a personalized resource bundle for a topic.
 
@@ -98,7 +99,7 @@ async def generate_resources(request: ResourceRequest):
 
 
 @router.post("/generate/stream")
-async def generate_resources_stream(request: ResourceRequest):
+async def generate_resources_stream(request: ResourceRequest, current_user: str = Depends(get_current_user)):
     """Generate resources with per-agent SSE progress updates.
 
     Streams events as agents start and finish so the frontend can render
@@ -142,10 +143,10 @@ async def generate_resources_stream(request: ResourceRequest):
     )
 
 
-@router.get("/remedial/{student_id}/{topic}")
+@router.get("/remedial/{topic}")
 async def get_remedial_resources(
-    student_id: str,
     topic: str,
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """

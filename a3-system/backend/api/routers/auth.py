@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.auth import create_access_token, get_current_user
 from core.logging import get_logger
 from models.database import StudentProfile, UserAccount, Cohort, CohortMembership, Course, get_db
 
@@ -56,6 +57,8 @@ class AuthResponse(BaseModel):
     email: str
     name: Optional[str] = None
     profile: Dict[str, Any]
+    access_token: str
+    token_type: str = "bearer"
 
 
 # ============================================================================
@@ -236,6 +239,7 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
         email=user.email,
         name=user.name,
         profile=profile.to_dict(),
+        access_token=create_access_token(student_id, user.email),
     )
 
 
@@ -288,6 +292,7 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
         email=user.email,
         name=user.name,
         profile=profile.to_dict(),
+        access_token=create_access_token(user.student_id, user.email),
     )
 
 
@@ -340,6 +345,7 @@ async def google_login(payload: GoogleLoginRequest, db: AsyncSession = Depends(g
             email=user.email,
             name=user.name,
             profile=profile.to_dict(),
+            access_token=create_access_token(user.student_id, user.email),
         )
     
     # New user - create account
@@ -391,12 +397,16 @@ async def google_login(payload: GoogleLoginRequest, db: AsyncSession = Depends(g
         email=user.email,
         name=user.name,
         profile=profile.to_dict(),
+        access_token=create_access_token(student_id, user.email),
     )
 
 
 @router.get("/me")
-async def get_me(student_id: str, db: AsyncSession = Depends(get_db)):
-    """Get current user info by student_id."""
+async def get_me(
+    student_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get current user info. Requires valid JWT token."""
     result = await db.execute(
         select(UserAccount).where(UserAccount.student_id == student_id)
     )
@@ -418,8 +428,11 @@ async def get_me(student_id: str, db: AsyncSession = Depends(get_db)):
     }
 
 
-@router.delete("/account/{student_id}", status_code=status.HTTP_200_OK)
-async def delete_account(student_id: str, db: AsyncSession = Depends(get_db)):
+@router.delete("/account", status_code=status.HTTP_200_OK)
+async def delete_account(
+    student_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """
     Delete a user account and all associated data.
     

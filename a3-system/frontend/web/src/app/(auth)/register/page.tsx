@@ -11,7 +11,7 @@ import { signInWithGoogle, signUpWithEmail } from "@/lib/firebase";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { setStudentId, setProfile, setUserName, setUserEmail, logout } = useAppStore();
+  const { setStudentId, setAccessToken, setProfile, setUserName, setUserEmail, logout } = useAppStore();
   const [step, setStep] = useState<"form" | "verify">("form");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +45,7 @@ export default function RegisterPage() {
 
       logout();
       setStudentId(data.student_id);
+      setAccessToken(data.access_token);
       setProfile(data.profile);
       setUserName(data.name || data.email.split("@")[0]);
       setUserEmail(data.email);
@@ -84,6 +85,7 @@ export default function RegisterPage() {
       logout();
       console.log("Registration successful, student_id:", data.student_id);
       setStudentId(data.student_id);
+      setAccessToken(data.access_token);
       setProfile(data.profile || null);
       setUserName(data.name || formData.name);
       setUserEmail(data.email || formData.email);

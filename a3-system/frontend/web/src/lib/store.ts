@@ -4,6 +4,7 @@ import type { StudentProfile, ChatMessage } from "@/types";
 
 interface AppState {
   studentId: string | null;
+  accessToken: string | null;
   profile: StudentProfile | null;
   userName: string | null;
   userEmail: string | null;
@@ -12,6 +13,7 @@ interface AppState {
   chatMessages: ChatMessage[];
   isHydrated: boolean;
   setStudentId: (id: string) => void;
+  setAccessToken: (token: string | null) => void;
   setProfile: (profile: StudentProfile | null) => void;
   setUserName: (name: string | null) => void;
   setUserEmail: (email: string | null) => void;
@@ -26,6 +28,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       studentId: null,
+      accessToken: null,
       profile: null,
       userName: null,
       userEmail: null,
@@ -34,6 +37,7 @@ export const useAppStore = create<AppState>()(
       chatMessages: [],
       isHydrated: false,
       setStudentId: (id) => set({ studentId: id }),
+      setAccessToken: (token) => set({ accessToken: token }),
       setProfile: (profile) => set({ profile }),
       setUserName: (name) => set({ userName: name }),
       setUserEmail: (email) => set({ userEmail: email }),
@@ -45,6 +49,7 @@ export const useAppStore = create<AppState>()(
       logout: () =>
         set({
           studentId: null,
+          accessToken: null,
           profile: null,
           userName: null,
           userEmail: null,
@@ -57,6 +62,7 @@ export const useAppStore = create<AppState>()(
       name: "a3-learning-storage",
       partialize: (state) => ({
         studentId: state.studentId,
+        accessToken: state.accessToken,
         profile: state.profile,
         userName: state.userName,
         userEmail: state.userEmail,

@@ -18,6 +18,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.auth import get_current_user
 from core.logging import get_logger
 from models.database import get_db
 from services.hierarchical_graph_service import HierarchicalGraphService
@@ -156,7 +157,7 @@ class QuotaResponse(BaseModel):
 @router.post("/generate", response_model=GenerateGraphResponse)
 async def generate_graph(
     request: GenerateGraphRequest,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     is_premium: bool = Query(False, description="Premium user flag"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -211,7 +212,7 @@ async def generate_graph(
 @router.post("/generate/stream")
 async def generate_graph_stream(
     request: GenerateGraphRequest,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     is_premium: bool = Query(False, description="Premium user flag"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -293,7 +294,7 @@ async def get_graph(
 async def ensure_topic_subtopics(
     graph_id: str,
     node_id: str,
-    student_id: Optional[str] = Query(None, description="Student ID (creates progress rows if accepted)"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -360,7 +361,7 @@ async def ensure_topic_subtopics(
 @router.post("/{graph_id}/accept")
 async def accept_graph(
     graph_id: str,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Accept a graph and initialize student progress."""
@@ -393,7 +394,7 @@ async def accept_graph(
 @router.get("/{graph_id}/progress", response_model=StudentProgressResponse)
 async def get_student_progress(
     graph_id: str,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Get student's progress through a graph."""
@@ -424,7 +425,7 @@ async def get_student_progress(
 @router.post("/subtopic/start")
 async def start_subtopic(
     request: StartSubtopicRequest,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Start learning a subtopic."""
@@ -451,7 +452,7 @@ async def start_subtopic(
 @router.post("/subtopic/complete", response_model=CompleteSubtopicResponse)
 async def complete_subtopic(
     request: CompleteSubtopicRequest,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Complete a subtopic after passing the quiz."""
@@ -492,7 +493,7 @@ async def complete_subtopic(
 @router.post("/subtopic/bypass")
 async def bypass_subtopic(
     request: BypassSubtopicRequest,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Bypass a subtopic (skip resources, take quiz directly with 85% requirement)."""
@@ -517,9 +518,9 @@ async def bypass_subtopic(
         )
 
 
-@router.get("/quota/{student_id}", response_model=QuotaResponse)
+@router.get("/quota", response_model=QuotaResponse)
 async def get_quota(
-    student_id: str,
+    student_id: str = Depends(get_current_user),
     subject: str = Query(..., description="Subject to check quota for"),
     is_premium: bool = Query(False, description="Premium user flag"),
     db: AsyncSession = Depends(get_db),
@@ -577,7 +578,7 @@ class PrefetchResponse(BaseModel):
 @router.post("/resources/get", response_model=ResourcesResponse)
 async def get_resources(
     request: GetResourcesRequest,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -612,7 +613,7 @@ async def get_resources(
 @router.post("/resources/prefetch", response_model=PrefetchResponse)
 async def prefetch_resources(
     request: PrefetchRequest,
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -645,7 +646,7 @@ async def prefetch_resources(
 
 @router.get("/resources/queue")
 async def get_queue_status(
-    student_id: str = Query(..., description="Student ID"),
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Get the status of resource generation queue for a student."""

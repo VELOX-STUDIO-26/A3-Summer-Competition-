@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.auth import get_current_user
 from core.logging import get_logger
 from models.database import (
     GeneratedQuiz,
@@ -110,7 +111,7 @@ async def get_top_rated_paths(
 async def submit_path_rating(
     graph_id: str,
     request: SubmitRatingRequest,
-    student_id: str,
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Submit or update a rating for a learning path."""
@@ -193,7 +194,7 @@ async def get_path_analytics(
 @router.post("/sessions/start", response_model=SessionResponse)
 async def start_learning_session(
     request: StartSessionRequest,
-    student_id: str,
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Start a new learning session."""
@@ -221,6 +222,7 @@ async def start_learning_session(
 async def end_learning_session(
     session_id: str,
     request: EndSessionRequest,
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """End a learning session and record metrics."""
@@ -251,6 +253,7 @@ async def end_learning_session(
 async def record_session_activity(
     session_id: str,
     activity_type: str,
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Record an activity within a session."""
@@ -273,9 +276,9 @@ async def record_session_activity(
 # Student Analytics Endpoints
 # ============================================================================
 
-@router.get("/{student_id}")
+@router.get("/me")
 async def get_analytics(
-    student_id: str,
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Get comprehensive analytics for a student from real database data."""
@@ -364,9 +367,9 @@ async def get_analytics(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{student_id}/progress")
+@router.get("/me/progress")
 async def get_progress(
-    student_id: str,
+    student_id: str = Depends(get_current_user),
     days: int = 30,
     db: AsyncSession = Depends(get_db),
 ):
@@ -409,9 +412,9 @@ async def get_progress(
     }
 
 
-@router.get("/{student_id}/activity")
+@router.get("/me/activity")
 async def get_activity(
-    student_id: str,
+    student_id: str = Depends(get_current_user),
     limit: int = 10,
     db: AsyncSession = Depends(get_db),
 ):
@@ -477,9 +480,9 @@ async def get_activity(
     }
 
 
-@router.get("/{student_id}/insights")
+@router.get("/me/insights")
 async def get_llm_insights(
-    student_id: str,
+    student_id: str = Depends(get_current_user),
     refresh: bool = False,
     db: AsyncSession = Depends(get_db),
 ):
@@ -518,9 +521,9 @@ async def get_llm_insights(
         )
 
 
-@router.get("/{student_id}/dashboard")
+@router.get("/me/dashboard")
 async def get_dashboard_summary(
-    student_id: str,
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Get dashboard summary with real data from database."""
