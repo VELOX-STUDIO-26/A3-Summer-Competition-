@@ -179,7 +179,7 @@ class HierarchicalGraphService:
         if lazy_subtopics and graph.main_topics:
             from models.database import db_manager
 
-            semaphore = asyncio.Semaphore(3)
+            semaphore = asyncio.Semaphore(5)
 
             async def _materialize_one(main_topic: MainTopic) -> Tuple[str, Optional[str]]:
                 async with semaphore:
@@ -215,6 +215,164 @@ class HierarchicalGraphService:
 
         logger.info(f"generate_graph for '{subject}' completed in {time.perf_counter() - service_start:.2f}s (new)")
         return graph, True
+
+    async def generate_graph_stream(
+        self,
+        subject: str,
+        student_id: str,
+        goals: List[str] = None,
+        knowledge_base: Dict[str, float] = None,
+        cognitive_style: str = "mixed",
+        learning_pace: float = 0.5,
+        is_premium: bool = False,
+    ):
+        """
+        Streaming graph generation: yields events as generation progresses.
+
+        Yields dicts with:
+        - {"event": "graph", "graph": {...}, "is_new": bool, "remaining_generations": int}
+          Emitted as soon as milestones are planned (no subtopics yet).
+        - {"event": "subtopics_ready", "main_topic_id": str, "main_topic_node_id": str, "subtopics": [...]}
+          Emitted each time a milestone's subtopics finish generating.
+        - {"event": "complete", "total_time": float}
+          Emitted when all subtopics are done.
+        - {"event": "error", "error": str}
+          Emitted on failure.
+        """
+        from models.database import db_manager
+
+        service_start = time.perf_counter()
+
+        # Check quota
+        can_generate, remaining = await self.can_generate(student_id, subject, is_premium)
+        if not can_generate:
+            yield {"event": "error", "error": f"Generation quota exceeded. {remaining} generations remaining."}
+            return
+
+        subject_normalized = normalize_subject(subject)
+
+        # Check for existing graph
+        existing = await self.find_best_match(subject, goals)
+        if existing:
+            structure = await self.get_graph_structure(existing.id)
+            yield {
+                "event": "graph",
+                "graph": structure,
+                "is_new": False,
+                "remaining_generations": remaining if not is_premium else -1,
+            }
+            yield {"event": "complete", "total_time": time.perf_counter() - service_start}
+            return
+
+        # Try template
+        template_path = await self._get_template_path(subject_normalized)
+        template_structure = self._extract_template_structure(template_path) if template_path else None
+
+        # Pass 1: Generate milestones only
+        try:
+            generated = await self.generator.generate_main_topics(
+                subject=subject,
+                goals=goals,
+                knowledge_base=knowledge_base,
+                cognitive_style=cognitive_style,
+                learning_pace=learning_pace,
+                template_structure=template_structure,
+            )
+        except Exception as e:
+            yield {"event": "error", "error": f"Graph generation failed: {str(e)}"}
+            return
+
+        if not generated.is_valid:
+            yield {"event": "error", "error": f"Generated graph is invalid: {', '.join(generated.validation_errors)}"}
+            return
+
+        # Store graph with milestones (no subtopics yet)
+        graph = await self.create_graph(generated, student_id)
+        await self.increment_quota(student_id, subject)
+
+        # Update remaining
+        if remaining > 0:
+            remaining -= 1
+
+        # Yield the graph immediately (milestones only, no subtopics)
+        structure = await self.get_graph_structure(graph.id)
+        yield {
+            "event": "graph",
+            "graph": structure,
+            "is_new": True,
+            "remaining_generations": remaining if not is_premium else -1,
+        }
+
+        # Pass 2: Generate subtopics in parallel (semaphore=5), yield each as it completes
+        if graph.main_topics:
+            semaphore = asyncio.Semaphore(5)
+            result_queue: asyncio.Queue = asyncio.Queue()
+
+            async def _materialize_and_enqueue(main_topic: MainTopic):
+                async with semaphore:
+                    session = await db_manager.get_async_session()
+                    try:
+                        parallel_service = HierarchicalGraphService(session)
+                        refreshed = await parallel_service.ensure_subtopics_for_topic(
+                            graph_id=graph.id,
+                            main_topic_node_id=main_topic.node_id,
+                            student_id=None,
+                            goals=goals,
+                            knowledge_base=knowledge_base,
+                            cognitive_style=cognitive_style,
+                            learning_pace=learning_pace,
+                        )
+                        subtopics_data = [
+                            {
+                                "id": str(st.id),
+                                "node_id": st.node_id,
+                                "title": st.title,
+                                "description": st.description,
+                                "order_index": st.order_index,
+                                "difficulty": st.difficulty,
+                                "estimated_minutes": st.estimated_minutes,
+                                "learning_points": st.learning_points,
+                                "topic_tags": st.topic_tags,
+                                "content_types": st.content_types,
+                                "prerequisites": st.prerequisites,
+                            }
+                            for st in (refreshed.subtopics if refreshed else [])
+                        ]
+                        await result_queue.put({
+                            "event": "subtopics_ready",
+                            "main_topic_id": str(main_topic.id),
+                            "main_topic_node_id": main_topic.node_id,
+                            "subtopics": subtopics_data,
+                        })
+                    except Exception as e:
+                        logger.error(f"Stream: Failed subtopics for '{main_topic.title}': {e}")
+                        await result_queue.put({
+                            "event": "subtopics_ready",
+                            "main_topic_id": str(main_topic.id),
+                            "main_topic_node_id": main_topic.node_id,
+                            "subtopics": [],
+                            "error": str(e),
+                        })
+                    finally:
+                        await session.close()
+
+            sorted_milestones = sorted(graph.main_topics, key=lambda mt: mt.order_index)
+            tasks = [asyncio.create_task(_materialize_and_enqueue(mt)) for mt in sorted_milestones]
+
+            # Yield results as they arrive
+            completed = 0
+            total = len(sorted_milestones)
+            while completed < total:
+                result = await result_queue.get()
+                yield result
+                completed += 1
+
+            # Ensure all tasks are done (they should be by now)
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+        total_time = time.perf_counter() - service_start
+        logger.info(f"generate_graph_stream for '{subject}' completed in {total_time:.2f}s")
+        yield {"event": "complete", "total_time": total_time}
 
     async def _get_template_path(
         self,

@@ -8,11 +8,13 @@ Endpoints for:
 - Resource generation queue
 """
 
+import json
 import uuid
 import time
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -204,6 +206,54 @@ async def generate_graph(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Graph generation failed: {str(e)}"
         )
+
+
+@router.post("/generate/stream")
+async def generate_graph_stream(
+    request: GenerateGraphRequest,
+    student_id: str = Query(..., description="Student ID"),
+    is_premium: bool = Query(False, description="Premium user flag"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Stream graph generation via SSE.
+
+    Returns milestones immediately after Pass 1 (~60s), then streams each
+    milestone's subtopics as they finish generating in the background.
+
+    Event types:
+    - ``graph``           — initial graph with milestones (no subtopics yet)
+    - ``subtopics_ready`` — one milestone's subtopics just finished
+    - ``complete``        — all subtopics generated
+    - ``error``           — fatal error
+    """
+
+    async def event_generator():
+        try:
+            service = HierarchicalGraphService(db)
+            async for event in service.generate_graph_stream(
+                subject=request.subject,
+                student_id=student_id,
+                goals=request.goals,
+                knowledge_base=request.knowledge_base,
+                cognitive_style=request.cognitive_style,
+                learning_pace=request.learning_pace,
+                is_premium=is_premium,
+            ):
+                yield f"data: {json.dumps(event)}\n\n"
+        except Exception as e:
+            logger.error(f"Graph stream failed: {e}", exc_info=True)
+            yield f"data: {json.dumps({'event': 'error', 'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/{graph_id}", response_model=GraphResponse)

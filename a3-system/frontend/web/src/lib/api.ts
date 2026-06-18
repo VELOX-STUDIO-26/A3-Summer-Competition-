@@ -918,6 +918,106 @@ export async function generateHierarchicalGraph(
   return res.data;
 }
 
+export interface GraphStreamEvent {
+  event: "graph" | "subtopics_ready" | "complete" | "error";
+  // graph event
+  graph?: HierarchicalGraphResponse;
+  is_new?: boolean;
+  remaining_generations?: number;
+  // subtopics_ready event
+  main_topic_id?: string;
+  main_topic_node_id?: string;
+  subtopics?: SubtopicInfo[];
+  // complete event
+  total_time?: number;
+  // error event
+  error?: string;
+}
+
+/**
+ * Stream hierarchical graph generation over SSE.
+ *
+ * Yields events as they arrive:
+ * - "graph": milestones ready (no subtopics yet) — renders immediately
+ * - "subtopics_ready": one milestone's subtopics just finished
+ * - "complete": all done
+ * - "error": something went wrong
+ */
+export async function* generateHierarchicalGraphStream(
+  subject: string,
+  studentId: string,
+  options: {
+    goals?: string[];
+    knowledgeBase?: Record<string, number>;
+    cognitiveStyle?: string;
+    learningPace?: number;
+    isPremium?: boolean;
+  } = {}
+): AsyncGenerator<GraphStreamEvent> {
+  const params = new URLSearchParams({
+    student_id: studentId,
+    is_premium: String(options.isPremium || false),
+  });
+
+  const res = await fetch(
+    `${API_BASE_URL}/api/hierarchical/generate/stream?${params}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subject,
+        goals: options.goals || [],
+        knowledge_base: options.knowledgeBase || {},
+        cognitive_style: options.cognitiveStyle || "mixed",
+        learning_pace: options.learningPace || 0.5,
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Graph stream failed (${res.status}): ${text}`);
+  }
+
+  if (!res.body) throw new Error("No response body");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("data: ")) {
+        const jsonStr = trimmed.slice(6);
+        if (jsonStr === "[DONE]") continue;
+        try {
+          yield JSON.parse(jsonStr) as GraphStreamEvent;
+        } catch {
+          // skip malformed JSON
+        }
+      }
+    }
+  }
+
+  // Process remaining buffer
+  if (buffer.trim().startsWith("data: ")) {
+    const jsonStr = buffer.trim().slice(6);
+    try {
+      yield JSON.parse(jsonStr) as GraphStreamEvent;
+    } catch {
+      // skip
+    }
+  }
+}
+
 export async function getHierarchicalGraph(
   graphId: string
 ): Promise<HierarchicalGraphResponse> {

@@ -13,6 +13,33 @@ Format:
 
 ---
 
+## 2026-06-18 - Optimize learning path generation: streaming + parallel boost
+
+### Changes Made
+- Increased subtopic generation parallelism from 3 to 5 concurrent LLM calls
+- Added SSE streaming endpoint `POST /api/hierarchical/generate/stream`
+- Frontend now uses streaming: milestones appear in ~60s, subtopics fill in one-by-one as they complete in background
+- Added `generateHierarchicalGraphStream()` async generator to frontend API lib
+- Updated `new-path/page.tsx` to consume the SSE stream and progressively render subtopics
+
+### Reason
+- Full generation took ~3 minutes (blocking). Users waited with no feedback.
+- Now users see their learning path milestones after Pass 1 (~36-60s), and subtopics stream in progressively.
+
+### Files
+- `a3-system/backend/services/hierarchical_graph_service.py` (semaphore 3→5, new `generate_graph_stream` method)
+- `a3-system/backend/api/routers/hierarchical_graphs.py` (new `/generate/stream` endpoint)
+- `a3-system/frontend/web/src/lib/api.ts` (new `GraphStreamEvent`, `generateHierarchicalGraphStream`)
+- `a3-system/frontend/web/src/app/(dashboard)/new-path/page.tsx` (stream consumption)
+
+### Impact / Testing
+- Perceived generation time: **~3 min → ~60s** (milestones appear)
+- Total generation time reduced ~20-30% from higher parallelism
+- Backward compatible: original `/generate` endpoint still works unchanged
+- Frontend build passes with 0 TypeScript errors
+
+---
+
 ## 2026-06-18 - Fix build/deploy bugs (Docker, Netlify, imports)
 
 ### Changes Made

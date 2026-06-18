@@ -29,6 +29,7 @@ import {
   startChat,
   sendMessage,
   generateHierarchicalGraph,
+  generateHierarchicalGraphStream,
   ensureSubtopicsForTopic,
   getPathRatings,
   type HierarchicalGraphResponse,
@@ -947,19 +948,38 @@ export default function NewPathPage() {
         setIsGenerating(true);
         setIsInitializing(false);
         
-        // Generate path directly
+        // Generate path directly via streaming
         try {
-          const result = await generateHierarchicalGraph(subjectToLearn, studentId, {
+          const stream = generateHierarchicalGraphStream(subjectToLearn, studentId, {
             goals: profile.goals || [],
             knowledgeBase: profile.knowledge_base || {},
             cognitiveStyle: profile.cognitive_style || "mixed",
             learningPace: profile.learning_pace || 0.5,
           });
-          setGeneratedGraph(result.graph);
-          setStep("preview");
+          for await (const event of stream) {
+            if (event.event === "graph" && event.graph) {
+              setGeneratedGraph(event.graph);
+              setStep("preview");
+              setIsGenerating(false);
+            } else if (event.event === "subtopics_ready" && event.main_topic_id) {
+              setGeneratedGraph((prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  main_topics: prev.main_topics.map((mt) =>
+                    mt.id === event.main_topic_id
+                      ? { ...mt, subtopics: event.subtopics || [], subtopic_count: event.subtopics?.length || 0 }
+                      : mt
+                  ),
+                };
+              });
+            } else if (event.event === "error") {
+              router.push("/profile-summary?error=generation_failed");
+              return;
+            }
+          }
         } catch (err: any) {
           console.error("Graph generation failed:", err);
-          // On failure, redirect back to profile-summary with error
           router.push("/profile-summary?error=generation_failed");
         } finally {
           setIsGenerating(false);
@@ -1050,61 +1070,48 @@ export default function NewPathPage() {
     setFirstMilestoneError(null);
 
     try {
-      const result = await generateHierarchicalGraph(subjectName, studentId!, {
+      const stream = generateHierarchicalGraphStream(subjectName, studentId!, {
         goals: extractedProfile?.goals || profile?.goals || [],
         knowledgeBase: extractedProfile?.knowledge_base || profile?.knowledge_base || {},
         cognitiveStyle: extractedProfile?.cognitive_style || profile?.cognitive_style || "mixed",
         learningPace: extractedProfile?.learning_pace || profile?.learning_pace || 0.5,
       });
 
-      setGeneratedGraph(result.graph);
-      setStep("preview");
-
-      // Two-pass UI: the backend now returns milestones only. Kick off Pass 2
-      // for the first milestone in the background so the student can start
-      // learning as soon as they accept the path.
-      const sortedMains = [...result.graph.main_topics].sort(
-        (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
-      );
-      const firstMain = sortedMains[0];
-      if (firstMain && (!firstMain.subtopics || firstMain.subtopics.length === 0)) {
-        setFirstMilestoneLoading(true);
-        ensureSubtopicsForTopic(result.graph.id, firstMain.id, studentId!)
-          .then((materialized) => {
-            setGeneratedGraph((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                main_topics: prev.main_topics.map((mt) =>
-                  mt.id === materialized.id ? materialized : mt
-                ),
-              };
-            });
-          })
-          .catch((err: any) => {
-            console.error("Failed to preload first milestone:", err);
-            setFirstMilestoneError(
-              err.message || "Failed to prepare the first milestone. You can retry from the preview."
-            );
-          })
-          .finally(() => {
-            setFirstMilestoneLoading(false);
+      for await (const event of stream) {
+        if (event.event === "graph" && event.graph) {
+          // Milestones ready — show preview immediately
+          setGeneratedGraph(event.graph);
+          setStep("preview");
+          setIsGenerating(false);
+        } else if (event.event === "subtopics_ready" && event.main_topic_id) {
+          // One milestone's subtopics just arrived — fill it in
+          setGeneratedGraph((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              main_topics: prev.main_topics.map((mt) =>
+                mt.id === event.main_topic_id
+                  ? { ...mt, subtopics: event.subtopics || [], subtopic_count: event.subtopics?.length || 0 }
+                  : mt
+              ),
+            };
           });
+        } else if (event.event === "error") {
+          setError(event.error || "Generation failed");
+          setIsGenerating(false);
+          return;
+        }
+        // "complete" event — all subtopics done, nothing extra to do
       }
     } catch (err: any) {
       console.error("Graph generation failed:", err);
-      // Provide user-friendly error messages
       let errorMessage = "Failed to generate learning path";
-      if (err.code === "ECONNABORTED" || err.message?.includes("timeout")) {
+      if (err.message?.includes("timeout")) {
         errorMessage = "Generation is taking longer than expected. The AI service may be busy. Please try again.";
-      } else if (err.response?.status === 500) {
-        errorMessage = "Server error occurred. Please try again in a moment.";
       } else if (err.message) {
         errorMessage = err.message;
       }
       setError(errorMessage);
-      // Stay on generating step but show error, don't go back to review
-      // User can retry or go back
     } finally {
       setIsGenerating(false);
     }
