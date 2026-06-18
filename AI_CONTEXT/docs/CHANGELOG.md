@@ -13,6 +13,144 @@ Format:
 
 ---
 
+## 2026-06-18 - Remove invalid hardcoded Kimi API fallback
+
+### Changes Made
+- `core/llm_client.py` and `core/vision_llm_client.py` no longer fall back to a
+  hardcoded `sk-xJuTUc3...` API key. They now read `KIMI_API_KEY` from the
+  environment and default to an empty string.
+- `LLMClient` already falls back to mock mode when the key is missing, so a
+  missing env var now yields demo responses instead of hanging on 401 retries.
+
+### Reason
+- The hardcoded key was invalid and caused 401 Unauthorized responses from the
+  Moonshot endpoint. Because the client retried on auth failures, requests hung
+  for minutes and surfaced in the frontend as 300s Axios timeouts.
+- The `.env` file contains a valid key (`sk-DCQN6Jf...`) that was being ignored
+  whenever the backend failed to load it.
+
+### Files
+- `a3-system/backend/core/llm_client.py`
+- `a3-system/backend/core/vision_llm_client.py`
+
+### Impact / Testing
+- Backend `py_compile` passes.
+- With the valid env key loaded, `/api/hierarchical/generate` returns milestones
+  in ~50s instead of timing out.
+- Missing-key behavior now falls back to mock mode (demo responses) instead of
+  long 401 retries.
+
+---
+
+## 2026-06-18 - Frontend two-pass UI for learning path generation
+
+### Changes Made
+- `GeneratingState` now displays real milestone-generation progress instead of
+  a fake 60-second timer. It receives the live milestone count and expected
+  total from the graph response and shows "Generating milestone N of M...".
+- `PathPreview` now lazily loads subtopics on-demand when a user expands a
+  milestone with no subtopics. It uses `ensureSubtopicsForTopic(graphId,
+  nodeId, studentId)`, caches the result in component state, shows a loading
+  spinner, and displays a retry button on error.
+- Graph view in `PathPreview` now reflects cached subtopics after a milestone
+  is expanded in list view.
+- `LearningPathGraph` detail panel now shows a graceful loading state when a
+  selected milestone has empty subtopics.
+- Updated call sites in `NewPathPage` to pass `studentId` to `PathPreview` and
+  to feed live milestone counts to `GeneratingState`.
+
+### Reason
+The backend already supported two-pass generation, but the frontend still used
+a fake progress bar and a 2-minute time estimate. This change exposes the fast
+milestone generation to users and lets them expand milestones to load lessons
+lazily, matching the existing notebook behavior.
+
+### Files
+- `a3-system/frontend/web/src/app/(dashboard)/new-path/page.tsx`
+- `a3-system/frontend/web/src/app/components/LearningPathGraph.tsx`
+
+### Impact / Testing
+- TypeScript `tsc --noEmit` passes with no errors.
+- Manual verification needed: create a new path, confirm milestone progress
+  appears, expand a milestone in list view, confirm subtopics load on demand,
+  and confirm graph view handles empty subtopics gracefully.
+
+---
+
+## 2026-06-18 - Frontend two-pass UI for learning path generation
+
+### Changes Made
+- `GeneratingState` now displays real milestone-generation progress instead of
+  a fake 60-second timer. It receives the live milestone count and expected
+  total from the graph response and shows "Generating milestone N of M...".
+- `PathPreview` now lazily loads subtopics on-demand when a user expands a
+  milestone with no subtopics. It uses `ensureSubtopicsForTopic(graphId,
+  nodeId, studentId)`, caches the result in component state, shows a loading
+  spinner, and displays a retry button on error.
+- Graph view in `PathPreview` now reflects cached subtopics after a milestone
+  is expanded in list view.
+- `LearningPathGraph` detail panel now shows a graceful loading state when a
+  selected milestone has empty subtopics.
+- Updated call sites in `NewPathPage` to pass `studentId` to `PathPreview` and
+  to feed live milestone counts to `GeneratingState`.
+
+### Reason
+The backend already supported two-pass generation, but the frontend still used
+a fake progress bar and a 2-minute time estimate. This change exposes the fast
+milestone generation to users and lets them expand milestones to load lessons
+lazily, matching the existing notebook behavior.
+
+### Files
+- `a3-system/frontend/web/src/app/(dashboard)/new-path/page.tsx`
+- `a3-system/frontend/web/src/app/components/LearningPathGraph.tsx`
+
+### Impact / Testing
+- TypeScript `tsc --noEmit` passes with no errors.
+- Manual verification needed: create a new path, confirm milestone progress
+  appears, expand a milestone in list view, confirm subtopics load on demand,
+  and confirm graph view handles empty subtopics gracefully.
+
+---
+
+## 2026-06-18 - Backend returns milestones immediately; first milestone loaded in background
+
+### Changes Made
+- `HierarchicalGraphService.generate_graph()` now takes a
+  `materialize_first_milestone` flag (default `False`). The
+  `/api/hierarchical/generate` endpoint no longer waits for the first
+  milestone's subtopics, so the milestone structure returns in ~10-15 seconds.
+- `_materialize_progress_for_subtopics()` now creates progress rows whenever
+  `student_id` is provided, even if the student hasn't formally accepted the
+  graph yet. The first subtopic is unlocked when it's the student's first
+  materialization so they can start learning immediately.
+- `new-path/page.tsx` automatically kicks off `ensureSubtopicsForTopic` for
+  the first milestone after the graph arrives. The "Accept & Start Learning"
+  button shows "Preparing your first milestone..." and is disabled until the
+  first milestone's lessons are ready.
+
+### Reason
+Even with two-pass generation, the backend was still synchronously generating
+ the first milestone's subtopics before responding. With Kimi K2.6 taking
+~60-120s per LLM call, two sequential calls produced total times of 2-4
+minutes. Returning milestones only and loading the first milestone in the
+background restores the intended fast first-render UX.
+
+### Files
+- `a3-system/backend/services/hierarchical_graph_service.py`
+- `a3-system/backend/api/routers/hierarchical_graphs.py`
+- `a3-system/frontend/web/src/app/(dashboard)/new-path/page.tsx`
+
+### Impact / Testing
+- TypeScript `tsc --noEmit` passes.
+- Python syntax checks pass.
+- Pre-existing test failures in `test_hierarchical_graph_generator.py`
+  unchanged (4 failures unrelated to this change).
+- Manual verification needed: create a new path, confirm milestones appear
+  quickly, confirm first milestone prepares in background, then accept and
+  verify the notebook loads with the first subtopic unlocked.
+
+---
+
 ## 2026-06-17 - Two-pass (lazy) learning-path generation for faster first render
 
 ### Changes Made

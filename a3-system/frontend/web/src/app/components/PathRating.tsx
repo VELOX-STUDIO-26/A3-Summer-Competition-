@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles } from "lucide-react";
 import {
   submitPathRating,
   getPathRatings,
@@ -371,7 +372,10 @@ export function PathRatingsDisplay({ graphId, compact = false }: PathRatingsDisp
 
   if (!ratings || ratings.total_ratings === 0) {
     return compact ? null : (
-      <p className="text-sm text-gray-400">No ratings yet</p>
+      <div className="flex items-center gap-2 text-sm text-[#6B7F6B]">
+        <Sparkles className="w-4 h-4" />
+        <span>AI-generated just for you</span>
+      </div>
     );
   }
 

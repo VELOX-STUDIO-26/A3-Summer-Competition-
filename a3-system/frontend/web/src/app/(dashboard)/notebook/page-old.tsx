@@ -473,7 +473,7 @@ export default function NotebookPage() {
       const totalCount = learningPath.length;
       const progressText = completedCount > 0
         ? `You've already mastered ${completedCount} of ${totalCount} topics — that's amazing progress! 🎉`
-        : "I'm so excited to start this learning journey with you! 🌟";
+        : "I'm so excited to start this learning journey with you!";
 
       setMessages([{
         role: "assistant",
@@ -1349,7 +1349,7 @@ export default function NotebookPage() {
               </p>
             ) : isLoading || isSending ? (
               <p className="text-center text-xs text-[#8a9ba3] mt-2 animate-pulse">
-                ✨ AI is responding... Press <kbd className="px-1 py-0.5 bg-[#E7E2D7] rounded text-[10px]">Enter</kbd> or click the stop button to cancel
+                AI is responding... Press <kbd className="px-1 py-0.5 bg-[#E7E2D7] rounded text-[10px]">Enter</kbd> or click the stop button to cancel
               </p>
             ) : voice.isStreaming ? (
               <p className="text-center text-xs text-red-500 mt-2 animate-pulse">

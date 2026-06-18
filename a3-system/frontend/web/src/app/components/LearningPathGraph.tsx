@@ -12,6 +12,7 @@ import {
   Sparkles,
   Target,
   X,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -235,12 +236,12 @@ function GraphNode({
         y={nodeRadius + 18}
         textAnchor="middle"
         fill="#2a2a2a"
-        fontSize="12"
+        fontSize="11"
         fontWeight="600"
         style={{ pointerEvents: "none" }}
       >
-        {node.topic.title.length > 22
-          ? node.topic.title.substring(0, 20) + "..."
+        {node.topic.title.length > 28
+          ? node.topic.title.substring(0, 26) + "..."
           : node.topic.title}
       </text>
 
@@ -426,7 +427,7 @@ function DetailPanel({
       )}
 
       {/* Subtopics - with minimal scrollbar styling */}
-      <div 
+      <div
         className="flex-1 overflow-y-auto px-4 py-3 scrollbar-thin"
         style={{
           scrollbarWidth: 'thin',
@@ -436,30 +437,40 @@ function DetailPanel({
         <h4 className="text-[10px] font-semibold text-[#999] uppercase tracking-wider mb-2.5">
           Lessons in this module
         </h4>
-        <div className="space-y-1.5">
-          {topic.subtopics.map((sub, i) => (
-            <motion.div
-              key={sub.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.04 }}
-              className="flex items-center gap-2.5 p-2 rounded-lg bg-[#FAFAF8] hover:bg-[#F0EDE8] transition-colors group cursor-pointer"
-            >
-              <div className="w-5 h-5 rounded-md bg-white border border-[#E0DDD5] flex items-center justify-center text-[10px] font-semibold text-[#999] group-hover:border-[#6B7F6B] group-hover:text-[#6B7F6B] transition-colors">
-                {i + 1}
-              </div>
-              <div className="flex-1 min-w-0">
-                {/* Dark charcoal title for clear scanning */}
-                <div className="text-[13px] font-semibold text-[#2a2a2a] truncate leading-tight">
-                  {sub.title}
+        {topic.subtopics.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <Loader2 className="w-6 h-6 text-[#6B7F6B] animate-spin mb-2" />
+            <p className="text-sm text-[#666]">Lessons loading...</p>
+            <p className="text-xs text-[#999] mt-1">
+              Expand this milestone in the list view to generate lessons.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {topic.subtopics.map((sub, i) => (
+              <motion.div
+                key={sub.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="flex items-center gap-2.5 p-2 rounded-lg bg-[#FAFAF8] hover:bg-[#F0EDE8] transition-colors group cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-md bg-white border border-[#E0DDD5] flex items-center justify-center text-[10px] font-semibold text-[#999] group-hover:border-[#6B7F6B] group-hover:text-[#6B7F6B] transition-colors">
+                  {i + 1}
                 </div>
-                {/* Soft silver duration for hierarchy */}
-                <div className="text-[11px] text-[#aaa] mt-0.5">{sub.estimated_minutes} min</div>
-              </div>
-              <ChevronRight className="w-3.5 h-3.5 text-[#ddd] group-hover:text-[#6B7F6B] transition-colors flex-shrink-0" />
-            </motion.div>
-          ))}
-        </div>
+                <div className="flex-1 min-w-0">
+                  {/* Dark charcoal title for clear scanning */}
+                  <div className="text-[13px] font-semibold text-[#2a2a2a] truncate leading-tight">
+                    {sub.title}
+                  </div>
+                  {/* Soft silver duration for hierarchy */}
+                  <div className="text-[11px] text-[#aaa] mt-0.5">{sub.estimated_minutes} min</div>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-[#ddd] group-hover:text-[#6B7F6B] transition-colors flex-shrink-0" />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Footer - ghost outline button to not compete with main CTA */}
@@ -517,7 +528,7 @@ export default function LearningPathGraph({
       index: i,
     }));
 
-    // Create sequential edges for the learning path
+    // Create sequential edges ONLY for the learning path (no cross-connections)
     const edgeList: Edge[] = [];
     for (let i = 0; i < nodeList.length - 1; i++) {
       edgeList.push({
@@ -525,6 +536,22 @@ export default function LearningPathGraph({
         target: nodeList[i + 1].id,
       });
     }
+
+    // Add prerequisite edges only (not cross-connections)
+    nodeList.forEach((node, i) => {
+      if (node.topic.prerequisites && node.topic.prerequisites.length > 0) {
+        node.topic.prerequisites.forEach((prereqId) => {
+          // Only add if the prerequisite exists in our node list
+          const prereqExists = nodeList.some((n) => n.id === prereqId);
+          if (prereqExists) {
+            edgeList.push({
+              source: prereqId,
+              target: node.id,
+            });
+          }
+        });
+      }
+    });
 
     return { nodes: nodeList, edges: edgeList };
   }, [graph]);
@@ -698,10 +725,11 @@ export default function LearningPathGraph({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2 border border-[#E7E2D7] shadow-sm"
+          className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-[#E7E2D7] shadow-sm"
         >
-          <p className="text-xs text-[#888]">
-            Click a topic to see details • Hover to highlight connections
+          <p className="text-sm font-medium text-[#6B7F6B] flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            Tap any topic to explore details
           </p>
         </motion.div>
       )}

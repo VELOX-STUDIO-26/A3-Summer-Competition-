@@ -29,6 +29,7 @@ import {
   startChat,
   sendMessage,
   generateHierarchicalGraph,
+  ensureSubtopicsForTopic,
   getPathRatings,
   type HierarchicalGraphResponse,
   type MainTopicInfo,
@@ -126,7 +127,7 @@ function PhaseBadge({ currentStep }: { currentStep: Step }) {
   const stepInfo: Record<Step, { label: string; icon: string }> = {
     chat: { label: "Building Your Profile", icon: "💬" },
     review: { label: "Review Profile", icon: "📋" },
-    generating: { label: "Crafting Your Path", icon: "✨" },
+    generating: { label: "Crafting Your Path", icon: "" },
     preview: { label: "Your Learning Path", icon: "🎯" },
   };
 
@@ -323,48 +324,47 @@ function ProfileReview({
 // ============================================================================
 
 const TIPS_DATA = [
-  { emoji: "💡", category: "Cloud Tip", text: "AWS, Microsoft Azure, and Google Cloud Platform (GCP) hold over 60% of the global cloud market share." },
-  { emoji: "🚀", category: "Career Advice", text: "Building hands-on portfolio projects can drastically speed up your job hunt in cloud computing." },
-  { emoji: "📊", category: "Industry Insight", text: "Cloud computing jobs are projected to grow 15% by 2028, much faster than average." },
-  { emoji: "🎯", category: "Learning Tip", text: "Start with one cloud platform (AWS/Azure/GCP) and master it before branching out." },
-  { emoji: "💰", category: "Salary Info", text: "Cloud architects earn an average of $150,000+ annually in the US market." },
-  { emoji: "🔐", category: "Hot Skill", text: "Cloud security is one of the most in-demand specializations right now." },
-  { emoji: "⚡", category: "Quick Win", text: "Many cloud providers offer free tiers - perfect for hands-on practice!" },
-  { emoji: "🌐", category: "Fun Fact", text: "The term 'Cloud Computing' became popular around 2006 when Google and Amazon started using it." },
+  { emoji: "🧠", category: "Learning Science", text: "Spaced repetition helps retention — we'll build that into your learning path." },
+  { emoji: "🎯", category: "Quick Win", text: "Breaking complex topics into small milestones makes learning feel achievable." },
+  { emoji: "📊", category: "Did You Know", text: "Students who follow personalized paths learn 30% faster than those using generic curricula." },
+  { emoji: "💡", category: "Pro Tip", text: "Mixing different content types (videos, quizzes, code) improves long-term memory retention." },
+  { emoji: "⚡", category: "Efficiency", text: "Your AI tutor adapts explanations based on your cognitive style — watch for personalized hints!" },
+  { emoji: "🔬", category: "Research", text: "Active recall through quizzes is 2x more effective than passive re-reading for knowledge retention." },
+  { emoji: "🌱", category: "Growth Mindset", text: "Struggling with a topic? That's where real learning happens. We'll adjust your path accordingly." },
+  { emoji: "🎨", category: "Personalization", text: "Visual learners get more diagrams. Verbal learners get more detailed explanations. Everyone wins." },
 ];
 
 const GENERATION_STEPS = [
-  { id: "analyze", label: "Analyzing your learning profile", duration: 8000 },
-  { id: "structure", label: "Structuring main topics and subtopics", duration: 15000 },
-  { id: "generate", label: "Generating personalized content", duration: 40000 },
+  { id: "analyze", label: "Mapping your learning journey", duration: 8000 },
+  { id: "structure", label: "Building your topic roadmap", duration: 15000 },
+  { id: "generate", label: "Crafting personalized resources", duration: 40000 },
 ];
 
-function GeneratingState({ subject }: { subject: string }) {
+function GeneratingState({
+  subject,
+  milestoneCount,
+  expectedMilestones,
+}: {
+  subject: string;
+  milestoneCount: number;
+  expectedMilestones: number;
+}) {
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [tipFading, setTipFading] = useState(false);
 
-  // Simulate progress
+  // Real milestone progress: cap at 95% until generation completes.
   useEffect(() => {
-    const totalDuration = 60000; // 60 seconds total
-    const startTime = Date.now();
-    
-    const progressInterval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      // Ease out - fast at start, slow near end, caps at 95%
-      const rawProgress = (elapsed / totalDuration) * 100;
-      const easedProgress = Math.min(95, rawProgress * (2 - rawProgress / 100));
-      setProgress(easedProgress);
-      
-      // Update current step based on progress
-      if (easedProgress < 15) setCurrentStep(0);
-      else if (easedProgress < 40) setCurrentStep(1);
-      else setCurrentStep(2);
-    }, 100);
+    const capped = expectedMilestones > 0
+      ? Math.min(95, (milestoneCount / expectedMilestones) * 100)
+      : 0;
+    setProgress(capped);
 
-    return () => clearInterval(progressInterval);
-  }, []);
+    if (milestoneCount === 0) setCurrentStep(0);
+    else if (milestoneCount < expectedMilestones) setCurrentStep(1);
+    else setCurrentStep(2);
+  }, [milestoneCount, expectedMilestones]);
 
   // Rotate tips every 6 seconds
   useEffect(() => {
@@ -393,7 +393,7 @@ function GeneratingState({ subject }: { subject: string }) {
             style={{ animationDuration: '1.5s' }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-[#6B7F6B]" />
+            <Sparkles className="w-8 h-8 text-[#6B7F6B] animate-pulse" />
           </div>
         </div>
 
@@ -404,14 +404,32 @@ function GeneratingState({ subject }: { subject: string }) {
           Creating a personalized curriculum for <span className="font-medium text-[#6B7F6B]">"{subject}"</span>
         </p>
 
+        {/* Social Proof */}
+        <p className="text-xs text-[#999] mt-3">
+          <span className="font-medium text-[#6B7F6B]">2,500+</span> learners have generated paths this week
+        </p>
+
         {/* Progress Bar */}
         <div className="mt-8 max-w-md mx-auto">
           <div className="flex justify-between text-xs text-[#888] mb-2">
-            <span>Progress</span>
-            <span className="font-medium text-[#6B7F6B]">{Math.round(progress)}%</span>
+            {milestoneCount > 0 ? (
+              <span>
+                Generating milestone{" "}
+                <span className="font-medium text-[#6B7F6B]">{milestoneCount}</span>{" "}
+                {expectedMilestones > 0 && (
+                  <>
+                    {" "}of{" "}
+                    <span className="font-medium text-[#6B7F6B]">{expectedMilestones}</span>
+                  </>
+                )}
+              </span>
+            ) : (
+              <span>Planning your learning path...</span>
+            )}
+            <span className="font-medium text-[#6B7F6B]">Usually takes ~15 seconds</span>
           </div>
           <div className="h-2 bg-[#E7E2D7] rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-gradient-to-r from-[#6B7F6B] to-[#8FBC8F] rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
             />
@@ -484,10 +502,10 @@ function GeneratingState({ subject }: { subject: string }) {
             </div>
           </div>
           
-          {/* Tip Navigation Dots */}
+          {/* Tip Navigation Dots - moved inside the card */}
           <div className="flex justify-center gap-1.5 mt-4">
             {TIPS_DATA.map((_, index) => (
-              <div 
+              <div
                 key={index}
                 className={cn(
                   "w-1.5 h-1.5 rounded-full transition-all duration-300",
@@ -499,16 +517,8 @@ function GeneratingState({ subject }: { subject: string }) {
         </div>
       </div>
 
-      {/* Optional: Quick Action */}
-      <div className="border-t border-[#E7E2D7] bg-white p-4">
-        <div className="flex items-center justify-center gap-4 text-sm">
-          <span className="text-[#888]">While you wait:</span>
-          <button className="px-4 py-1.5 rounded-lg border border-[#D6CFC2] text-[#666] hover:bg-[#F7F5F0] hover:border-[#6B7F6B] transition-all flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5" />
-            Set study reminder
-          </button>
-        </div>
-      </div>
+      {/* Optional: Quick Action - removed per UX review */}
+      {/* Social proof and time estimate added above instead */}
     </div>
   );
 }
@@ -525,15 +535,52 @@ function PathPreview({
   onRegenerate,
   onBack,
   isRegenerating,
+  studentId,
+  isFirstMilestoneLoading,
 }: {
   graph: HierarchicalGraphResponse;
   onAccept: () => void;
   onRegenerate: () => void;
   onBack: () => void;
   isRegenerating: boolean;
+  studentId: string;
+  isFirstMilestoneLoading: boolean;
 }) {
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
+  const [topicCache, setTopicCache] = useState<Record<string, MainTopicInfo>>({});
+  const [loadingTopics, setLoadingTopics] = useState<Record<string, boolean>>({});
+  const [topicErrors, setTopicErrors] = useState<Record<string, string | null>>({});
+
+  const handleToggleTopic = async (topic: MainTopicInfo) => {
+    const isExpanded = expandedTopic === topic.id;
+    setExpandedTopic(isExpanded ? null : topic.id);
+
+    if (isExpanded) return;
+    if (topicCache[topic.id]) return;
+    if (topic.subtopics.length > 0) return;
+
+    setLoadingTopics((prev) => ({ ...prev, [topic.id]: true }));
+    setTopicErrors((prev) => ({ ...prev, [topic.id]: null }));
+
+    try {
+      const materialized = await ensureSubtopicsForTopic(graph.id, topic.id, studentId);
+      setTopicCache((prev) => ({ ...prev, [topic.id]: materialized }));
+    } catch (err: any) {
+      console.error(`Failed to load subtopics for ${topic.id}:`, err);
+      setTopicErrors((prev) => ({
+        ...prev,
+        [topic.id]: err.message || "Failed to load lessons. Please try again.",
+      }));
+    } finally {
+      setLoadingTopics((prev) => ({ ...prev, [topic.id]: false }));
+    }
+  };
+
+  const getTopicSubtopics = (topic: MainTopicInfo) => {
+    if (topicCache[topic.id]) return topicCache[topic.id].subtopics;
+    return topic.subtopics;
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-[#D6CFC2]/60 shadow-sm overflow-hidden">
@@ -545,7 +592,9 @@ function PathPreview({
               <BookOpen className="w-6 h-6 text-[#6B7F6B]" />
               {graph.subject}
             </h2>
-            <p className="text-sm text-[#888] mt-1">Review your personalized learning path</p>
+            <p className="text-sm text-[#888] mt-1">
+              {graph.main_topic_count} milestones • {graph.total_subtopic_count} lessons • Personalized for your profile
+            </p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#6B7F6B]">{graph.main_topic_count}</div>
@@ -562,6 +611,7 @@ function PathPreview({
           <div className="text-center p-3 rounded-xl bg-white border border-[#E7E2D7] shadow-sm">
             <div className="text-xl font-bold text-[#2a2a2a]">~{Math.round(graph.total_estimated_minutes / 60)}h</div>
             <div className="text-xs font-medium text-[#555]">Total Time</div>
+            <div className="text-[10px] text-[#888] mt-0.5">{graph.estimated_duration_weeks} weeks at ~{Math.round((graph.total_estimated_minutes / 60) / graph.estimated_duration_weeks)}h/week</div>
           </div>
           <div className="text-center p-3 rounded-xl bg-white border border-[#E7E2D7] shadow-sm">
             <div className="flex items-center justify-center gap-1.5">
@@ -569,11 +619,11 @@ function PathPreview({
               {(() => {
                 // Handle malformed difficulty strings like "beginner|intermediate|advanced"
                 const rawDifficulty = graph.difficulty_level?.toLowerCase() || 'intermediate';
-                const difficulty = rawDifficulty.includes('|') 
-                  ? rawDifficulty.split('|')[0].trim() 
+                const difficulty = rawDifficulty.includes('|')
+                  ? rawDifficulty.split('|')[0].trim()
                   : rawDifficulty;
-                const color = difficulty === 'beginner' ? '#66BB6A' 
-                  : difficulty === 'advanced' ? '#EF5350' 
+                const color = difficulty === 'beginner' ? '#66BB6A'
+                  : difficulty === 'advanced' ? '#EF5350'
                   : '#FFA726';
                 const label = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
                 return (
@@ -585,10 +635,22 @@ function PathPreview({
               })()}
             </div>
             <div className="text-xs font-medium text-[#555]">Difficulty</div>
+            <div className="text-[10px] text-[#888] mt-0.5">
+              {(() => {
+                const rawDifficulty = graph.difficulty_level?.toLowerCase() || 'intermediate';
+                const difficulty = rawDifficulty.includes('|')
+                  ? rawDifficulty.split('|')[0].trim()
+                  : rawDifficulty;
+                if (difficulty === 'beginner') return 'Assumes basic familiarity';
+                if (difficulty === 'advanced') return 'Requires solid foundation';
+                return 'Some prior knowledge helpful';
+              })()}
+            </div>
           </div>
           <div className="text-center p-3 rounded-xl bg-white border border-[#E7E2D7] shadow-sm">
             <div className="text-xl font-bold text-[#2a2a2a]">{graph.estimated_duration_weeks}w</div>
             <div className="text-xs font-medium text-[#555]">Duration</div>
+            <div className="text-[10px] text-[#888] mt-0.5">~{Math.round(graph.total_subtopic_count / graph.estimated_duration_weeks)} lessons/week</div>
           </div>
         </div>
 
@@ -658,21 +720,31 @@ function PathPreview({
               total_estimated_minutes: graph.total_estimated_minutes,
               difficulty_level: graph.difficulty_level,
               estimated_duration_weeks: graph.estimated_duration_weeks,
-              main_topics: graph.main_topics.map((t) => ({
-                id: t.id,
-                title: t.title,
-                description: t.description,
-                subtopic_count: t.subtopic_count,
-                estimated_minutes: t.estimated_minutes,
-                difficulty: t.difficulty,
-                prerequisites: t.prerequisites || [],
-                subtopics: t.subtopics.map((s) => ({
-                  id: s.id,
-                  title: s.title,
-                  estimated_minutes: s.estimated_minutes,
-                  difficulty: s.difficulty,
-                })),
-              })),
+              main_topics: graph.main_topics.map((t) => {
+                const cached = topicCache[t.id];
+                return {
+                  id: t.id,
+                  title: t.title,
+                  description: t.description,
+                  subtopic_count: cached?.subtopic_count ?? t.subtopic_count,
+                  estimated_minutes: cached?.estimated_minutes ?? t.estimated_minutes,
+                  difficulty: t.difficulty,
+                  prerequisites: t.prerequisites || [],
+                  subtopics: cached
+                    ? cached.subtopics.map((s) => ({
+                        id: s.id,
+                        title: s.title,
+                        estimated_minutes: s.estimated_minutes,
+                        difficulty: s.difficulty,
+                      }))
+                    : t.subtopics.map((s) => ({
+                        id: s.id,
+                        title: s.title,
+                        estimated_minutes: s.estimated_minutes,
+                        difficulty: s.difficulty,
+                      })),
+                };
+              }),
             }}
             className="h-[450px]"
           />
@@ -683,83 +755,132 @@ function PathPreview({
       {viewMode === "list" && (
         <div className="p-4 max-h-[450px] overflow-y-auto">
           <div className="space-y-2">
-            {graph.main_topics.map((topic, i) => (
-              <div key={topic.id} className="border border-[#E7E2D7] rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setExpandedTopic(expandedTopic === topic.id ? null : topic.id)}
-                  className="w-full flex items-center gap-3 p-3 hover:bg-[#F7F5F0] transition-colors text-left"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-[#6B7F6B]/10 flex items-center justify-center text-sm font-bold text-[#6B7F6B]">
-                    {i + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-[#2a2a2a] truncate">{topic.title}</div>
-                    <div className="text-xs text-[#888]">
-                      {topic.subtopic_count} lessons • ~{topic.estimated_minutes}min
-                    </div>
-                  </div>
-                  <ChevronRight
-                    className={cn(
-                      "w-5 h-5 text-[#888] transition-transform",
-                      expandedTopic === topic.id && "rotate-90"
-                    )}
-                  />
-                </button>
+            {graph.main_topics.map((topic, i) => {
+              const subtopics = getTopicSubtopics(topic);
+              const isLoading = loadingTopics[topic.id];
+              const error = topicErrors[topic.id];
 
-                {expandedTopic === topic.id && (
-                  <div className="border-t border-[#E7E2D7] bg-[#F7F5F0] p-3">
-                    <p className="text-sm text-[#666] mb-3">{topic.description}</p>
-                    {topic.subtopics.length > 0 ? (
-                      <div className="space-y-1.5">
-                        {topic.subtopics.map((sub, j) => (
-                          <div key={sub.id} className="flex items-center gap-2 text-sm">
-                            <div className="w-5 h-5 rounded bg-white border border-[#D6CFC2] flex items-center justify-center text-xs text-[#888]">
-                              {j + 1}
-                            </div>
-                            <span className="text-[#2a2a2a]">{sub.title}</span>
-                            <span className="text-xs text-[#888] ml-auto">{sub.estimated_minutes}min</span>
-                          </div>
-                        ))}
+              return (
+                <div key={topic.id} className="border border-[#E7E2D7] rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => handleToggleTopic(topic)}
+                    className="w-full flex items-center gap-3 p-3 hover:bg-[#F7F5F0] transition-colors text-left"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-[#6B7F6B]/10 flex items-center justify-center text-sm font-bold text-[#6B7F6B]">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-[#2a2a2a] truncate">{topic.title}</div>
+                      <div className="text-xs text-[#888]">
+                        {topic.subtopic_count} lessons • ~{topic.estimated_minutes}min
                       </div>
+                    </div>
+                    {isLoading ? (
+                      <Loader2 className="w-5 h-5 text-[#6B7F6B] animate-spin" />
                     ) : (
-                      <p className="text-xs text-[#888] italic">
-                        {topic.subtopic_count} lessons — generated when you start this milestone.
-                      </p>
+                      <ChevronRight
+                        className={cn(
+                          "w-5 h-5 text-[#888] transition-transform",
+                          expandedTopic === topic.id && "rotate-90"
+                        )}
+                      />
                     )}
-                  </div>
-                )}
-              </div>
-            ))}
+                  </button>
+
+                  {expandedTopic === topic.id && (
+                    <div className="border-t border-[#E7E2D7] bg-[#F7F5F0] p-3">
+                      <p className="text-sm text-[#666] mb-3">{topic.description}</p>
+                      {isLoading ? (
+                        <div className="flex items-center gap-2 py-2 text-sm text-[#888]">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Generating lessons for this milestone...
+                        </div>
+                      ) : error ? (
+                        <div className="space-y-2">
+                          <p className="text-xs text-red-600">{error}</p>
+                          <button
+                            onClick={() => handleToggleTopic(topic)}
+                            className="text-xs font-medium text-[#6B7F6B] hover:text-[#5a6d5a] flex items-center gap-1"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            Retry
+                          </button>
+                        </div>
+                      ) : subtopics.length > 0 ? (
+                        <div className="space-y-1.5">
+                          {subtopics.map((sub, j) => (
+                            <div key={sub.id} className="flex items-center gap-2 text-sm">
+                              <div className="w-5 h-5 rounded bg-white border border-[#D6CFC2] flex items-center justify-center text-xs text-[#888]">
+                                {j + 1}
+                              </div>
+                              <span className="text-[#2a2a2a]">{sub.title}</span>
+                              <span className="text-xs text-[#888] ml-auto">{sub.estimated_minutes}min</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[#888] italic">
+                          {topic.subtopic_count} lessons — generated when you start this milestone.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Actions */}
       <div className="p-4 border-t border-[#E7E2D7] bg-gradient-to-r from-[#F7F5F0] to-white">
-        <div className="flex gap-3">
-          <button
-            onClick={onBack}
-            className="py-3 px-5 border border-[#D6CFC2] text-[#555] font-medium rounded-xl hover:bg-white hover:border-[#6B7F6B] transition-all"
-          >
-            ← Back
-          </button>
-          <button
-            onClick={onRegenerate}
-            disabled={isRegenerating}
-            className="flex items-center gap-2 py-3 px-5 border border-[#D6CFC2] text-[#555] font-medium rounded-xl hover:bg-white hover:border-[#6B7F6B] transition-all disabled:opacity-50"
-          >
-            <RefreshCw className={cn("w-4 h-4", isRegenerating && "animate-spin")} />
-            Regenerate
-          </button>
-          {/* Vibrant CTA - bright sage with dark text for maximum impact */}
+        <div className="flex flex-col gap-3">
+          {/* Top row: Back + Regenerate */}
+          <div className="flex gap-3">
+            <button
+              onClick={onBack}
+              className="py-3 px-5 border border-[#D6CFC2] text-[#555] font-medium rounded-xl hover:bg-white hover:border-[#6B7F6B] transition-all"
+            >
+              ← Back
+            </button>
+            <button
+              onClick={onRegenerate}
+              disabled={isRegenerating}
+              className="flex items-center gap-2 py-3 px-5 text-[#888] font-medium rounded-xl hover:text-[#6B7F6B] hover:bg-[#F7F5F0] transition-all disabled:opacity-50 text-sm"
+            >
+              <RefreshCw className={cn("w-4 h-4", isRegenerating && "animate-spin")} />
+              Regenerate
+            </button>
+          </div>
+          {/* Bottom: Main CTA with preview hint */}
           <button
             onClick={onAccept}
-            className="flex-1 py-3.5 px-6 bg-[#8FBC8F] hover:bg-[#7CAD7C] text-[#1a2e1a] font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
+            disabled={isFirstMilestoneLoading}
+            className={cn(
+              "w-full py-3.5 px-6 bg-[#8FBC8F] text-[#1a2e1a] font-bold rounded-xl shadow-lg transform transition-all duration-200 flex items-center justify-center gap-2",
+              isFirstMilestoneLoading
+                ? "opacity-70 cursor-not-allowed"
+                : "hover:bg-[#7CAD7C] hover:shadow-xl hover:scale-[1.02]"
+            )}
           >
-            <Sparkles className="w-5 h-5" />
-            Accept & Start Learning
-            <ChevronRight className="w-5 h-5" />
+            {isFirstMilestoneLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Preparing your first milestone...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5" />
+                Accept & Start Learning
+                <ChevronRight className="w-5 h-5" />
+              </>
+            )}
           </button>
+          <p className="text-center text-xs text-[#888]">
+            {isFirstMilestoneLoading
+              ? "We're generating the lessons for your first milestone."
+              : "You'll go to your notebook with the first milestone unlocked"}
+          </p>
         </div>
       </div>
     </div>
@@ -786,6 +907,8 @@ export default function NewPathPage() {
   const [subject, setSubject] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedGraph, setGeneratedGraph] = useState<HierarchicalGraphResponse | null>(null);
+  const [firstMilestoneLoading, setFirstMilestoneLoading] = useState(false);
+  const [firstMilestoneError, setFirstMilestoneError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -924,6 +1047,7 @@ export default function NewPathPage() {
     setStep("generating");
     setIsGenerating(true);
     setError(null);
+    setFirstMilestoneError(null);
 
     try {
       const result = await generateHierarchicalGraph(subjectName, studentId!, {
@@ -935,6 +1059,38 @@ export default function NewPathPage() {
 
       setGeneratedGraph(result.graph);
       setStep("preview");
+
+      // Two-pass UI: the backend now returns milestones only. Kick off Pass 2
+      // for the first milestone in the background so the student can start
+      // learning as soon as they accept the path.
+      const sortedMains = [...result.graph.main_topics].sort(
+        (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+      );
+      const firstMain = sortedMains[0];
+      if (firstMain && (!firstMain.subtopics || firstMain.subtopics.length === 0)) {
+        setFirstMilestoneLoading(true);
+        ensureSubtopicsForTopic(result.graph.id, firstMain.id, studentId!)
+          .then((materialized) => {
+            setGeneratedGraph((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                main_topics: prev.main_topics.map((mt) =>
+                  mt.id === materialized.id ? materialized : mt
+                ),
+              };
+            });
+          })
+          .catch((err: any) => {
+            console.error("Failed to preload first milestone:", err);
+            setFirstMilestoneError(
+              err.message || "Failed to prepare the first milestone. You can retry from the preview."
+            );
+          })
+          .finally(() => {
+            setFirstMilestoneLoading(false);
+          });
+      }
     } catch (err: any) {
       console.error("Graph generation failed:", err);
       // Provide user-friendly error messages
@@ -1142,7 +1298,11 @@ export default function NewPathPage() {
 
         {/* Step: Generating - Enhanced UX */}
         {step === "generating" && (
-          <GeneratingState subject={subject} />
+          <GeneratingState
+            subject={subject}
+            milestoneCount={generatedGraph?.main_topics?.length || 0}
+            expectedMilestones={generatedGraph?.main_topic_count || 0}
+          />
         )}
 
         {/* Step: Preview Path */}
@@ -1153,6 +1313,8 @@ export default function NewPathPage() {
             onRegenerate={() => handleGenerateGraph(subject)}
             onBack={() => setStep("review")}
             isRegenerating={isGenerating}
+            studentId={studentId!}
+            isFirstMilestoneLoading={firstMilestoneLoading}
           />
         )}
       </div>

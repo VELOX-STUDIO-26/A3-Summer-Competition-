@@ -1030,11 +1030,11 @@ class KimiClient:
     Uses the kimi-k2.6 reasoning model via the Moonshot general endpoint.
     """
 
-    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
-        self.api_key = api_key or os.getenv("KIMI_API_KEY", "sk-xJuTUc3KAhsnnrtRTuNjewyaorAGCwtPaSe2pyogHdTHm4Wb")
+    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None, model: Optional[str] = None):
+        self.api_key = api_key or os.getenv("KIMI_API_KEY", "")
         self.base_url = base_url or os.getenv("KIMI_BASE_URL", "https://api.moonshot.cn")
-        self.model = "kimi-k2.6"
-        
+        self.model = model or os.getenv("KIMI_MODEL", "kimi-k2.6")
+
         if self.api_key:
             logger.info(f"KimiClient initialized with base URL: {self.base_url}")
 
@@ -1214,26 +1214,76 @@ class MockLLMClient:
 
 
 # ============================================================================
+# Local embedding fallback (Kimi has no embeddings endpoint)
+# ============================================================================
+
+def _local_embed(texts: List[str], n_features: int = 384) -> List[List[float]]:
+    """Deterministic local embeddings using sklearn HashingVectorizer + L2 norm.
+
+    Runs entirely offline. Quality is lower than neural embeddings but is
+    sufficient for cosine-similarity retrieval (RAG, gap detection) when no
+    remote embedding service is available.
+    """
+    from sklearn.feature_extraction.text import HashingVectorizer
+    import numpy as np
+
+    hv = HashingVectorizer(n_features=n_features, alternate_sign=False, stop_words="english")
+    X = hv.fit_transform(texts).toarray().astype(np.float32)
+    # L2-normalise each row
+    norms = np.linalg.norm(X, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    X = X / norms
+    return X.tolist()
+
+
+# ============================================================================
 # Unified LLM Client
 # ============================================================================
 
 class LLMClient:
     """
-    Unified LLM client using Kimi as the sole provider.
+    Unified LLM client.
 
-    Uses Kimi 2.6 for all LLM operations (text and multimodal).
+    Prefers OpenRouter when an API key is configured, falls back to Kimi, and
+    finally to the offline mock client. This keeps latency-sensitive flows such
+    as learning-path generation fast while preserving Kimi as an option.
     """
 
-    def __init__(self):
+    def __init__(self, provider: Optional[str] = None):
+        self.openrouter = OpenRouterClient()
         self.kimi = KimiClient()
         self.mock = MockLLMClient()
-        
-        # Use Kimi only
-        if self.kimi.api_key:
+
+        # Provider selection: explicit arg > LLM_PROVIDER env > auto-preference
+        requested = (provider or os.getenv("LLM_PROVIDER", "openrouter")).lower()
+
+        if requested == "openrouter" and self.openrouter.api_key:
+            self.primary = self.openrouter
+            self.use_mock = False
+            logger.info("=" * 60)
+            logger.info("LLM Client initialized with OpenRouter")
+            logger.info(f"Model: {settings.llm.model}")
+            logger.info("=" * 60)
+        elif requested == "kimi" and self.kimi.api_key:
             self.primary = self.kimi
             self.use_mock = False
             logger.info("=" * 60)
             logger.info("LLM Client initialized with Kimi 2.6")
+            logger.info(f"Base URL: {self.kimi.base_url}")
+            logger.info("=" * 60)
+        elif self.openrouter.api_key:
+            # Default/fallback: OpenRouter is the project's primary provider
+            self.primary = self.openrouter
+            self.use_mock = False
+            logger.info("=" * 60)
+            logger.info("LLM Client initialized with OpenRouter (fallback)")
+            logger.info(f"Model: {settings.llm.model}")
+            logger.info("=" * 60)
+        elif self.kimi.api_key:
+            self.primary = self.kimi
+            self.use_mock = False
+            logger.info("=" * 60)
+            logger.info("LLM Client initialized with Kimi 2.6 (fallback)")
             logger.info(f"Base URL: {self.kimi.base_url}")
             logger.info("=" * 60)
         else:
@@ -1241,7 +1291,7 @@ class LLMClient:
             self.use_mock = True
             logger.warning("=" * 60)
             logger.warning("RUNNING IN DEMO/MOCK MODE")
-            logger.warning("No KIMI_API_KEY found")
+            logger.warning("No OPENROUTER_API_KEY or KIMI_API_KEY found")
             logger.warning("=" * 60)
 
     async def generate(
@@ -1258,6 +1308,12 @@ class LLMClient:
             logger.warning("Using mock LLM response - no API keys configured")
             return await self.mock.generate(messages, **kwargs)
 
+        # Kimi/Moonshot only accepts its own model IDs (kimi-k2.6, etc.).
+        # Callers that pass model="openrouter/free" etc. will get a 404.
+        # Strip the model kwarg so KimiClient falls back to its own default.
+        if self.primary is self.kimi:
+            kwargs.pop("model", None)
+
         return await self.primary.generate(messages, **kwargs)
 
     async def generate_stream(
@@ -1272,14 +1328,31 @@ class LLMClient:
                 yield chunk
             return
 
+        if self.primary is self.kimi:
+            kwargs.pop("model", None)
+
         async for chunk in self.primary.generate_stream(messages, **kwargs):
             yield chunk
 
     async def get_embeddings(self, texts: List[str]) -> List[List[float]]:
-        """Get embeddings for texts."""
+        """Get embeddings for texts.
+
+        Kimi/Moonshot does not expose an embeddings endpoint, so when Kimi is
+        the active provider we fall back to a local sklearn-based embedding
+        (HashingVectorizer + L2 normalization). It is deterministic, offline,
+        and adequate for cosine-similarity retrieval used by RAG / gap detection.
+        For higher-quality semantic search, install ``sentence-transformers``
+        and swap ``_local_embed`` for it.
+        """
         if self.use_mock:
             raise RuntimeError("LLM running in demo/mock mode. Set a real API key.")
-        return await self.primary.get_embeddings(texts)
+        primary_has_embeddings = hasattr(self.primary, "get_embeddings")
+        if primary_has_embeddings:
+            try:
+                return await self.primary.get_embeddings(texts)
+            except (NotImplementedError, AttributeError):
+                pass
+        return _local_embed(texts)
 
     async def health_check(self) -> Dict[str, Any]:
         """Check LLM service health."""
@@ -1288,15 +1361,19 @@ class LLMClient:
                 "provider": "mock",
                 "status": "healthy",
                 "mode": "demo",
-                "note": "Set KIMI_API_KEY for real LLM responses"
+                "note": "Set OPENROUTER_API_KEY or KIMI_API_KEY for real LLM responses"
             }
-        
-        return {
-            "provider": "kimi",
-            "status": "healthy",
-            "model": self.kimi.model,
-            "base_url": self.kimi.base_url
-        }
+
+        provider = "openrouter" if self.primary is self.openrouter else "kimi"
+        result: Dict[str, Any] = {"provider": provider, "status": "healthy"}
+
+        if provider == "openrouter":
+            result["model"] = settings.llm.model
+        else:
+            result["model"] = self.kimi.model
+            result["base_url"] = self.kimi.base_url
+
+        return result
 
 
 # Global LLM client instance

@@ -488,7 +488,7 @@ export default function NotebookPage() {
       const progressText =
         completedCount > 0
           ? `You've already mastered ${completedCount} of ${totalCount} topics — that's amazing progress! 🎉`
-          : "I'm so excited to start this learning journey with you! 🌟";
+          : "I'm so excited to start this learning journey with you!";
 
       setMessages([
         {
