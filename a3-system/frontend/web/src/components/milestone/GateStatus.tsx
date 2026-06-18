@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { bypassGate, GateStatus } from "@/lib/tracking";
-import { generateQuiz, startQuiz } from "@/lib/api";
+import { generateQuizStream, startQuiz } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,6 +43,8 @@ export function GateStatusPanel({
   const [showBypassDialog, setShowBypassDialog] = useState(false);
   const [bypassing, setBypassing] = useState(false);
   const [startingQuiz, setStartingQuiz] = useState(false);
+  const [quizProgress, setQuizProgress] = useState(0);
+  const [totalExpected, setTotalExpected] = useState(0);
 
   if (loading || !gateStatus) {
     return (
@@ -90,26 +92,37 @@ export function GateStatusPanel({
   const handleStartQuiz = async () => {
     if (!studentId || !topic) return;
     setStartingQuiz(true);
+    setQuizProgress(0);
+    setTotalExpected(8); // default expected count
     try {
-      // Generate a quiz for this topic
-      const quiz = await generateQuiz({
+      let quizId: string | null = null;
+
+      for await (const event of generateQuizStream({
         student_id: studentId,
         topic: topic,
         node_id: gateStatus?.milestone_id,
-      });
+      })) {
+        if (event.event === "question") {
+          setQuizProgress((event.index ?? 0) + 1);
+        } else if (event.event === "complete") {
+          quizId = event.quiz_id ?? null;
+          if (event.num_questions) setTotalExpected(event.num_questions);
+        } else if (event.event === "error") {
+          console.error("Quiz stream error:", event.message);
+        }
+      }
 
-      if (quiz?.quiz_id) {
-        // Start the quiz attempt
-        await startQuiz(quiz.quiz_id, studentId);
-        // Navigate to quiz page
-        router.push(`/quiz/${quiz.quiz_id}`);
+      if (quizId) {
+        await startQuiz(quizId, studentId);
+        router.push(`/quiz/${quizId}`);
       } else {
-        console.error("Quiz generation failed:", quiz);
+        console.error("Quiz stream did not return quiz_id");
       }
     } catch (error) {
       console.error("Failed to start quiz:", error);
     } finally {
       setStartingQuiz(false);
+      setQuizProgress(0);
     }
   };
 
@@ -272,7 +285,11 @@ export function GateStatusPanel({
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 backdrop-blur-sm">
               <span className="w-2 h-2 rounded-full bg-gradient-to-br from-emerald-500 to-green-500" />
               <span className="text-sm font-medium text-emerald-700">
-                {startingQuiz ? "Starting..." : "Start Quiz"}
+                {startingQuiz
+                  ? quizProgress > 0
+                    ? `Generating ${quizProgress}/${totalExpected}...`
+                    : "Preparing quiz..."
+                  : "Start Quiz"}
               </span>
             </div>
             <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover/card:bg-gradient-to-br group-hover/card:from-emerald-500 group-hover/card:to-green-500 transition-all duration-300">

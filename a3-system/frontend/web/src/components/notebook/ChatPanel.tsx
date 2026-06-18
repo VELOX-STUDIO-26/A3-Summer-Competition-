@@ -205,6 +205,7 @@ export default function ChatPanel({
 
   return (
     <div 
+      data-tour="tour-chat"
       className={`flex flex-col bg-white relative z-10 shrink-0 overflow-hidden ${isSidebar ? "border-l border-gray-200" : "flex-1 min-w-0"}`}
       style={isSidebar && width ? { width: `${width}px` } : isSidebar ? { width: '384px' } : undefined}
     >

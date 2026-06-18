@@ -46,6 +46,7 @@ export default function LearningPathPanel({
 }: LearningPathPanelProps) {
   return (
     <div
+      data-tour="tour-sidebar"
       className={`relative flex flex-col bg-white border-r border-gray-100 transition-all duration-300 ease-in-out shrink-0 overflow-hidden font-[var(--font-nunito)]
         lg:relative lg:translate-x-0 lg:z-auto lg:h-auto
         fixed inset-y-0 left-0 z-50 h-full
@@ -213,7 +214,7 @@ export default function LearningPathPanel({
       </div>
 
       {/* Analytics Link */}
-      <div className={`border-t border-gray-100 ${isCollapsed ? "p-1.5" : "p-3"}`}>
+      <div data-tour="tour-analytics" className={`border-t border-gray-100 ${isCollapsed ? "p-1.5" : "p-3"}`}>
         <Link
           href="/analytics"
           title={isCollapsed ? "Analytics" : undefined}

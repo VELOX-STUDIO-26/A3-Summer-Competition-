@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAppStore } from "@/lib/store";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -11,6 +12,24 @@ export const api = axios.create({
   // generation requests; specific calls override with shorter/longer values.
   timeout: 120000,
 });
+
+// Attach JWT token to every request
+api.interceptors.request.use((config) => {
+  const token = useAppStore.getState().accessToken;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Helper to get the current token for non-axios requests (e.g. fetch/SSE)
+export function getAuthHeaders(): Record<string, string> {
+  const token = useAppStore.getState().accessToken;
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
+}
 
 // Chat / Profiling
 export async function startChat(studentId: string) {
@@ -186,7 +205,7 @@ export async function* generateResourcesStream(
 ): AsyncGenerator<ResourceStreamEvent> {
   const res = await fetch(`${API_BASE_URL}/api/resources/generate/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify(request),
   });
 
@@ -221,7 +240,7 @@ export async function* generateResourcesStream(
 
 export async function getRemedialResources(studentId: string, topic: string) {
   // 3 min: backend may be busy with concurrent generation requests
-  const res = await api.get(`/api/resources/remedial/${studentId}/${topic}`, {
+  const res = await api.get(`/api/resources/remedial/${topic}`, {
     timeout: 180000,
   });
   return res.data;
@@ -246,7 +265,7 @@ export interface TutorStreamEvent {
 export async function* askTutorStream(request: unknown): AsyncGenerator<TutorStreamEvent> {
   const res = await fetch(`${API_BASE_URL}/api/tutor/ask/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify(request),
   });
 
@@ -299,7 +318,7 @@ export async function createTutorSession(studentId: string, currentTopic?: strin
 }
 
 export async function listTutorSessions(studentId: string) {
-  const res = await api.get("/api/tutor/sessions", { params: { student_id: studentId } });
+  const res = await api.get("/api/tutor/sessions");
   return res.data as TutorSession[];
 }
 
@@ -339,7 +358,7 @@ export async function* sendTutorMessageStream(
 ): AsyncGenerator<TutorStreamEvent> {
   const res = await fetch(`${API_BASE_URL}/api/tutor/sessions/${sessionId}/messages/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ content, current_topic: currentTopic }),
     signal: abortSignal,
   });
@@ -376,17 +395,17 @@ export async function* sendTutorMessageStream(
 
 // Analytics
 export async function getAnalytics(studentId: string) {
-  const res = await api.get(`/api/analytics/${studentId}`);
+  const res = await api.get(`/api/analytics/me`);
   return res.data;
 }
 
 export async function getDashboardSummary(studentId: string) {
-  const res = await api.get(`/api/analytics/${studentId}/dashboard`);
+  const res = await api.get(`/api/analytics/me/dashboard`);
   return res.data;
 }
 
 export async function getAnalyticsInsights(studentId: string, refresh: boolean = false) {
-  const res = await api.get(`/api/analytics/${studentId}/insights`, { 
+  const res = await api.get(`/api/analytics/me/insights`, { 
     params: { refresh },
     timeout: 60000 
   });
@@ -394,12 +413,12 @@ export async function getAnalyticsInsights(studentId: string, refresh: boolean =
 }
 
 export async function getAnalyticsProgress(studentId: string, days: number = 30) {
-  const res = await api.get(`/api/analytics/${studentId}/progress`, { params: { days } });
+  const res = await api.get(`/api/analytics/me/progress`, { params: { days } });
   return res.data;
 }
 
 export async function getAnalyticsActivity(studentId: string, limit: number = 20) {
-  const res = await api.get(`/api/analytics/${studentId}/activity`, { params: { limit } });
+  const res = await api.get(`/api/analytics/me/activity`, { params: { limit } });
   return res.data;
 }
 
@@ -445,6 +464,79 @@ export async function generateQuiz(request: {
 }) {
   const res = await api.post("/api/quiz/generate", request, { timeout: 180000 });
   return res.data;
+}
+
+export interface QuizStreamEvent {
+  event: "question" | "complete" | "error";
+  index?: number;
+  question?: Record<string, unknown>;
+  quiz_id?: string;
+  num_questions?: number;
+  is_existing?: boolean;
+  message?: string;
+}
+
+/**
+ * Stream quiz generation via SSE. Yields question events as they are parsed
+ * from the LLM stream, then a final complete event with the saved quiz_id.
+ */
+export async function* generateQuizStream(request: {
+  student_id: string;
+  topic: string;
+  node_id?: string;
+  num_questions?: number;
+  difficulty?: number;
+  context?: string;
+}): AsyncGenerator<QuizStreamEvent> {
+  const baseURL =
+    (typeof window !== "undefined" && (window as unknown as Record<string, unknown>).__NEXT_PUBLIC_API_URL) ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:8000";
+
+  const response = await fetch(`${baseURL}/api/quiz/generate/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`Quiz stream failed: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        const jsonStr = line.slice(6).trim();
+        if (!jsonStr) continue;
+        try {
+          yield JSON.parse(jsonStr) as QuizStreamEvent;
+        } catch {
+          // skip malformed
+        }
+      }
+    }
+  }
+
+  // Process remaining buffer
+  if (buffer.trim().startsWith("data: ")) {
+    const jsonStr = buffer.trim().slice(6);
+    try {
+      yield JSON.parse(jsonStr) as QuizStreamEvent;
+    } catch {
+      // skip
+    }
+  }
 }
 
 export async function getQuiz(quizId: string) {
@@ -526,7 +618,7 @@ export async function registerUser(payload: {
 }
 
 export async function getMe(studentId: string) {
-  const res = await api.get("/api/auth/me", { params: { student_id: studentId } });
+  const res = await api.get("/api/auth/me");
   return res.data;
 }
 
@@ -543,7 +635,7 @@ export async function loginWithGoogle(payload: {
 
 // Delete user account and all associated data
 export async function deleteAccount(studentId: string): Promise<{ message: string; student_id: string }> {
-  const res = await api.delete(`/api/auth/account/${studentId}`);
+  const res = await api.delete(`/api/auth/account`);
   return res.data;
 }
 
@@ -918,6 +1010,106 @@ export async function generateHierarchicalGraph(
   return res.data;
 }
 
+export interface GraphStreamEvent {
+  event: "graph" | "subtopics_ready" | "complete" | "error";
+  // graph event
+  graph?: HierarchicalGraphResponse;
+  is_new?: boolean;
+  remaining_generations?: number;
+  // subtopics_ready event
+  main_topic_id?: string;
+  main_topic_node_id?: string;
+  subtopics?: SubtopicInfo[];
+  // complete event
+  total_time?: number;
+  // error event
+  error?: string;
+}
+
+/**
+ * Stream hierarchical graph generation over SSE.
+ *
+ * Yields events as they arrive:
+ * - "graph": milestones ready (no subtopics yet) — renders immediately
+ * - "subtopics_ready": one milestone's subtopics just finished
+ * - "complete": all done
+ * - "error": something went wrong
+ */
+export async function* generateHierarchicalGraphStream(
+  subject: string,
+  studentId: string,
+  options: {
+    goals?: string[];
+    knowledgeBase?: Record<string, number>;
+    cognitiveStyle?: string;
+    learningPace?: number;
+    isPremium?: boolean;
+  } = {}
+): AsyncGenerator<GraphStreamEvent> {
+  const params = new URLSearchParams({
+    student_id: studentId,
+    is_premium: String(options.isPremium || false),
+  });
+
+  const res = await fetch(
+    `${API_BASE_URL}/api/hierarchical/generate/stream?${params}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+      body: JSON.stringify({
+        subject,
+        goals: options.goals || [],
+        knowledge_base: options.knowledgeBase || {},
+        cognitive_style: options.cognitiveStyle || "mixed",
+        learning_pace: options.learningPace || 0.5,
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Graph stream failed (${res.status}): ${text}`);
+  }
+
+  if (!res.body) throw new Error("No response body");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("data: ")) {
+        const jsonStr = trimmed.slice(6);
+        if (jsonStr === "[DONE]") continue;
+        try {
+          yield JSON.parse(jsonStr) as GraphStreamEvent;
+        } catch {
+          // skip malformed JSON
+        }
+      }
+    }
+  }
+
+  // Process remaining buffer
+  if (buffer.trim().startsWith("data: ")) {
+    const jsonStr = buffer.trim().slice(6);
+    try {
+      yield JSON.parse(jsonStr) as GraphStreamEvent;
+    } catch {
+      // skip
+    }
+  }
+}
+
 export async function getHierarchicalGraph(
   graphId: string
 ): Promise<HierarchicalGraphResponse> {
@@ -1087,7 +1279,7 @@ export async function getHierarchicalQuota(
   subject: string,
   isPremium: boolean = false
 ): Promise<{ can_generate: boolean; remaining: number; is_premium: boolean }> {
-  const res = await api.get(`/api/hierarchical/quota/${studentId}`, {
+  const res = await api.get(`/api/hierarchical/quota`, {
     params: { subject, is_premium: isPremium },
   });
   return res.data;
@@ -1135,8 +1327,7 @@ export async function submitPathRating(
 ): Promise<PathRatingResponse> {
   const res = await api.post(
     `/api/analytics/paths/${graphId}/rate`,
-    rating,
-    { params: { student_id: studentId } }
+    rating
   );
   return res.data;
 }
@@ -1183,8 +1374,7 @@ export async function startLearningSession(
 ): Promise<SessionResponse> {
   const res = await api.post(
     "/api/analytics/sessions/start",
-    { graph_id: graphId, subtopic_id: subtopicId, device_type: deviceType },
-    { params: { student_id: studentId } }
+    { graph_id: graphId, subtopic_id: subtopicId, device_type: deviceType }
   );
   return res.data;
 }

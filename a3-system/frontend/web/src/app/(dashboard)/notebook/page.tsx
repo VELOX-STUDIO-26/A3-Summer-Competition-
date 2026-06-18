@@ -17,6 +17,7 @@ import {
   QuizConfigModal,
   ResourcePreview,
 } from "@/components/notebook";
+import OnboardingTour from "@/components/notebook/OnboardingTour";
 import { RatingPrompt } from "@/app/components/PathRating";
 import { MessageSquare, Plus, PanelRightOpen } from "lucide-react";
 
@@ -77,6 +78,30 @@ export default function NotebookPage() {
     if (graphId) setActiveGraphId(graphId);
   }, [graphId, setActiveGraphId]);
   const [graphSubject, setGraphSubject] = useState<string>("");
+
+  // Onboarding tour — show when arriving from new-path generation
+  const showTourParam = searchParams.get("tour") === "1";
+  const [showTour, setShowTour] = useState(false);
+
+  useEffect(() => {
+    if (showTourParam && graphId) {
+      const tourKey = `tour_seen_${graphId}`;
+      if (!localStorage.getItem(tourKey)) {
+        setShowTour(true);
+      }
+    }
+  }, [showTourParam, graphId]);
+
+  const handleTourComplete = useCallback(() => {
+    setShowTour(false);
+    if (graphId) {
+      localStorage.setItem(`tour_seen_${graphId}`, "1");
+    }
+    // Remove tour param from URL without reload
+    const url = new URL(window.location.href);
+    url.searchParams.delete("tour");
+    window.history.replaceState({}, "", url.toString());
+  }, [graphId]);
 
   // Learning path state
   const [learningPath, setLearningPath] = useState<PathNode[]>(DEFAULT_PATH);
@@ -247,11 +272,15 @@ export default function NotebookPage() {
             // Convert hierarchical graph to path nodes.
             // A subtopic is "completed" if its milestone is recorded complete;
             // the first not-yet-completed subtopic becomes "current".
+            // Sort by order_index to ensure correct milestone ordering.
             const convertedPath: PathNode[] = [];
             let foundCurrentSubtopic = false;
             let currentSubtopicTitle = "";
+            const orderedTopics = [...graph.main_topics].sort(
+              (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+            );
 
-            for (const mainTopic of graph.main_topics) {
+            for (const mainTopic of orderedTopics) {
               const hasSubtopics = mainTopic.subtopics && mainTopic.subtopics.length > 0;
 
               // Add main topic as a header node (status filled in after subtopics)
@@ -294,6 +323,12 @@ export default function NotebookPage() {
                     parentId: mainTopic.id,
                   });
                 }
+              } else if (!foundCurrentSubtopic) {
+                // Milestone has no subtopics yet (still generating).
+                // Mark it as current so the path starts here.
+                mainHasCurrent = true;
+                foundCurrentSubtopic = true;
+                currentSubtopicTitle = mainTopic.title;
               }
 
               // Derive main topic status from its subtopics
@@ -959,6 +994,16 @@ export default function NotebookPage() {
           handleAgentClick("quiz", { difficulty: quizDifficulty, count: quizCount });
         }}
       />
+
+      {/* Onboarding Tour */}
+      {showTour && (
+        <OnboardingTour
+          onComplete={handleTourComplete}
+          onExpandChat={() => setIsRightPanelCollapsed(false)}
+          onCollapseChat={() => setIsRightPanelCollapsed(true)}
+          onExpandSidebar={() => setIsLeftPanelCollapsed(false)}
+        />
+      )}
     </div>
   );
 }

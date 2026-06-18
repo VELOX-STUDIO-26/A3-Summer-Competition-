@@ -10,15 +10,13 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Redirects for API calls to backend
-[[redirects]]
-  from = "/api/*"
-  to = "https://your-backend-url.com/api/:splat"
-  status = 200
-  force = true
+# Redirects for API calls to backend (update URL when backend is deployed)
+# [[redirects]]
+#   from = "/api/*"
+#   to = "https://your-backend-url.com/api/:splat"
+#   status = 200
+#   force = true
 
-# SPA fallback
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# NOTE: Do NOT add a SPA fallback redirect (/* -> /index.html) here.
+# The @netlify/plugin-nextjs handles all routing for Next.js apps.
+# A catch-all redirect would break SSR, dynamic routes, and API routes.

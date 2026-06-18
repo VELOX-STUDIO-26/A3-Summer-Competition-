@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.auth import get_current_user
 from core.content_moderator import content_moderator
 from core.conversation_manager import ConversationManager
 from core.llm_client import llm_client
@@ -176,11 +177,12 @@ Title:"""
 @router.post("/sessions", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
 async def create_session(
     request: CreateSessionRequest,
+    current_user: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new tutor session."""
     session = ChatSession(
-        student_id=request.student_id,
+        student_id=current_user,
         session_type="tutor",
         status="active",
         current_node_id=request.current_topic,
@@ -196,7 +198,7 @@ async def create_session(
 
 @router.get("/sessions", response_model=List[SessionResponse])
 async def list_sessions(
-    student_id: str,
+    student_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """List all active tutor sessions for a student, newest first."""
@@ -221,12 +223,15 @@ async def list_sessions(
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
 async def get_session(
     session_id: str,
+    current_user: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Get session details."""
     session = await db.get(ChatSession, session_id)
     if not session or session.session_type != "tutor":
         raise HTTPException(status_code=404, detail="Session not found")
+    if session.student_id != current_user:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     count_result = await db.execute(
         select(ChatMessage).where(ChatMessage.session_id == session_id)
@@ -238,6 +243,7 @@ async def get_session(
 @router.get("/sessions/{session_id}/messages", response_model=List[MessageResponse])
 async def get_messages(
     session_id: str,
+    current_user: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
     limit: int = 200,
@@ -246,6 +252,8 @@ async def get_messages(
     session = await db.get(ChatSession, session_id)
     if not session or session.session_type != "tutor":
         raise HTTPException(status_code=404, detail="Session not found")
+    if session.student_id != current_user:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     result = await db.execute(
         select(ChatMessage)
@@ -271,12 +279,15 @@ async def get_messages(
 async def update_session(
     session_id: str,
     request: UpdateSessionRequest,
+    current_user: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Update session title or status."""
     session = await db.get(ChatSession, session_id)
     if not session or session.session_type != "tutor":
         raise HTTPException(status_code=404, detail="Session not found")
+    if session.student_id != current_user:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     if request.title is not None:
         session.title = request.title
@@ -291,12 +302,15 @@ async def update_session(
 @router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def archive_session(
     session_id: str,
+    current_user: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Archive a session (soft delete)."""
     session = await db.get(ChatSession, session_id)
     if not session or session.session_type != "tutor":
         raise HTTPException(status_code=404, detail="Session not found")
+    if session.student_id != current_user:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     session.status = "archived"
     await db.commit()
@@ -313,12 +327,15 @@ async def archive_session(
 async def send_message(
     session_id: str,
     request: SendMessageRequest,
+    current_user: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Send a message in a tutor session (blocking)."""
     session = await db.get(ChatSession, session_id)
     if not session or session.session_type != "tutor":
         raise HTTPException(status_code=404, detail="Session not found")
+    if session.student_id != current_user:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     if session.status != "active":
         raise HTTPException(status_code=400, detail="Session is archived")
@@ -429,6 +446,7 @@ async def send_message(
 async def send_message_stream(
     session_id: str,
     request: SendMessageRequest,
+    current_user: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     raw_request: Request = None,
 ):
@@ -436,6 +454,8 @@ async def send_message_stream(
     session = await db.get(ChatSession, session_id)
     if not session or session.session_type != "tutor":
         raise HTTPException(status_code=404, detail="Session not found")
+    if session.student_id != current_user:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     if session.status != "active":
         raise HTTPException(status_code=400, detail="Session is archived")

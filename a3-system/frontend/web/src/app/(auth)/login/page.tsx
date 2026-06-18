@@ -12,7 +12,7 @@ import { signInWithGoogle, signInWithEmail, resetPassword } from "@/lib/firebase
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setStudentId, setProfile, setUserName, setUserEmail, logout } = useAppStore();
+  const { setStudentId, setAccessToken, setProfile, setUserName, setUserEmail, logout } = useAppStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -57,6 +57,7 @@ export default function LoginPage() {
       logout();
       // Set new user data
       setStudentId(data.student_id);
+      setAccessToken(data.access_token);
       setProfile(data.profile);
       setUserName(data.name || data.email.split("@")[0]);
       setUserEmail(data.email);
@@ -105,6 +106,7 @@ export default function LoginPage() {
 
       logout();
       setStudentId(data.student_id);
+      setAccessToken(data.access_token);
       setProfile(data.profile);
       setUserName(data.name || data.email.split("@")[0]);
       setUserEmail(data.email);

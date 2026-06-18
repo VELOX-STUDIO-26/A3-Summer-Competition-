@@ -28,7 +28,7 @@ import LearningPathGraph from "@/app/components/LearningPathGraph";
 import {
   startChat,
   sendMessage,
-  generateHierarchicalGraph,
+  generateHierarchicalGraphStream,
   ensureSubtopicsForTopic,
   getPathRatings,
   type HierarchicalGraphResponse,
@@ -426,7 +426,7 @@ function GeneratingState({
             ) : (
               <span>Planning your learning path...</span>
             )}
-            <span className="font-medium text-[#6B7F6B]">Usually takes ~15 seconds</span>
+            <span className="font-medium text-[#6B7F6B]">Usually takes ~45-60 seconds</span>
           </div>
           <div className="h-2 bg-[#E7E2D7] rounded-full overflow-hidden">
             <div
@@ -536,7 +536,6 @@ function PathPreview({
   onBack,
   isRegenerating,
   studentId,
-  isFirstMilestoneLoading,
 }: {
   graph: HierarchicalGraphResponse;
   onAccept: () => void;
@@ -544,7 +543,6 @@ function PathPreview({
   onBack: () => void;
   isRegenerating: boolean;
   studentId: string;
-  isFirstMilestoneLoading: boolean;
 }) {
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
@@ -593,7 +591,11 @@ function PathPreview({
               {graph.subject}
             </h2>
             <p className="text-sm text-[#888] mt-1">
-              {graph.main_topic_count} milestones • {graph.total_subtopic_count} lessons • Personalized for your profile
+              {graph.main_topic_count} milestones
+              {graph.main_topics.some(t => t.subtopics.length > 0)
+                ? ` • ${graph.main_topics.reduce((sum, t) => sum + t.subtopics.length, 0)} lessons`
+                : " • Lessons loading..."}
+              {" • "}Personalized for your profile
             </p>
           </div>
           <div className="text-right">
@@ -605,13 +607,36 @@ function PathPreview({
         {/* Stats - with better contrast and difficulty color coding */}
         <div className="grid grid-cols-4 gap-4 mt-4">
           <div className="text-center p-3 rounded-xl bg-white border border-[#E7E2D7] shadow-sm">
-            <div className="text-xl font-bold text-[#2a2a2a]">{graph.total_subtopic_count}</div>
-            <div className="text-xs font-medium text-[#555]">Lessons</div>
+            {(() => {
+              const actualLessons = graph.main_topics.reduce((sum, t) => sum + t.subtopics.length, 0);
+              const planned = graph.total_subtopic_count;
+              const allLoaded = actualLessons >= planned && planned > 0;
+              return (
+                <>
+                  <div className="text-xl font-bold text-[#2a2a2a]">
+                    {allLoaded ? actualLessons : actualLessons > 0 ? `${actualLessons}/${planned}` : planned > 0 ? planned : "..."}
+                  </div>
+                  <div className="text-xs font-medium text-[#555]">
+                    {allLoaded ? "Lessons" : "Lessons loading"}
+                  </div>
+                </>
+              );
+            })()}
           </div>
           <div className="text-center p-3 rounded-xl bg-white border border-[#E7E2D7] shadow-sm">
-            <div className="text-xl font-bold text-[#2a2a2a]">~{Math.round(graph.total_estimated_minutes / 60)}h</div>
-            <div className="text-xs font-medium text-[#555]">Total Time</div>
-            <div className="text-[10px] text-[#888] mt-0.5">{graph.estimated_duration_weeks} weeks at ~{Math.round((graph.total_estimated_minutes / 60) / graph.estimated_duration_weeks)}h/week</div>
+            {(() => {
+              const totalMins = graph.main_topics.reduce((sum, t) => sum + t.subtopics.reduce((s, sub) => s + (sub.estimated_minutes || 0), 0), 0);
+              const hours = Math.round(totalMins / 60);
+              return (
+                <>
+                  <div className="text-xl font-bold text-[#2a2a2a]">{hours > 0 ? `~${hours}h` : "..."}</div>
+                  <div className="text-xs font-medium text-[#555]">Total Time</div>
+                  {hours > 0 && graph.estimated_duration_weeks > 0 && (
+                    <div className="text-[10px] text-[#888] mt-0.5">{graph.estimated_duration_weeks} weeks at ~{Math.round(hours / graph.estimated_duration_weeks)}h/week</div>
+                  )}
+                </>
+              );
+            })()}
           </div>
           <div className="text-center p-3 rounded-xl bg-white border border-[#E7E2D7] shadow-sm">
             <div className="flex items-center justify-center gap-1.5">
@@ -772,7 +797,9 @@ function PathPreview({
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-[#2a2a2a] truncate">{topic.title}</div>
                       <div className="text-xs text-[#888]">
-                        {topic.subtopic_count} lessons • ~{topic.estimated_minutes}min
+                        {topic.subtopics.length > 0
+                          ? `${topic.subtopics.length} lessons • ~${topic.subtopics.reduce((s, sub) => s + (sub.estimated_minutes || 0), 0)}min`
+                          : `${topic.subtopic_count} lessons planned`}
                       </div>
                     </div>
                     {isLoading ? (
@@ -819,9 +846,10 @@ function PathPreview({
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-[#888] italic">
-                          {topic.subtopic_count} lessons — generated when you start this milestone.
-                        </p>
+                        <div className="flex items-center gap-2 py-2 text-sm text-[#888]">
+                          <Loader2 className="w-4 h-4 animate-spin text-[#6B7F6B]" />
+                          <span className="italic">{topic.subtopic_count} lessons generating in background...</span>
+                        </div>
                       )}
                     </div>
                   )}
@@ -855,31 +883,14 @@ function PathPreview({
           {/* Bottom: Main CTA with preview hint */}
           <button
             onClick={onAccept}
-            disabled={isFirstMilestoneLoading}
-            className={cn(
-              "w-full py-3.5 px-6 bg-[#8FBC8F] text-[#1a2e1a] font-bold rounded-xl shadow-lg transform transition-all duration-200 flex items-center justify-center gap-2",
-              isFirstMilestoneLoading
-                ? "opacity-70 cursor-not-allowed"
-                : "hover:bg-[#7CAD7C] hover:shadow-xl hover:scale-[1.02]"
-            )}
+            className="w-full py-3.5 px-6 bg-[#8FBC8F] text-[#1a2e1a] font-bold rounded-xl shadow-lg transform transition-all duration-200 flex items-center justify-center gap-2 hover:bg-[#7CAD7C] hover:shadow-xl hover:scale-[1.02]"
           >
-            {isFirstMilestoneLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Preparing your first milestone...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                Accept & Start Learning
-                <ChevronRight className="w-5 h-5" />
-              </>
-            )}
+            <Sparkles className="w-5 h-5" />
+            Accept & Start Learning
+            <ChevronRight className="w-5 h-5" />
           </button>
           <p className="text-center text-xs text-[#888]">
-            {isFirstMilestoneLoading
-              ? "We're generating the lessons for your first milestone."
-              : "You'll go to your notebook with the first milestone unlocked"}
+            You'll go to your notebook with the first milestone unlocked
           </p>
         </div>
       </div>
@@ -907,8 +918,6 @@ export default function NewPathPage() {
   const [subject, setSubject] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedGraph, setGeneratedGraph] = useState<HierarchicalGraphResponse | null>(null);
-  const [firstMilestoneLoading, setFirstMilestoneLoading] = useState(false);
-  const [firstMilestoneError, setFirstMilestoneError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -947,19 +956,38 @@ export default function NewPathPage() {
         setIsGenerating(true);
         setIsInitializing(false);
         
-        // Generate path directly
+        // Generate path directly via streaming
         try {
-          const result = await generateHierarchicalGraph(subjectToLearn, studentId, {
+          const stream = generateHierarchicalGraphStream(subjectToLearn, studentId, {
             goals: profile.goals || [],
             knowledgeBase: profile.knowledge_base || {},
             cognitiveStyle: profile.cognitive_style || "mixed",
             learningPace: profile.learning_pace || 0.5,
           });
-          setGeneratedGraph(result.graph);
-          setStep("preview");
+          for await (const event of stream) {
+            if (event.event === "graph" && event.graph) {
+              setGeneratedGraph(event.graph);
+              setStep("preview");
+              setIsGenerating(false);
+            } else if (event.event === "subtopics_ready" && event.main_topic_id) {
+              setGeneratedGraph((prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  main_topics: prev.main_topics.map((mt) =>
+                    mt.id === event.main_topic_id
+                      ? { ...mt, subtopics: event.subtopics || [], subtopic_count: event.subtopics?.length || 0 }
+                      : mt
+                  ),
+                };
+              });
+            } else if (event.event === "error") {
+              router.push("/profile-summary?error=generation_failed");
+              return;
+            }
+          }
         } catch (err: any) {
           console.error("Graph generation failed:", err);
-          // On failure, redirect back to profile-summary with error
           router.push("/profile-summary?error=generation_failed");
         } finally {
           setIsGenerating(false);
@@ -1047,64 +1075,51 @@ export default function NewPathPage() {
     setStep("generating");
     setIsGenerating(true);
     setError(null);
-    setFirstMilestoneError(null);
+
 
     try {
-      const result = await generateHierarchicalGraph(subjectName, studentId!, {
+      const stream = generateHierarchicalGraphStream(subjectName, studentId!, {
         goals: extractedProfile?.goals || profile?.goals || [],
         knowledgeBase: extractedProfile?.knowledge_base || profile?.knowledge_base || {},
         cognitiveStyle: extractedProfile?.cognitive_style || profile?.cognitive_style || "mixed",
         learningPace: extractedProfile?.learning_pace || profile?.learning_pace || 0.5,
       });
 
-      setGeneratedGraph(result.graph);
-      setStep("preview");
-
-      // Two-pass UI: the backend now returns milestones only. Kick off Pass 2
-      // for the first milestone in the background so the student can start
-      // learning as soon as they accept the path.
-      const sortedMains = [...result.graph.main_topics].sort(
-        (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
-      );
-      const firstMain = sortedMains[0];
-      if (firstMain && (!firstMain.subtopics || firstMain.subtopics.length === 0)) {
-        setFirstMilestoneLoading(true);
-        ensureSubtopicsForTopic(result.graph.id, firstMain.id, studentId!)
-          .then((materialized) => {
-            setGeneratedGraph((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                main_topics: prev.main_topics.map((mt) =>
-                  mt.id === materialized.id ? materialized : mt
-                ),
-              };
-            });
-          })
-          .catch((err: any) => {
-            console.error("Failed to preload first milestone:", err);
-            setFirstMilestoneError(
-              err.message || "Failed to prepare the first milestone. You can retry from the preview."
-            );
-          })
-          .finally(() => {
-            setFirstMilestoneLoading(false);
+      for await (const event of stream) {
+        if (event.event === "graph" && event.graph) {
+          // Milestones ready — show preview immediately
+          setGeneratedGraph(event.graph);
+          setStep("preview");
+          setIsGenerating(false);
+        } else if (event.event === "subtopics_ready" && event.main_topic_id) {
+          // One milestone's subtopics just arrived — fill it in
+          setGeneratedGraph((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              main_topics: prev.main_topics.map((mt) =>
+                mt.id === event.main_topic_id
+                  ? { ...mt, subtopics: event.subtopics || [], subtopic_count: event.subtopics?.length || 0 }
+                  : mt
+              ),
+            };
           });
+        } else if (event.event === "error") {
+          setError(event.error || "Generation failed");
+          setIsGenerating(false);
+          return;
+        }
+        // "complete" event — all subtopics done, nothing extra to do
       }
     } catch (err: any) {
       console.error("Graph generation failed:", err);
-      // Provide user-friendly error messages
       let errorMessage = "Failed to generate learning path";
-      if (err.code === "ECONNABORTED" || err.message?.includes("timeout")) {
+      if (err.message?.includes("timeout")) {
         errorMessage = "Generation is taking longer than expected. The AI service may be busy. Please try again.";
-      } else if (err.response?.status === 500) {
-        errorMessage = "Server error occurred. Please try again in a moment.";
       } else if (err.message) {
         errorMessage = err.message;
       }
       setError(errorMessage);
-      // Stay on generating step but show error, don't go back to review
-      // User can retry or go back
     } finally {
       setIsGenerating(false);
     }
@@ -1112,7 +1127,7 @@ export default function NewPathPage() {
 
   const handleAcceptPath = () => {
     if (generatedGraph) {
-      router.push(`/notebook?graph=${generatedGraph.id}`);
+      router.push(`/notebook?graph=${generatedGraph.id}&tour=1`);
     }
   };
 
@@ -1314,7 +1329,6 @@ export default function NewPathPage() {
             onBack={() => setStep("review")}
             isRegenerating={isGenerating}
             studentId={studentId!}
-            isFirstMilestoneLoading={firstMilestoneLoading}
           />
         )}
       </div>

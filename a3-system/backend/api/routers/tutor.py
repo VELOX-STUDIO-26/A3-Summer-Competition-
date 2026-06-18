@@ -13,10 +13,11 @@ import json
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from core.auth import get_current_user
 from core.content_moderator import content_moderator
 from core.logging import get_logger
 from core.tts_client import tts_client
@@ -55,7 +56,7 @@ def _add_to_history(student_id: str, role: str, content: str, max_turns: int = 1
 
 
 @router.post("/ask", response_model=TutorResponse)
-async def ask_tutor(request: TutorRequest):
+async def ask_tutor(request: TutorRequest, current_user: str = Depends(get_current_user)):
     """
     Ask the AI tutor a question.
 
@@ -135,6 +136,7 @@ async def ask_tutor(request: TutorRequest):
 @router.post("/ask/stream")
 async def ask_tutor_stream(
     request: TutorRequest,
+    current_user: str = Depends(get_current_user),
     raw_request: Request = None,
 ):
     """
@@ -222,7 +224,7 @@ async def ask_tutor_stream(
 
 
 @router.post("/speak")
-async def text_to_speech(request: TTSRequest):
+async def text_to_speech(request: TTSRequest, current_user: str = Depends(get_current_user)):
     """
     Convert text to speech using Edge-TTS.
 
@@ -304,6 +306,7 @@ async def analyze_image(
     image: UploadFile = File(..., description="Image file to analyze (PNG, JPG, GIF)"),
     question: str = Form("", description="Optional question about the image"),
     student_id: str = Form(..., description="Student ID"),
+    current_user: str = Depends(get_current_user),
 ):
     """
     Analyze an uploaded image (equation, diagram, code screenshot, etc.)
@@ -366,6 +369,7 @@ async def analyze_image(
 async def extract_equation(
     image: UploadFile = File(..., description="Image of a mathematical equation"),
     student_id: str = Form(..., description="Student ID"),
+    current_user: str = Depends(get_current_user),
 ):
     """
     Extract LaTeX from an image of a mathematical equation.
