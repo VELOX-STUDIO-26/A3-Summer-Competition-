@@ -303,7 +303,7 @@ class HierarchicalGraphService:
             "remaining_generations": remaining if not is_premium else -1,
         }
 
-        # Pass 2: Generate subtopics in parallel (semaphore=5), yield each as it completes
+        # Pass 2: Generate subtopics — first milestone prioritized, then rest in parallel
         if graph.main_topics:
             semaphore = asyncio.Semaphore(5)
             result_queue: asyncio.Queue = asyncio.Queue()
@@ -357,18 +357,25 @@ class HierarchicalGraphService:
                         await session.close()
 
             sorted_milestones = sorted(graph.main_topics, key=lambda mt: mt.order_index)
-            tasks = [asyncio.create_task(_materialize_and_enqueue(mt)) for mt in sorted_milestones]
 
-            # Yield results as they arrive
-            completed = 0
-            total = len(sorted_milestones)
-            while completed < total:
-                result = await result_queue.get()
-                yield result
-                completed += 1
+            # Prioritize the first milestone — generate it alone first so the
+            # student can start learning as soon as possible.
+            first_milestone = sorted_milestones[0]
+            first_task = asyncio.create_task(_materialize_and_enqueue(first_milestone))
+            first_result = await result_queue.get()
+            yield first_result
+            await first_task  # ensure clean completion
 
-            # Ensure all tasks are done (they should be by now)
-            await asyncio.gather(*tasks, return_exceptions=True)
+            # Now generate the remaining milestones in parallel
+            remaining = sorted_milestones[1:]
+            if remaining:
+                tasks = [asyncio.create_task(_materialize_and_enqueue(mt)) for mt in remaining]
+                completed = 0
+                while completed < len(remaining):
+                    result = await result_queue.get()
+                    yield result
+                    completed += 1
+                await asyncio.gather(*tasks, return_exceptions=True)
 
         total_time = time.perf_counter() - service_start
         logger.info(f"generate_graph_stream for '{subject}' completed in {total_time:.2f}s")
