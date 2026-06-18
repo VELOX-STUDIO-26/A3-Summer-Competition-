@@ -247,11 +247,15 @@ export default function NotebookPage() {
             // Convert hierarchical graph to path nodes.
             // A subtopic is "completed" if its milestone is recorded complete;
             // the first not-yet-completed subtopic becomes "current".
+            // Sort by order_index to ensure correct milestone ordering.
             const convertedPath: PathNode[] = [];
             let foundCurrentSubtopic = false;
             let currentSubtopicTitle = "";
+            const orderedTopics = [...graph.main_topics].sort(
+              (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+            );
 
-            for (const mainTopic of graph.main_topics) {
+            for (const mainTopic of orderedTopics) {
               const hasSubtopics = mainTopic.subtopics && mainTopic.subtopics.length > 0;
 
               // Add main topic as a header node (status filled in after subtopics)
@@ -294,6 +298,12 @@ export default function NotebookPage() {
                     parentId: mainTopic.id,
                   });
                 }
+              } else if (!foundCurrentSubtopic) {
+                // Milestone has no subtopics yet (still generating).
+                // Mark it as current so the path starts here.
+                mainHasCurrent = true;
+                foundCurrentSubtopic = true;
+                currentSubtopicTitle = mainTopic.title;
               }
 
               // Derive main topic status from its subtopics
