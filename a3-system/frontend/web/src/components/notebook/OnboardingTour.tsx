@@ -45,7 +45,7 @@ export default function OnboardingTour({
     {
       title: "Your Learning Path",
       description:
-        "This is your learning roadmap. Each milestone represents a major topic, and inside each are subtopics you'll master step by step. Your current position is highlighted in blue — completed topics get checked off as you progress.",
+        "This is your learning roadmap. Each milestone represents a major topic, and inside each are subtopics you'll master step by step. Your current topic is highlighted — completed ones show a checkmark as you progress through the path.",
       icon: <Map className="w-5 h-5" />,
       target: "tour-sidebar",
       cardPosition: "right-of-target",
@@ -56,7 +56,7 @@ export default function OnboardingTour({
     {
       title: "AI-Generated Resources",
       description:
-        "These cards represent your personalized study materials. Resources are being generated right now in the background — you'll see them fill in with content tailored to your learning profile. Click any card to view its content.",
+        "These cards represent your personalized study materials. Resources are being generated right now in the background — you'll see them fill in with content tailored to your learning profile. Click any card to expand and view its content.",
       icon: <Sparkles className="w-5 h-5" />,
       target: "tour-resources",
       cardPosition: "below-target",
@@ -64,7 +64,7 @@ export default function OnboardingTour({
     {
       title: "Meet Your AI Agents",
       description:
-        "Five specialized AI agents work together to create your materials:\n\n📖 Scholar — Comprehensive study notes\n🗺️ Mapper — Visual concept maps\n🧠 Sage — Knowledge-check quizzes\n🎬 Director — Video lesson scripts\n💻 Architect — Hands-on code labs\n\nClick any agent card to generate that resource on demand.",
+        "Five specialized AI agents work together to create your materials:\n\n📖 Scholar — Study notes and explanations\n🗺️ Mapper — Visual mindmaps of concepts\n🧠 Sage — Knowledge-check quizzes\n🎬 Director — Video lesson scripts\n💻 Architect — Hands-on code labs\n\nClick any agent card to generate that resource on demand.",
       icon: <BookOpen className="w-5 h-5" />,
       target: "tour-agents",
       cardPosition: "center",
@@ -72,7 +72,7 @@ export default function OnboardingTour({
     {
       title: "Your AI Tutor — NoboGyan",
       description:
-        "This is your personal AI tutor. Ask questions about any topic you're studying, highlight text in resources to discuss it, or upload images for analysis. NoboGyan adapts to your learning style and remembers your conversation context.",
+        "This is your personal AI tutor. Ask questions about any topic you're studying, highlight text in resources to discuss it, or upload images for analysis. NoboGyan remembers your conversation history across sessions.",
       icon: <MessageSquare className="w-5 h-5" />,
       target: "tour-chat",
       cardPosition: "left-of-target",
@@ -86,7 +86,7 @@ export default function OnboardingTour({
     {
       title: "Track Your Progress",
       description:
-        "Visit Analytics to see detailed insights about your learning journey — time spent, mastery levels, strengths, and areas to improve. The system adapts your path based on your quiz performance and engagement patterns.",
+        "Visit Analytics to see detailed insights about your learning journey — study time, topic mastery, quiz scores, and areas to improve. The system generates targeted remedial resources when you struggle with specific concepts.",
       icon: <BarChart3 className="w-5 h-5" />,
       target: "tour-analytics",
       cardPosition: "right-of-target",
