@@ -21,7 +21,7 @@ class VisionLLMClient:
 
     def __init__(self):
         # Kimi API for vision (Kimi 2.6 is multimodal)
-        self.api_key = os.getenv("KIMI_API_KEY", "sk-xJuTUc3KAhsnnrtRTuNjewyaorAGCwtPaSe2pyogHdTHm4Wb")
+        self.api_key = os.getenv("KIMI_API_KEY", "")
         self.base_url = os.getenv("KIMI_BASE_URL", "https://api.moonshot.cn")
         self.model = "kimi-k2.6"
         # kimi-k2.* require temperature=1.0 with reasoning ON, 0.6 with it OFF

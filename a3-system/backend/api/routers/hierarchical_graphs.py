@@ -9,6 +9,7 @@ Endpoints for:
 """
 
 import uuid
+import time
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -163,12 +164,13 @@ async def generate_graph(
     If an existing verified graph matches, it will be returned instead.
     Free users have 3 generations per subject.
     """
+    endpoint_start = time.perf_counter()
     try:
         service = HierarchicalGraphService(db)
-        
+
         # Check quota first
         can_gen, remaining = await service.can_generate(student_id, request.subject, is_premium)
-        
+
         graph, is_new = await service.generate_graph(
             subject=request.subject,
             student_id=student_id,
@@ -186,6 +188,7 @@ async def generate_graph(
         if is_new:
             remaining = remaining - 1 if remaining > 0 else 0
 
+        logger.info(f"POST /api/hierarchical/generate for '{request.subject}' completed in {time.perf_counter() - endpoint_start:.2f}s")
         return GenerateGraphResponse(
             graph=GraphResponse(**structure),
             is_new=is_new,

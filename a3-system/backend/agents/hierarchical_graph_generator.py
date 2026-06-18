@@ -10,9 +10,11 @@ Each subtopic is a concrete learning unit where resources are generated.
 
 import json
 import re
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from core.config import settings
 from core.llm_client import llm_client
 from core.logging import get_logger
 
@@ -816,6 +818,7 @@ Use this as inspiration but adapt to the student's specific goals and knowledge 
             try:
                 logger.info(f"Planning main topics for '{subject}' (attempt {attempt + 1}/{max_retries})")
 
+                llm_start = time.perf_counter()
                 response = await self.llm.generate(
                     messages=[
                         {"role": "system", "content": "You are an expert curriculum designer. Return ONLY valid JSON with no markdown formatting. The JSON must be complete and properly closed."},
@@ -824,6 +827,7 @@ Use this as inspiration but adapt to the student's specific goals and knowledge 
                     temperature=0.5 if attempt == 0 else 0.3,
                     max_tokens=3000,  # Main topics only -> small output
                 )
+                logger.info(f"Main-topic LLM call for '{subject}' took {time.perf_counter() - llm_start:.2f}s")
 
                 raw_content = response["choices"][0]["message"].get("content") or ""
                 if not raw_content.strip():
@@ -841,6 +845,10 @@ Use this as inspiration but adapt to the student's specific goals and knowledge 
                 raw_main_topics = data.get("main_topics", [])
                 if not raw_main_topics:
                     last_error = "No main topics returned"
+                    logger.warning(f"Attempt {attempt + 1}: {last_error}")
+                    continue
+                if len(raw_main_topics) < 3:
+                    last_error = f"Only {len(raw_main_topics)} main topic(s) returned (need at least 3)"
                     logger.warning(f"Attempt {attempt + 1}: {last_error}")
                     continue
 
@@ -942,6 +950,7 @@ Use this as inspiration but adapt to the student's specific goals and knowledge 
             try:
                 logger.info(f"Generating subtopics for milestone '{main_title}' (attempt {attempt + 1}/{max_retries})")
 
+                llm_start = time.perf_counter()
                 response = await self.llm.generate(
                     messages=[
                         {"role": "system", "content": "You are an expert curriculum designer. Return ONLY valid JSON with no markdown formatting. The JSON must be complete and properly closed."},
@@ -950,6 +959,7 @@ Use this as inspiration but adapt to the student's specific goals and knowledge 
                     temperature=0.5 if attempt == 0 else 0.3,
                     max_tokens=4000,  # One milestone's subtopics -> moderate output
                 )
+                logger.info(f"Subtopic LLM call for '{main_title}' took {time.perf_counter() - llm_start:.2f}s")
 
                 raw_content = response["choices"][0]["message"].get("content") or ""
                 if not raw_content.strip():
@@ -967,6 +977,10 @@ Use this as inspiration but adapt to the student's specific goals and knowledge 
                 raw_subs = data.get("subtopics", []) if isinstance(data, dict) else data
                 if not raw_subs:
                     last_error = "No subtopics returned"
+                    logger.warning(f"Attempt {attempt + 1}: {last_error}")
+                    continue
+                if len(raw_subs) < 3:
+                    last_error = f"Only {len(raw_subs)} subtopic(s) returned (need at least 3)"
                     logger.warning(f"Attempt {attempt + 1}: {last_error}")
                     continue
 

@@ -8,7 +8,9 @@ Handles:
 - Background generation queue
 """
 
+import asyncio
 import uuid
+import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -67,6 +69,7 @@ class HierarchicalGraphService:
         use_template: bool = True,
         validate_quality: bool = True,
         lazy_subtopics: bool = True,
+        materialize_first_milestone: bool = False,
     ) -> Tuple[HierarchicalKnowledgeGraph, bool]:
         """
         Generate a new hierarchical knowledge graph.
@@ -81,18 +84,20 @@ class HierarchicalGraphService:
             is_premium: Premium user flag
             use_template: If True, try to use highly-rated paths as templates
             validate_quality: If True, run quality validation on generated graph
-            lazy_subtopics: If True (default), use two-pass generation -- plan
-                the main topics (milestones) first and only materialize the
-                first milestone's subtopics synchronously. The remaining
-                milestones' subtopics are generated on demand via
-                :meth:`ensure_subtopics_for_topic`. This makes the path appear
-                far faster. If False, the full graph (all subtopics) is
-                generated in a single call.
+            lazy_subtopics: If True, use two-pass generation -- plan the main
+                topics (milestones) first. The milestone subtopics are then
+                generated in parallel (up to 3 at a time). This is faster than
+                full eager generation because each subtopic call is independent.
+                If False, generate the full graph in a single LLM call.
+            materialize_first_milestone: Kept for backwards compatibility. No
+                longer needed since all milestones' subtopics are generated in
+                parallel when lazy_subtopics=True.
 
         Returns:
             Tuple of (graph, is_new) where is_new indicates if a new graph was created
         """
         # Check quota
+        service_start = time.perf_counter()
         can_generate, remaining = await self.can_generate(student_id, subject, is_premium)
         if not can_generate:
             raise ValueError(f"Generation quota exceeded. {remaining} generations remaining.")
@@ -103,6 +108,7 @@ class HierarchicalGraphService:
         existing = await self.find_best_match(subject, goals)
         if existing:
             logger.info(f"Found existing graph for '{subject}': {existing.id}")
+            logger.info(f"generate_graph for '{subject}' completed in {time.perf_counter() - service_start:.2f}s (existing)")
             return existing, False
 
         # Try to find a highly-rated template path
@@ -165,27 +171,49 @@ class HierarchicalGraphService:
         # Update quota
         await self.increment_quota(student_id, subject)
 
-        # In lazy mode, materialize the first milestone's subtopics so the
-        # student can start learning immediately. The rest are filled in on
-        # demand as the student reaches each milestone.
+        # In lazy mode, materialize ALL milestones' subtopics in parallel.
+        # This avoids N sequential LLM calls when the student clicks each
+        # milestone. Uses a semaphore of 3 to avoid overwhelming the API.
+        # Each subtopic generation gets its own DB session to avoid SQLAlchemy
+        # async concurrency issues.
         if lazy_subtopics and graph.main_topics:
-            first_main = min(graph.main_topics, key=lambda mt: mt.order_index)
-            try:
-                await self.ensure_subtopics_for_topic(
-                    graph_id=graph.id,
-                    main_topic_node_id=first_main.node_id,
-                    student_id=None,  # progress is initialized on /accept
-                    goals=goals,
-                    knowledge_base=knowledge_base,
-                    cognitive_style=cognitive_style,
-                    learning_pace=learning_pace,
-                )
-                graph = await self.get_graph(graph.id)
-            except Exception as e:
-                # A failure here shouldn't lose the whole path -- the student can
-                # still trigger materialization from the notebook.
-                logger.error(f"Failed to materialize first milestone subtopics: {e}")
+            from models.database import db_manager
 
+            semaphore = asyncio.Semaphore(3)
+
+            async def _materialize_one(main_topic: MainTopic) -> Tuple[str, Optional[str]]:
+                async with semaphore:
+                    session = await db_manager.get_async_session()
+                    try:
+                        parallel_service = HierarchicalGraphService(session)
+                        await parallel_service.ensure_subtopics_for_topic(
+                            graph_id=graph.id,
+                            main_topic_node_id=main_topic.node_id,
+                            student_id=None,
+                            goals=goals,
+                            knowledge_base=knowledge_base,
+                            cognitive_style=cognitive_style,
+                            learning_pace=learning_pace,
+                        )
+                        return main_topic.node_id, None
+                    except Exception as e:
+                        logger.error(f"Failed to materialize subtopics for '{main_topic.title}': {e}")
+                        return main_topic.node_id, str(e)
+                    finally:
+                        await session.close()
+
+            sorted_milestones = sorted(graph.main_topics, key=lambda mt: mt.order_index)
+            tasks = [_materialize_one(mt) for mt in sorted_milestones]
+            results = await asyncio.gather(*tasks)
+
+            # Re-fetch so the returned graph includes all subtopics
+            graph = await self.get_graph(graph.id)
+
+            ok = sum(1 for _, err in results if err is None)
+            nok = sum(1 for _, err in results if err is not None)
+            logger.info(f"Parallel subtopic materialization for '{subject}': {ok}/{len(results)} milestones done, {nok} failed")
+
+        logger.info(f"generate_graph for '{subject}' completed in {time.perf_counter() - service_start:.2f}s (new)")
         return graph, True
 
     async def _get_template_path(
@@ -334,6 +362,7 @@ class HierarchicalGraphService:
         graph, locked progress rows are created for the new subtopics so the
         existing progression logic keeps working.
         """
+        ensure_start = time.perf_counter()
         graph = await self.get_graph(graph_id)
         if not graph:
             raise ValueError(f"Graph {graph_id} not found")
@@ -347,6 +376,7 @@ class HierarchicalGraphService:
 
         # Already materialized -> nothing to do.
         if main_topic.subtopics:
+            logger.info(f"ensure_subtopics_for_topic '{main_topic.title}' no-op (already materialized) in {time.perf_counter() - ensure_start:.2f}s")
             return main_topic
 
         # Personalization context: prefer explicit args, fall back to the graph's
@@ -417,12 +447,18 @@ class HierarchicalGraphService:
             f"'{main_topic.title}' in graph {graph_id}"
         )
 
-        # Re-fetch with relationships for a consistent return value.
-        refreshed = await self.get_graph(graph_id)
-        return next(
-            (mt for mt in refreshed.main_topics if mt.node_id == main_topic_node_id),
-            None,
+        # Re-fetch with relationships for a consistent return value. The commit
+        # expires the original object, so load the specific milestone with its
+        # subtopics to avoid returning stale (empty) collections to the UI.
+        self.db.expire(main_topic)
+        refreshed_topic_result = await self.db.execute(
+            select(MainTopic)
+            .where(MainTopic.id == main_topic.id)
+            .options(selectinload(MainTopic.subtopics))
         )
+        refreshed_topic = refreshed_topic_result.scalar_one()
+        logger.info(f"ensure_subtopics_for_topic '{main_topic.title}' completed in {time.perf_counter() - ensure_start:.2f}s")
+        return refreshed_topic
 
     async def _materialize_progress_for_subtopics(
         self,
@@ -431,11 +467,13 @@ class HierarchicalGraphService:
         main_topic_id: uuid.UUID,
         subtopics: List[Subtopic],
     ) -> None:
-        """Create locked progress rows for lazily-generated subtopics.
+        """Create progress rows for lazily-generated subtopics.
 
-        Only runs if the student already has progress for this graph (i.e. they
-        accepted it). New subtopics start locked; the existing unlock logic
-        promotes them when the student reaches the milestone.
+        Runs whenever ``ensure_subtopics_for_topic`` is called with a
+        ``student_id``. If the student already has progress for this graph, the
+        new subtopics start locked and the existing unlock logic promotes them.
+        If this is the very first materialization for the student, the first
+        subtopic is unlocked so they can start learning immediately.
         """
         existing = await self.db.execute(
             select(StudentSubtopicProgress.subtopic_id).where(
@@ -444,21 +482,23 @@ class HierarchicalGraphService:
             )
         )
         existing_ids = {row[0] for row in existing.all()}
-        if not existing_ids:
-            # Student hasn't accepted the graph yet -- progress is initialized on
-            # /accept, which will pick up these subtopics.
-            return
+        is_first_materialization = not existing_ids
 
-        for subtopic in subtopics:
+        sorted_subtopics = sorted(subtopics, key=lambda s: s.order_index)
+        for idx, subtopic in enumerate(sorted_subtopics):
             if subtopic.id in existing_ids:
                 continue
+            # First subtopic ever for this student starts unlocked so they can
+            # begin learning; all others (and all subsequent materializations)
+            # start locked.
+            status = "unlocked" if is_first_materialization and idx == 0 else "locked"
             self.db.add(StudentSubtopicProgress(
                 id=uuid.uuid4(),
                 student_id=student_id,
                 graph_id=graph_id,
                 main_topic_id=main_topic_id,
                 subtopic_id=subtopic.id,
-                status="locked",
+                status=status,
                 gate_score=0.0,
                 quiz_unlocked=False,
                 quiz_passed=False,

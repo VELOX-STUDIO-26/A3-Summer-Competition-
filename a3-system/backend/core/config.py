@@ -99,8 +99,13 @@ class LLMSettings(BaseSettings):
     # OpenRouter (Primary - Free tier)
     api_key: Optional[str] = Field(default=None, description="OpenRouter API key")
     api_key_fallback: Optional[str] = Field(default=None, description="Secondary OpenRouter API key used when the primary is rate-limited or invalid")
-    model: str = Field(default="meta-llama/llama-3.1-70b-instruct", description="OpenRouter model")
+    model: str = Field(default="openrouter/free", description="OpenRouter model")
     embedding_model: str = Field(default="nvidia/llama-nemotron-embed-vl-1b-v2:free", description="OpenRouter embedding model (free tier)")
+
+    # Kimi (Moonshot AI - paid production)
+    kimi_api_key: Optional[str] = Field(default=None, description="Kimi/Moonshot API key")
+    kimi_base_url: str = Field(default="https://api.moonshot.cn", description="Kimi API base URL")
+    kimi_model: str = Field(default="kimi-k2.6", description="Kimi chat model (e.g. kimi-k2.6, kimi-k2.7-code-highspeed)")
 
     # OpenAI (Optional)
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
