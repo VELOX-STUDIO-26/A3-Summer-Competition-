@@ -13,6 +13,33 @@ Format:
 
 ---
 
+## 2026-06-18 - Onboarding tour for new notebook users
+
+### Changes Made
+- Created `OnboardingTour` component — 5-step guided walkthrough with animated spotlight
+- Tour highlights: learning path sidebar, AI resources, agent types, AI tutor, analytics
+- Triggered via `?tour=1` URL param (added when navigating from new-path page)
+- Saves completion to localStorage per-graph (won't re-show)
+- Keyboard navigation (arrow keys, Enter, Esc) + skip button
+- Uses Framer Motion for smooth transitions between steps
+
+### Reason
+- When users first arrive at the notebook, resources are still generating in the background.
+- The tour occupies this wait time productively by teaching the user how the platform works.
+- Improves first-time user experience and reduces confusion about available features.
+
+### Files
+- `a3-system/frontend/web/src/components/notebook/OnboardingTour.tsx` (new component)
+- `a3-system/frontend/web/src/app/(dashboard)/notebook/page.tsx` (tour integration)
+- `a3-system/frontend/web/src/app/(dashboard)/new-path/page.tsx` (adds `&tour=1` to redirect)
+
+### Impact / Testing
+- Only affects first visit from new-path generation (non-intrusive)
+- Navigate: generate a new learning path → accept → notebook shows tour
+- Tour auto-dismissed after completion, won't show again for same graph
+
+---
+
 ## 2026-06-18 - Stream quiz generation for faster perceived response
 
 ### Changes Made

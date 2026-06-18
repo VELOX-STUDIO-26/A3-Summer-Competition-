@@ -17,6 +17,7 @@ import {
   QuizConfigModal,
   ResourcePreview,
 } from "@/components/notebook";
+import OnboardingTour from "@/components/notebook/OnboardingTour";
 import { RatingPrompt } from "@/app/components/PathRating";
 import { MessageSquare, Plus, PanelRightOpen } from "lucide-react";
 
@@ -77,6 +78,30 @@ export default function NotebookPage() {
     if (graphId) setActiveGraphId(graphId);
   }, [graphId, setActiveGraphId]);
   const [graphSubject, setGraphSubject] = useState<string>("");
+
+  // Onboarding tour — show when arriving from new-path generation
+  const showTourParam = searchParams.get("tour") === "1";
+  const [showTour, setShowTour] = useState(false);
+
+  useEffect(() => {
+    if (showTourParam && graphId) {
+      const tourKey = `tour_seen_${graphId}`;
+      if (!localStorage.getItem(tourKey)) {
+        setShowTour(true);
+      }
+    }
+  }, [showTourParam, graphId]);
+
+  const handleTourComplete = useCallback(() => {
+    setShowTour(false);
+    if (graphId) {
+      localStorage.setItem(`tour_seen_${graphId}`, "1");
+    }
+    // Remove tour param from URL without reload
+    const url = new URL(window.location.href);
+    url.searchParams.delete("tour");
+    window.history.replaceState({}, "", url.toString());
+  }, [graphId]);
 
   // Learning path state
   const [learningPath, setLearningPath] = useState<PathNode[]>(DEFAULT_PATH);
@@ -969,6 +994,9 @@ export default function NotebookPage() {
           handleAgentClick("quiz", { difficulty: quizDifficulty, count: quizCount });
         }}
       />
+
+      {/* Onboarding Tour */}
+      {showTour && <OnboardingTour onComplete={handleTourComplete} />}
     </div>
   );
 }

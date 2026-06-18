@@ -1127,7 +1127,7 @@ export default function NewPathPage() {
 
   const handleAcceptPath = () => {
     if (generatedGraph) {
-      router.push(`/notebook?graph=${generatedGraph.id}`);
+      router.push(`/notebook?graph=${generatedGraph.id}&tour=1`);
     }
   };
 
