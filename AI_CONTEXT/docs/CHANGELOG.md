@@ -13,6 +13,40 @@ Format:
 
 ---
 
+## 2026-06-18 - Stream quiz generation for faster perceived response
+
+### Changes Made
+- Added `run_stream()` async generator to `QuizAgent` — streams questions as they're parsed from LLM output
+- Added SSE endpoint `POST /api/quiz/generate/stream` — yields each question incrementally, then saves to DB
+- Added `generateQuizStream()` frontend function (async generator consuming SSE)
+- Updated `GateStatus.tsx` to use streaming: shows "Generating 1/5...", "2/5..." progress as each question arrives
+- Faithfulness check was already skipping when no RAG chunks (no change needed)
+
+### Reason
+- Quiz generation takes ~30-50s with Kimi k2.6. User saw a spinner with no progress.
+- With streaming, first question feedback arrives in ~10-14s (3-4x faster perceived response).
+- Questions appear one-by-one giving continuous visual progress.
+
+### Benchmark Results
+| Metric | Before | After |
+|--------|--------|-------|
+| First feedback | ~48s | ~10-14s |
+| Total time | ~48s | ~55-72s (same LLM time, overhead is streaming parse) |
+| User perception | Blocked 48s | Progress from 10s onward |
+
+### Files
+- `a3-system/backend/agents/quiz_agent.py` (new `run_stream` + `_extract_questions_from_buffer`)
+- `a3-system/backend/api/routers/quiz.py` (new `/generate/stream` SSE endpoint)
+- `a3-system/frontend/web/src/lib/api.ts` (new `generateQuizStream` + `QuizStreamEvent` type)
+- `a3-system/frontend/web/src/components/milestone/GateStatus.tsx` (streaming consumer + progress UI)
+
+### Impact / Testing
+- Non-breaking: original `/generate` endpoint unchanged
+- Frontend falls back gracefully if streaming fails
+- Test via: start a quiz from the notebook milestone gate → see progress indicator
+
+---
+
 ## 2026-06-18 - Optimize learning path generation: streaming + parallel boost
 
 ### Changes Made

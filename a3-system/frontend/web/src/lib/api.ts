@@ -447,6 +447,79 @@ export async function generateQuiz(request: {
   return res.data;
 }
 
+export interface QuizStreamEvent {
+  event: "question" | "complete" | "error";
+  index?: number;
+  question?: Record<string, unknown>;
+  quiz_id?: string;
+  num_questions?: number;
+  is_existing?: boolean;
+  message?: string;
+}
+
+/**
+ * Stream quiz generation via SSE. Yields question events as they are parsed
+ * from the LLM stream, then a final complete event with the saved quiz_id.
+ */
+export async function* generateQuizStream(request: {
+  student_id: string;
+  topic: string;
+  node_id?: string;
+  num_questions?: number;
+  difficulty?: number;
+  context?: string;
+}): AsyncGenerator<QuizStreamEvent> {
+  const baseURL =
+    (typeof window !== "undefined" && (window as unknown as Record<string, unknown>).__NEXT_PUBLIC_API_URL) ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:8000";
+
+  const response = await fetch(`${baseURL}/api/quiz/generate/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`Quiz stream failed: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        const jsonStr = line.slice(6).trim();
+        if (!jsonStr) continue;
+        try {
+          yield JSON.parse(jsonStr) as QuizStreamEvent;
+        } catch {
+          // skip malformed
+        }
+      }
+    }
+  }
+
+  // Process remaining buffer
+  if (buffer.trim().startsWith("data: ")) {
+    const jsonStr = buffer.trim().slice(6);
+    try {
+      yield JSON.parse(jsonStr) as QuizStreamEvent;
+    } catch {
+      // skip
+    }
+  }
+}
+
 export async function getQuiz(quizId: string) {
   const res = await api.get(`/api/quiz/${quizId}`);
   return res.data;

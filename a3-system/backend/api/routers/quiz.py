@@ -12,11 +12,13 @@ Endpoints:
 """
 
 import asyncio
+import json as json_module
 import re
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -354,6 +356,156 @@ async def generate_quiz(
         "faithfulness": faithfulness,
         "sources": sources,
     }
+
+
+@router.post("/generate/stream")
+async def generate_quiz_stream(
+    request: GenerateQuizRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Stream quiz generation via SSE.
+
+    Yields events:
+      data: {"event":"question","index":0,"question":{...}}
+      data: {"event":"complete","quiz_id":"...","num_questions":5}
+    """
+    logger.info(f"Streaming quiz for student {request.student_id}, topic: {request.topic}")
+
+    # Check for existing quiz (same dedup as non-streaming)
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    existing_query = select(GeneratedQuiz).where(
+        GeneratedQuiz.student_id == request.student_id,
+        GeneratedQuiz.topic == request.topic,
+        GeneratedQuiz.created_at >= seven_days_ago,
+    )
+    if request.node_id:
+        existing_query = existing_query.where(GeneratedQuiz.node_id == request.node_id)
+
+    result = await db.execute(existing_query)
+    existing_quiz = result.scalar_one_or_none()
+
+    if existing_quiz:
+        # Return cached quiz as a single event
+        async def _cached():
+            yield f"data: {json_module.dumps({'event': 'complete', 'quiz_id': existing_quiz.quiz_id, 'num_questions': existing_quiz.num_questions, 'is_existing': True})}\n\n"
+
+        return StreamingResponse(
+            _cached(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+        )
+
+    # Fetch student profile
+    profile_result = await db.execute(
+        select(StudentProfile).where(StudentProfile.student_id == request.student_id)
+    )
+    profile = profile_result.scalar_one_or_none()
+
+    if not profile:
+        profile_data = {
+            "knowledge_base": {},
+            "cognitive_style": "mixed",
+            "learning_pace": 0.5,
+            "weak_points": [],
+            "goals": [],
+        }
+    else:
+        profile_data = {
+            "knowledge_base": profile.knowledge_base or {},
+            "cognitive_style": profile.cognitive_style or "mixed",
+            "learning_pace": profile.learning_pace or 0.5,
+            "weak_points": profile.weak_points or [],
+            "goals": profile.goals or [],
+        }
+
+    complexity_level = request.complexity_level
+    attempt_number = request.attempt_number
+    complexity_to_count = {"beginner": 5, "standard": 8, "complex": 10, "advanced": 12}
+    num_questions = request.num_questions or complexity_to_count.get(complexity_level, 8)
+
+    quiz_agent = QuizAgent(llm_client)
+
+    # Capture DB session reference for use inside the generator
+    _db = db
+    _request = request
+    _profile_data = profile_data
+
+    async def event_generator():
+        all_questions: List[Dict[str, Any]] = []
+        metadata: Dict[str, Any] = {}
+        faithfulness_data: Dict[str, Any] = {}
+
+        try:
+            async for event in quiz_agent.run_stream(
+                topic=_request.topic,
+                profile=_profile_data,
+                node_id=_request.node_id or "",
+                complexity_level=complexity_level,
+                attempt_number=attempt_number,
+                num_questions=num_questions,
+                difficulty_override=_request.difficulty,
+            ):
+                if event["event"] == "question":
+                    yield f"data: {json_module.dumps(event)}\n\n"
+                elif event["event"] == "complete":
+                    all_questions = event["questions"]
+                    metadata = event.get("metadata", {})
+                    faithfulness_data = event.get("faithfulness", {})
+
+            # Validate and sanitize questions (same as non-streaming)
+            for idx, q in enumerate(all_questions):
+                if not q.get("id"):
+                    q["id"] = f"q{idx + 1}"
+                if not q.get("type"):
+                    q["type"] = "multiple_choice"
+                if not q.get("options") or not isinstance(q.get("options"), list):
+                    if q.get("type") == "true_false":
+                        q["options"] = ["True", "False"]
+                    else:
+                        correct = q.get("correct_answer", "")
+                        q["options"] = ["A", "B", "C", "D"] if not correct else [correct, "Option B", "Option C", "Option D"]
+                if not q.get("correct_answer"):
+                    q["correct_answer"] = q.get("options", [""])[0]
+                if not q.get("explanation"):
+                    q["explanation"] = ""
+
+            # Save to database
+            new_quiz = GeneratedQuiz(
+                student_id=_request.student_id,
+                node_id=_request.node_id,
+                title=f"Quiz: {_request.topic}",
+                description=f"Adaptive quiz on {_request.topic}",
+                topic=_request.topic,
+                difficulty=_request.difficulty or metadata.get("difficulty", 0.5),
+                num_questions=len(all_questions),
+                questions=all_questions,
+                weak_points_focus=metadata.get("focus_areas", _profile_data["weak_points"]),
+                estimated_time_minutes=metadata.get("estimated_time", 15),
+                total_points=100,
+                complexity_level=complexity_level,
+                attempt_number=attempt_number,
+                has_coding=metadata.get("has_coding", False),
+                concept_tags=metadata.get("concept_tags", []),
+            )
+
+            _db.add(new_quiz)
+            await _db.commit()
+            await _db.refresh(new_quiz)
+
+            logger.info(f"Streamed quiz {new_quiz.quiz_id} with {len(all_questions)} questions")
+
+            yield f"data: {json_module.dumps({'event': 'complete', 'quiz_id': new_quiz.quiz_id, 'num_questions': len(all_questions), 'is_existing': False})}\n\n"
+
+        except Exception as e:
+            logger.error(f"Streaming quiz generation failed: {e}")
+            yield f"data: {json_module.dumps({'event': 'error', 'message': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.get("")

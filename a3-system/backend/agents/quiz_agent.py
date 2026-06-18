@@ -11,7 +11,7 @@ Generates personalized quizzes that adapt based on:
 import json
 import random
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from agents.base_agent import BaseAgent
 from core.faithfulness_checker import faithfulness_checker
@@ -360,6 +360,224 @@ class QuizAgent(BaseAgent):
                 },
                 "sources": [],
             }
+
+    async def run_stream(
+        self,
+        topic: str,
+        profile: Dict[str, Any],
+        node_id: str = "",
+        **kwargs
+    ) -> AsyncGenerator[Dict[str, Any], None]:
+        """
+        Stream quiz generation, yielding each question as it's parsed.
+
+        Yields dicts of the form:
+          {"event": "question", "index": 0, "question": {...}}
+          {"event": "complete", "questions": [...], "metadata": {...}}
+
+        On error falls back to non-streaming generation.
+        """
+        rag_chunks = await self._retrieve_chunks(topic, node_id)
+        rag_context = self._format_rag_context(rag_chunks)
+
+        complexity_level = kwargs.get("complexity_level", "standard")
+        attempt_number = kwargs.get("attempt_number", 1)
+        has_coding = kwargs.get("has_coding", False)
+        previous_wrong_concepts = kwargs.get("previous_wrong_concepts", [])
+
+        num_questions = kwargs.get("num_questions")
+        if num_questions is None:
+            from agents.quiz_agent import COMPLEXITY_QUESTION_COUNT
+            num_questions = COMPLEXITY_QUESTION_COUNT.get(complexity_level, 8)
+
+        knowledge_base = profile.get("knowledge_base", {})
+        if not isinstance(knowledge_base, dict):
+            knowledge_base = {}
+        mastery = self._get_topic_mastery(topic, knowledge_base)
+        weak_points = profile.get("weak_points", [])
+        difficulty_distribution = self._calculate_difficulty_distribution(mastery, num_questions)
+        question_types = self._get_question_distribution(num_questions, has_coding)
+
+        if attempt_number > 1:
+            difficulty_distribution = self._adjust_for_retry(difficulty_distribution, attempt_number)
+
+        system_prompt = self._build_system_prompt(QUIZ_SYSTEM_PROMPT, profile)
+        user_prompt = self._build_user_prompt(
+            topic=topic,
+            complexity_level=complexity_level,
+            num_questions=num_questions,
+            question_types=question_types,
+            difficulty_distribution=difficulty_distribution,
+            mastery=mastery,
+            weak_points=weak_points,
+            previous_wrong_concepts=previous_wrong_concepts,
+            attempt_number=attempt_number,
+            context=rag_context,
+        )
+
+        try:
+            # Accumulate streamed content and extract questions incrementally
+            buffer = ""
+            questions_yielded = 0
+            all_questions: List[Dict[str, Any]] = []
+
+            async for chunk in self.llm.generate_stream(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7 if attempt_number > 1 else 0.5,
+                max_tokens=4000,
+            ):
+                buffer += chunk
+                # Try to extract complete question objects from the buffer.
+                # Questions appear as objects inside a JSON array.
+                newly_parsed = self._extract_questions_from_buffer(buffer, questions_yielded)
+                for q in newly_parsed:
+                    all_questions.append(q)
+                    yield {"event": "question", "index": questions_yielded, "question": q}
+                    questions_yielded += 1
+
+            # Final parse of any remaining content
+            if questions_yielded == 0:
+                # Streaming didn't yield individual questions; parse the whole thing
+                quiz_data = self._parse_quiz_json(buffer)
+                all_questions = quiz_data.get("questions", [])
+                for idx, q in enumerate(all_questions):
+                    yield {"event": "question", "index": idx, "question": q}
+
+            all_questions = self._validate_questions(all_questions, num_questions, question_types)
+            estimated_time = self._calculate_time_limit(num_questions, has_coding)
+
+            # Skip faithfulness if no RAG chunks (already returns 1.0 instantly)
+            faithfulness_result = await faithfulness_checker.check_faithfulness(
+                generated_text=json.dumps(all_questions, indent=2),
+                source_chunks=[{"id": c["chunk_id"], "text": c["text"], "source": c["source"]} for c in rag_chunks],
+                context=topic,
+            )
+
+            yield {
+                "event": "complete",
+                "questions": all_questions,
+                "metadata": {
+                    "topic": topic,
+                    "agent": "quiz",
+                    "complexity_level": complexity_level,
+                    "attempt_number": attempt_number,
+                    "num_questions": len(all_questions),
+                    "mastery_at_generation": mastery,
+                    "difficulty_distribution": difficulty_distribution,
+                    "question_types_used": question_types,
+                    "estimated_time_minutes": estimated_time,
+                    "focus_areas": weak_points or previous_wrong_concepts,
+                    "has_coding": has_coding,
+                    "time_limit_seconds": estimated_time * 60,
+                    "rag_chunks_used": len(rag_chunks),
+                },
+                "faithfulness": {
+                    "score": faithfulness_result.score,
+                    "verified": faithfulness_result.score >= faithfulness_checker.threshold,
+                    "total_claims": faithfulness_result.total_claims,
+                    "supported_claims": faithfulness_result.supported_count,
+                    "unverifiable_claims": faithfulness_result.unverifiable_count,
+                    "citations": faithfulness_result.citations,
+                },
+                "sources": rag_chunks,
+            }
+
+        except Exception as e:
+            logger.exception(f"Streaming quiz generation failed for {topic}: {e!r}. Using fallback.")
+            questions = self._generate_fallback_questions(topic, num_questions, question_types)
+            for idx, q in enumerate(questions):
+                yield {"event": "question", "index": idx, "question": q}
+            yield {
+                "event": "complete",
+                "questions": questions,
+                "metadata": {
+                    "topic": topic,
+                    "agent": "quiz",
+                    "complexity_level": complexity_level,
+                    "attempt_number": attempt_number,
+                    "num_questions": len(questions),
+                    "fallback": True,
+                    "error": str(e),
+                },
+                "faithfulness": {"score": 0.0, "verified": False, "total_claims": 0,
+                                 "supported_claims": 0, "unverifiable_claims": 0, "citations": []},
+                "sources": [],
+            }
+
+    def _extract_questions_from_buffer(
+        self, buffer: str, already_yielded: int
+    ) -> List[Dict[str, Any]]:
+        """Try to extract complete question objects from a streaming JSON buffer.
+
+        Looks for the `"questions": [...]` array and parses individual objects
+        as they become complete (balanced braces).
+        """
+        new_questions: List[Dict[str, Any]] = []
+
+        # Find the start of the questions array
+        arr_start = buffer.find('"questions"')
+        if arr_start == -1:
+            return new_questions
+        bracket_pos = buffer.find("[", arr_start)
+        if bracket_pos == -1:
+            return new_questions
+
+        # Walk through the array extracting complete objects
+        pos = bracket_pos + 1
+        obj_count = 0
+
+        while pos < len(buffer):
+            # Skip whitespace and commas
+            while pos < len(buffer) and buffer[pos] in " \t\n\r,":
+                pos += 1
+            if pos >= len(buffer) or buffer[pos] == "]":
+                break
+            if buffer[pos] != "{":
+                pos += 1
+                continue
+
+            # Find matching closing brace
+            depth = 0
+            start = pos
+            in_string = False
+            escape_next = False
+            for i in range(start, len(buffer)):
+                ch = buffer[i]
+                if escape_next:
+                    escape_next = False
+                    continue
+                if ch == "\\":
+                    escape_next = True
+                    continue
+                if ch == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
+                if in_string:
+                    continue
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        # Found a complete object
+                        obj_str = buffer[start:i + 1]
+                        obj_count += 1
+                        if obj_count > already_yielded:
+                            try:
+                                q = json.loads(obj_str)
+                                new_questions.append(q)
+                            except json.JSONDecodeError:
+                                pass
+                        pos = i + 1
+                        break
+            else:
+                # Incomplete object — stop
+                break
+
+        return new_questions
 
     def _get_topic_mastery(self, topic: str, knowledge_base: Dict) -> float:
         """Get student's mastery level for a topic."""
