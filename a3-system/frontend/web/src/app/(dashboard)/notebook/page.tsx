@@ -996,7 +996,14 @@ export default function NotebookPage() {
       />
 
       {/* Onboarding Tour */}
-      {showTour && <OnboardingTour onComplete={handleTourComplete} />}
+      {showTour && (
+        <OnboardingTour
+          onComplete={handleTourComplete}
+          onExpandChat={() => setIsRightPanelCollapsed(false)}
+          onCollapseChat={() => setIsRightPanelCollapsed(true)}
+          onExpandSidebar={() => setIsLeftPanelCollapsed(false)}
+        />
+      )}
     </div>
   );
 }

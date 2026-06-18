@@ -246,7 +246,7 @@ export default function AgentPanel({
           <div className={`flex-1 overflow-auto scrollbar-hide flex flex-col ${expandedAgentId ? 'p-0' : 'p-6'}`} style={{ scrollbarWidth: "none" }}>
             {/* Header - Glassmorphism style (hidden when detail panel is open) */}
             {!expandedAgentId && (
-            <div className="flex items-center justify-between mb-6 flex-shrink-0">
+            <div data-tour="tour-resources" className="flex items-center justify-between mb-6 flex-shrink-0">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Resources</h2>
                 <p className="text-sm text-gray-500 mt-0.5">
@@ -344,7 +344,7 @@ export default function AgentPanel({
                   gateStatus={gateStatus}
                 />
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div data-tour="tour-agents" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {AGENTS.map((agent) => (
                     <ResourceTypeGroup
                       key={agent.id}
