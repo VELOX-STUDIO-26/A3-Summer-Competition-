@@ -121,7 +121,6 @@ else:
 from collections import defaultdict
 from time import time
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Simple rate limiting middleware - 100 requests per minute per IP."""

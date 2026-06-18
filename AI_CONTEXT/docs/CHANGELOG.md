@@ -13,6 +13,34 @@ Format:
 
 ---
 
+## 2026-06-18 - Fix build/deploy bugs (Docker, Netlify, imports)
+
+### Changes Made
+- Added `requirements.txt` to `a3-system/backend/` directory (was only at parent level)
+- Fixed root `netlify.toml`: commented out placeholder API redirect (`your-backend-url.com`) and removed broken SPA fallback (`/* -> /index.html`)
+- Removed shadowed `JSONResponse` import in `backend/main.py` (was imported from both `fastapi.responses` and `starlette.responses`)
+- Removed deprecated `version: '3.8'` key from `docker-compose.yml`
+
+### Reason
+- **Docker build failure**: The backend `Dockerfile` uses `COPY requirements.txt .` but the build context is `./backend/`. The file only existed at `a3-system/requirements.txt` (parent), causing Docker build to fail.
+- **Netlify deploy failure**: Active redirect to `https://your-backend-url.com/api/:splat` would send all API calls to a non-existent host. The `/* -> /index.html` SPA fallback conflicts with Next.js routing (SSR, dynamic routes, API routes) and the `@netlify/plugin-nextjs` which handles routing automatically.
+- **Import shadowing**: The starlette import on line 124 overrode the fastapi import on line 15, causing namespace pollution.
+- **Docker Compose warning**: The `version` key is obsolete in Compose V2+ and produces deprecation warnings.
+
+### Files
+- `a3-system/backend/requirements.txt` (new — copy of parent-level file)
+- `netlify.toml` (root)
+- `a3-system/backend/main.py`
+- `a3-system/docker-compose.yml`
+
+### Impact / Testing
+- Backend Docker image now builds successfully
+- Netlify deployments won't break Next.js routing
+- `python3 -c "import ast; ast.parse(open('main.py').read())"` passes
+- `docker compose config` no longer warns about deprecated version field
+
+---
+
 ## 2026-06-18 - Remove invalid hardcoded Kimi API fallback
 
 ### Changes Made
