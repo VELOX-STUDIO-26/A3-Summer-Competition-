@@ -145,7 +145,11 @@ interface Activity {
 
 export default function AnalyticsPage() {
   const router = useRouter();
-  const { studentId, userName, logout } = useAppStore();
+  const { studentId, userName, logout, activeGraphId } = useAppStore();
+
+  const notebookHref = activeGraphId
+    ? `/notebook?graph=${activeGraphId}`
+    : "/notebook";
 
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [insights, setInsights] = useState<InsightsData | null>(null);
@@ -387,7 +391,7 @@ export default function AnalyticsPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push("/notebook")}
+              onClick={() => router.push(notebookHref)}
               className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />

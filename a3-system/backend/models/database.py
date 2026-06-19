@@ -441,9 +441,9 @@ class ChatSession(Base):
     )
 
     current_node_id = Column(
-        String(50),
+        String(500),
         nullable=True,
-        comment="Current knowledge node context"
+        comment="Current knowledge node context (topic title or node ID)"
     )
 
     context_summary = Column(

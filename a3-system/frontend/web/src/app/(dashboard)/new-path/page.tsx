@@ -904,7 +904,11 @@ function PathPreview({
 
 export default function NewPathPage() {
   const router = useRouter();
-  const { userName, studentId, profile, setProfile } = useAppStore();
+  const { userName, studentId, profile, setProfile, activeGraphId } = useAppStore();
+
+  const notebookHref = activeGraphId
+    ? `/notebook?graph=${activeGraphId}`
+    : "/notebook";
 
   // State
   const [step, setStep] = useState<Step>("chat");
@@ -1163,7 +1167,7 @@ export default function NewPathPage() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={() => router.push("/analytics")}
+            onClick={() => router.push(notebookHref)}
             className="p-2 rounded-lg hover:bg-[#E7E2D7] transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-[#666]" />
