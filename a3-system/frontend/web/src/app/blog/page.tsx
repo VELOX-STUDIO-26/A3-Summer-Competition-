@@ -12,14 +12,14 @@ const roadmapItems = [
 const faqs = [
   { q: "What subjects does NOBOGYAN cover?", a: "Currently focused on cloud computing with 500+ topics. The knowledge graph can be extended to any subject." },
   { q: "How does NOBOGYAN compare to ChatGPT for learning?", a: "ChatGPT is a general-purpose assistant. NOBOGYAN is specifically designed for education with profiling, adaptive paths, multimodal content, and continuous assessment — all working together." },
-  { q: "Can I try NOBOGYAN?", a: "We're currently in private beta. Contact us to request early access." },
+  { q: "Can I try NOBOGYAN?", a: "We're currently in closed beta for the 15th China Software Cup. Join the waitlist at /register or email theveloxstudio@gmail.com for early access." },
 ];
 
 export default function BlogPage() {
   return (
     <PageLayout 
       title="Introducing NOBOGYAN" 
-      subtitle="15+ AI Agents Working Together to Build Your Perfect Learning Experience"
+      subtitle="How 15+ AI agents collaborate to build a learning system that actually knows you"
     >
       {/* Meta */}
       <div className="flex flex-wrap items-center gap-4 mb-8 text-sm text-deep-charcoal/60">
@@ -62,7 +62,7 @@ export default function BlogPage() {
           Meet NOBOGYAN: An Entire AI Team Learning With You
         </h2>
         <p className="text-deep-charcoal/70 leading-relaxed mb-6">
-          Today, we're excited to introduce <strong>NOBOGYAN</strong> — a personalized AI learning system that deploys a swarm of 15+ specialized agents, each with a unique role, collaborating in real-time to build your perfect learning experience.
+          Today, we're excited to introduce <strong>NOBOGYAN</strong> — an AI learning system that deploys a swarm of 15+ specialized agents, each with a unique role, working together to build a curriculum around you.
         </p>
 
         <div className="p-6 bg-gradient-to-br from-sage-50 to-white rounded-2xl border border-sage-200/50 mb-6">
@@ -141,7 +141,7 @@ export default function BlogPage() {
             When you select a topic, the <strong>Orchestrator</strong> dispatches multiple content agents in parallel — generating lecture notes, mind maps, quizzes, video scripts, and coding exercises simultaneously.
           </p>
           <p className="text-deep-charcoal/70">
-            Within seconds, you have a complete learning package personalized to your profile.
+            Within seconds, you have a complete learning package matched to your profile.
           </p>
         </div>
 
@@ -226,8 +226,8 @@ export default function BlogPage() {
           We're currently in private beta as we prepare for launch. Contact us to learn more or request early access.
         </p>
         <div className="flex flex-wrap gap-4">
-          <a href="https://veloxstudio.tech" target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-sage-500 text-white rounded-xl font-medium hover:bg-sage-600 transition-colors">
-            Visit Website
+          <a href="/register" className="px-6 py-2 bg-sage-500 text-white rounded-xl font-medium hover:bg-sage-600 transition-colors">
+            Join the Waitlist
           </a>
           <a href="mailto:theveloxstudio@gmail.com" className="px-6 py-2 bg-white text-deep-charcoal rounded-xl font-medium border border-sand-200 hover:border-sage-300 transition-colors">
             Contact Us
@@ -253,8 +253,8 @@ export default function BlogPage() {
         <p className="text-lg text-deep-charcoal/70 italic mb-4">
           Ready to experience learning with a swarm of 15+ AI agents?
         </p>
-        <a href="https://veloxstudio.tech" target="_blank" rel="noopener noreferrer" className="inline-block px-8 py-3 bg-sage-500 text-white rounded-xl font-semibold hover:bg-sage-600 transition-colors">
-          Get Started →
+        <a href="/register" className="inline-block px-8 py-3 bg-sage-500 text-white rounded-xl font-semibold hover:bg-sage-600 transition-colors">
+          Join the Waitlist →
         </a>
         <p className="text-deep-charcoal/50 mt-6 text-sm">
           Copyright © 2026 VELOX Studio. All rights reserved.

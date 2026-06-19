@@ -15,7 +15,7 @@ import {
   Target,
   BookOpen,
   Briefcase,
-  Sparkles,
+  Activity,
   Focus,
   Gauge,
   Rocket,
@@ -44,7 +44,7 @@ const features = [
     number: "01",
     label: "Profiling",
     headline: "Your Profile, Built From Conversation",
-    body: "No forms. No quizzes. Just chat naturally. Every message shapes a 6-dimension learning model that adapts to you in real-time.",
+    body: "No forms. No quizzes. Just chat naturally. Every message shapes a 6-dimension learning model — your strengths, gaps, and preferences.",
     agents: [],
     capabilities: [
       "Knowledge base scoring per topic",
@@ -60,13 +60,13 @@ const features = [
     number: "02",
     label: "Path Planning",
     headline: "Your Optimal Learning Route",
-    body: "We map 500+ topics and find the fastest path to your goals. When you struggle or excel, the route adapts in real-time.",
+    body: "A* search across 500+ topics finds the fastest route to your goals. Struggle on a topic? The path reshuffles automatically.",
     agents: [],
     capabilities: [
       "Smart topic sequencing",
       "Adapts when you struggle or excel",
       "Milestone checkpoints",
-      "Personalized recommendations",
+      "Goal-aware recommendations",
     ],
     metric: { value: "200ms", label: "Optimization Time", color: "#F39C12" },
     icon: GitBranch,
@@ -92,7 +92,7 @@ const features = [
     number: "04",
     label: "Multimodal",
     headline: "Learn Your Way",
-    body: "Type, speak, or upload diagrams—get instant help with auto-generated visuals and voice responses. Context-aware tutoring that adapts to your learning style.",
+    body: "Type, speak, or upload diagrams — get instant help with auto-generated visuals and voice responses. Text, audio, video, or code: pick your format.",
     agents: [],
     capabilities: [
       "Real-time streaming responses",
@@ -130,7 +130,7 @@ function ProfilingVisual() {
   const quantitativeDims: { label: string; score: number; color: string; icon: LucideIcon }[] = [
     { label: "Knowledge Base", score: 85, color: "#7C9A6B", icon: BookOpen },
     { label: "Prior Experience", score: 45, color: "#E74C3C", icon: Briefcase },
-    { label: "Engagement Level", score: 88, color: "#1ABC9C", icon: Sparkles },
+    { label: "Engagement Level", score: 88, color: "#1ABC9C", icon: Activity },
   ];
   
   // Qualitative dimensions (show tags instead of percentages)
@@ -752,7 +752,7 @@ export default function FeatureSpotlight() {
             See Your Profile in Action
           </h2>
           <p className="mt-2 sm:mt-4 text-sm sm:text-base lg:text-lg text-deep-charcoal/60 max-w-2xl mx-auto">
-            Five features. One personalized learning experience.
+            Five features. One complete learning system.
           </p>
         </ScrollReveal>
 

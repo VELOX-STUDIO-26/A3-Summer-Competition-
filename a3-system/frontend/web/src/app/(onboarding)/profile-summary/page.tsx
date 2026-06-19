@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Edit3, ArrowRight, Database, Layers, Target, Zap, Clock, Settings, Sparkles } from "lucide-react";
+import { Check, Edit3, ArrowRight, Database, Layers, Target, Zap, Clock, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 
@@ -295,11 +295,11 @@ export default function ProfileSummaryPage() {
       {/* Phase Header */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 backdrop-blur-md border border-white/50 shadow-lg shadow-black/5 mb-4">
-          <Sparkles className="w-4 h-4 text-[#6B7F6B]" />
+          <Check className="w-4 h-4 text-[#6B7F6B]" />
           <span className="text-sm text-[#6B7F6B] font-medium">Profile Complete</span>
         </div>
         <h1 className="text-2xl md:text-3xl font-serif font-semibold text-[#2a2a2a] mb-2">
-          Phase 03: <span className="text-[#666]">Review Your Profile</span>
+          <span className="text-[#666]">Review Your Profile</span>
         </h1>
         <p className="text-[#888] max-w-lg mx-auto">
           Here&apos;s what A³ learned about you. Review and edit anything that doesn&apos;t look right.

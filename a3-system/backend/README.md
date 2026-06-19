@@ -66,7 +66,9 @@ backend/
 See `.env.template` for all available configuration options.
 
 Key variables:
-- `OPENROUTER_API_KEY` - Your OpenRouter API key (get from https://openrouter.ai/keys)
+- `OPENROUTER_KIMI_API_KEY` - Kimi/Moonshot API key (primary LLM, get from https://platform.moonshot.cn)
+- `OPENROUTER_API_KEY` - OpenRouter API key (fallback LLM, get from https://openrouter.ai/keys)
+- `SECRET_KEY` - JWT signing key for authentication
 - `DATABASE_URL` - PostgreSQL connection string
 - `REDIS_URL` - Redis connection string
 - `WEAVIATE_URL` - Weaviate vector database URL
@@ -77,12 +79,33 @@ Key variables:
 - `GET /` - API information
 - `GET /health` - Health check
 
-### (Coming Soon)
-- `POST /api/profile` - Create/update student profile
-- `POST /api/path/plan` - Generate learning path
-- `POST /api/resources/generate` - Generate learning resources
-- `POST /api/tutor/ask` - Ask AI tutor
-- `POST /api/analytics/track` - Track learning events
+### Auth
+- `POST /api/auth/register` - Register a new student
+- `POST /api/auth/login` - Login and get JWT token
+
+### Profiling
+- `POST /api/profile/chat` - Conversational profiling chat
+- `GET /api/profile/{student_id}` - Get student profile
+
+### Learning Path
+- `POST /api/path/generate` - Generate learning path (streaming SSE)
+- `GET /api/path/{graph_id}` - Get learning path graph
+
+### Resources
+- `POST /api/resources/generate` - Generate learning resources for a topic
+
+### Tutoring
+- `POST /api/tutor/sessions` - Create tutor session
+- `POST /api/tutor/ask` - Ask AI tutor (streaming SSE)
+
+### Quiz
+- `POST /api/quiz/generate` - Generate quiz for a topic
+- `POST /api/quiz/submit` - Submit quiz answers
+
+### Analytics
+- `GET /api/analytics/{student_id}` - Get learning analytics
+
+Full interactive docs at http://localhost:8000/docs when the server is running.
 
 ## Development
 

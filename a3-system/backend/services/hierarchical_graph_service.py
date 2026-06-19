@@ -612,18 +612,12 @@ class HierarchicalGraphService:
             f"'{main_topic.title}' in graph {graph_id}"
         )
 
-        # Re-fetch with relationships for a consistent return value. The commit
-        # expires the original object, so load the specific milestone with its
-        # subtopics to avoid returning stale (empty) collections to the UI.
-        self.db.expire(main_topic)
-        refreshed_topic_result = await self.db.execute(
-            select(MainTopic)
-            .where(MainTopic.id == main_topic.id)
-            .options(selectinload(MainTopic.subtopics))
-        )
-        refreshed_topic = refreshed_topic_result.scalar_one()
+        # Re-fetch subtopics via async-safe refresh instead of expire() +
+        # manual re-query, which triggers a synchronous lazy-load of the
+        # expired PK and fails with "greenlet_spawn has not been called".
+        await self.db.refresh(main_topic, ["subtopics"])
         logger.info(f"ensure_subtopics_for_topic '{main_topic.title}' completed in {time.perf_counter() - ensure_start:.2f}s")
-        return refreshed_topic
+        return main_topic
 
     async def _materialize_progress_for_subtopics(
         self,

@@ -271,7 +271,7 @@ export default function ProfileChatPage() {
       {/* Phase Header */}
       <div className="text-center mb-8">
         <h1 className="text-2xl md:text-3xl font-serif font-semibold text-[#2a2a2a]">
-          Phase 02: <span className="text-[#666]">Initializing Your Profile</span>
+          <span className="text-[#666]">Initializing Your Profile</span>
         </h1>
       </div>
 

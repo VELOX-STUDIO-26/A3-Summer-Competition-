@@ -11,14 +11,7 @@ export default function JsonLd() {
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD",
-      description: "Free tier available, Pro starts at $19/month",
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      ratingCount: "2000",
-      bestRating: "5",
-      worstRating: "1",
+      description: "Free tier available during closed beta",
     },
     author: {
       "@type": "Organization",
@@ -44,9 +37,9 @@ export default function JsonLd() {
     description: "AI-powered personalized learning platform",
     foundingDate: "2026",
     sameAs: [
-      // Add social media links when available
-      // "https://twitter.com/nobogyan",
-      // "https://linkedin.com/company/nobogyan",
+      "https://x.com/velox_studio_26",
+      "https://www.youtube.com/@veloxstudio1",
+      "https://veloxstudio.tech",
     ],
   };
 

@@ -2,7 +2,8 @@ import PageLayout from "../components/PageLayout";
 import { Handshake, Building2, GraduationCap, Code, FileText, Shield, Mail } from "lucide-react";
 
 const techStack = [
-  { partner: "OpenRouter", tech: "Model aggregation", useCase: "LLM routing and fallbacks" },
+  { partner: "Kimi (Moonshot AI)", tech: "LLM Provider", useCase: "Primary production LLM (kimi-k2.6)" },
+  { partner: "OpenRouter", tech: "Model aggregation", useCase: "LLM fallback and free-tier routing" },
   { partner: "PostgreSQL", tech: "Database", useCase: "Primary data storage" },
   { partner: "Redis", tech: "Caching", useCase: "Sessions and performance" },
   { partner: "Weaviate", tech: "Vector DB", useCase: "Semantic search and RAG" },
@@ -14,31 +15,29 @@ const techStack = [
 
 const partnerBenefits = {
   educational: [
-    "Early access to new features",
-    "Dedicated support channel",
-    "Co-marketing opportunities",
-    "Custom integration support",
-    "Analytics dashboard access",
+    "Pilot NOBOGYAN with your students",
+    "Co-develop curriculum for your subject area",
+    "Research collaboration on adaptive learning",
+    "Direct feedback channel with development team",
   ],
   technology: [
-    "API integration support",
-    "Joint case studies",
-    "Technical documentation",
-    "Co-development opportunities",
-    "Community recognition",
+    "Technical documentation and integration support",
+    "Joint case studies and publications",
+    "Co-development on open-source components",
+    "Credit and recognition in project materials",
   ],
 };
 
 export default function PartnersPage() {
   return (
     <PageLayout 
-      title="Partners" 
-      subtitle="Collaborating with leaders in technology and education"
+      title="Partners & Tech Stack" 
+      subtitle="The tools and collaborators behind NOBOGYAN"
     >
       {/* Intro */}
       <section className="mb-12">
         <p className="text-lg text-deep-charcoal/70 leading-relaxed">
-          NOBOGYAN is proud to collaborate with leading technology and education partners who share our vision for personalized, AI-powered learning.
+          NOBOGYAN is built on open-source infrastructure and integrated with iFlytek for the 15th China Software Cup competition.
         </p>
       </section>
 
@@ -52,51 +51,47 @@ export default function PartnersPage() {
             </div>
             <div>
               <h3 className="text-2xl font-bold text-deep-charcoal">iFlytek</h3>
-              <p className="text-sage-600 font-medium">LLM and AI Technology Partner</p>
+              <p className="text-sage-600 font-medium">Voice & Speech Technology Partner</p>
             </div>
           </div>
           
           <p className="text-deep-charcoal/70 mb-6">
-            iFlytek provides the Spark LLM foundation that powers NOBOGYAN's intelligence layer:
+            iFlytek provides voice and speech services that power NOBOGYAN's multimodal capabilities:
           </p>
           
           <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div className="p-4 bg-white/70 rounded-xl">
-              <p className="font-semibold text-deep-charcoal mb-1">Spark LLM v3.5+</p>
-              <p className="text-sm text-deep-charcoal/60">Core reasoning and natural language understanding</p>
+              <p className="font-semibold text-deep-charcoal mb-1">ASR (Speech Recognition)</p>
+              <p className="text-sm text-deep-charcoal/60">Voice input for the AI tutor via WebSocket streaming</p>
             </div>
             <div className="p-4 bg-white/70 rounded-xl">
-              <p className="font-semibold text-deep-charcoal mb-1">TTS SDK</p>
-              <p className="text-sm text-deep-charcoal/60">Voice synthesis for tutoring features</p>
+              <p className="font-semibold text-deep-charcoal mb-1">TTS (Text-to-Speech)</p>
+              <p className="text-sm text-deep-charcoal/60">Voice synthesis for tutoring responses (with Edge TTS fallback)</p>
             </div>
             <div className="p-4 bg-white/70 rounded-xl">
-              <p className="font-semibold text-deep-charcoal mb-1">ASR</p>
-              <p className="text-sm text-deep-charcoal/60">Speech recognition for voice input</p>
+              <p className="font-semibold text-deep-charcoal mb-1">Spark LLM</p>
+              <p className="text-sm text-deep-charcoal/60">Optional LLM provider for competition evaluation</p>
             </div>
             <div className="p-4 bg-white/70 rounded-xl">
-              <p className="font-semibold text-deep-charcoal mb-1">Content Moderation API</p>
-              <p className="text-sm text-deep-charcoal/60">Safety filtering for educational content</p>
+              <p className="font-semibold text-deep-charcoal mb-1">Competition Track</p>
+              <p className="text-sm text-deep-charcoal/60">15th China Software Cup (iFlytek Track)</p>
             </div>
           </div>
 
           <div className="border-t border-sage-200/50 pt-6">
-            <h4 className="font-semibold text-deep-charcoal mb-3">Partnership Highlights</h4>
+            <h4 className="font-semibold text-deep-charcoal mb-3">Integration Details</h4>
             <ul className="space-y-2 text-deep-charcoal/70">
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-sage-400 mt-2 shrink-0" />
-                Integration with iFlytek's advanced Chinese language models
+                WebSocket-based streaming for real-time voice interactions
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-sage-400 mt-2 shrink-0" />
-                WebSocket-based streaming for real-time interactions
+                Automatic fallback between iFlytek TTS and Edge TTS
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-sage-400 mt-2 shrink-0" />
-                Enterprise-grade content moderation
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-sage-400 mt-2 shrink-0" />
-                Competition track alignment (15th China Software Cup)
+                Competition track alignment for the 15th China Software Cup
               </li>
             </ul>
           </div>
@@ -151,9 +146,9 @@ export default function PartnersPage() {
       <section className="mb-12">
         <h2 className="text-2xl font-serif font-semibold text-deep-charcoal mb-6 flex items-center gap-3">
           <Code className="w-6 h-6 text-sage-500" />
-          Technology Stack Partners
+          Technology Stack
         </h2>
-        <p className="text-deep-charcoal/70 mb-6">NOBOGYAN is built on and integrated with:</p>
+        <p className="text-deep-charcoal/70 mb-6">Open-source tools and frameworks NOBOGYAN is built on:</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -189,24 +184,24 @@ export default function PartnersPage() {
             <h3 className="text-lg font-semibold text-deep-charcoal mb-3">Educational Institutions</h3>
             <ul className="space-y-2 text-sm text-deep-charcoal/70">
               <li>• Pilot NOBOGYAN with your students</li>
-              <li>• Co-develop curriculum-specific features</li>
+              <li>• Co-develop curriculum for your subject area</li>
               <li>• Research collaboration on adaptive learning</li>
             </ul>
           </div>
           <div className="p-6 bg-white rounded-2xl border border-sand-200 shadow-sm">
             <h3 className="text-lg font-semibold text-deep-charcoal mb-3">Technology Companies</h3>
             <ul className="space-y-2 text-sm text-deep-charcoal/70">
-              <li>• Integrate your services into our platform</li>
-              <li>• White-label solutions</li>
-              <li>• API partnerships</li>
+              <li>• Integrate your LLM or voice services</li>
+              <li>• Joint technical publications</li>
+              <li>• Co-development on open-source components</li>
             </ul>
           </div>
           <div className="p-6 bg-white rounded-2xl border border-sand-200 shadow-sm">
             <h3 className="text-lg font-semibold text-deep-charcoal mb-3">Content Providers</h3>
             <ul className="space-y-2 text-sm text-deep-charcoal/70">
-              <li>• Integrate your educational content</li>
-              <li>• RAG knowledge base partnerships</li>
-              <li>• Content licensing</li>
+              <li>• Contribute educational content to the knowledge graph</li>
+              <li>• RAG knowledge base collaboration</li>
+              <li>• Subject-area expertise</li>
             </ul>
           </div>
         </div>
@@ -248,23 +243,23 @@ export default function PartnersPage() {
           Trust & Security
         </h2>
         <div className="p-6 bg-white rounded-2xl border border-sand-200">
-          <p className="text-deep-charcoal/70 mb-4">Partners can trust NOBOGYAN with their data:</p>
+          <p className="text-deep-charcoal/70 mb-4">How we handle partner and user data:</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4">
               <p className="font-semibold text-deep-charcoal">Data Privacy</p>
-              <p className="text-sm text-deep-charcoal/60">Strict data handling policies</p>
+              <p className="text-sm text-deep-charcoal/60">Student data stays on-platform</p>
             </div>
             <div className="text-center p-4">
               <p className="font-semibold text-deep-charcoal">Security</p>
-              <p className="text-sm text-deep-charcoal/60">Enterprise-grade practices</p>
+              <p className="text-sm text-deep-charcoal/60">JWT auth, hashed credentials</p>
             </div>
             <div className="text-center p-4">
-              <p className="font-semibold text-deep-charcoal">Compliance</p>
-              <p className="text-sm text-deep-charcoal/60">GDPR-aligned protection</p>
+              <p className="font-semibold text-deep-charcoal">Open Source</p>
+              <p className="text-sm text-deep-charcoal/60">Auditable codebase</p>
             </div>
             <div className="text-center p-4">
               <p className="font-semibold text-deep-charcoal">Transparency</p>
-              <p className="text-sm text-deep-charcoal/60">Clear terms & agreements</p>
+              <p className="text-sm text-deep-charcoal/60">Clear terms and privacy policy</p>
             </div>
           </div>
         </div>
@@ -288,7 +283,7 @@ export default function PartnersPage() {
       {/* Closing */}
       <section className="text-center py-8">
         <p className="text-lg text-deep-charcoal/70 italic">
-          Together, we're building the future of personalized education.
+          Interested in collaborating? Reach out at theveloxstudio@gmail.com.
         </p>
       </section>
     </PageLayout>

@@ -32,19 +32,19 @@ const features = [
 ];
 
 const metrics = [
-  { metric: "Time to First Token", target: "<800ms", achieved: true },
-  { metric: "Resource Generation (Text)", target: "<5s", achieved: true },
-  { metric: "Resource Generation (Video)", target: "<30s", achieved: true },
-  { metric: "Profile Update Latency", target: "<2s", achieved: true },
-  { metric: "Path Replanning", target: "<3s", achieved: true },
-  { metric: "Concurrent Users", target: "50+", achieved: true },
+  { metric: "Time to First Token", target: "<800ms" },
+  { metric: "Resource Generation (Text)", target: "<5s" },
+  { metric: "Resource Generation (Video)", target: "<30s" },
+  { metric: "Profile Update Latency", target: "<2s" },
+  { metric: "Path Replanning", target: "<3s" },
+  { metric: "Concurrent Users", target: "50+" },
 ];
 
 export default function AboutPage() {
   return (
     <PageLayout 
       title="About NOBOGYAN" 
-      subtitle="An AI-native personalized education platform"
+      subtitle="A multi-agent education platform built for the 15th China Software Cup"
     >
       {/* Mission */}
       <section className="mb-16">
@@ -53,7 +53,7 @@ export default function AboutPage() {
           Mission
         </h2>
         <p className="text-deep-charcoal/70 leading-relaxed">
-          NOBOGYAN is an AI-native personalized education platform that replaces the traditional "one-size-fits-all" curriculum with a dynamic, data-driven approach. Every resource, learning path, and tutoring interaction is customized for each individual student.
+          NOBOGYAN is a multi-agent education platform that replaces the traditional &quot;one-size-fits-all&quot; curriculum with a data-driven approach. Every resource, learning path, and tutoring interaction is generated based on individual student profiles.
         </p>
         <p className="text-deep-charcoal/70 leading-relaxed mt-4">
           Built for the <strong>15th China Software Cup</strong> (iFlytek Track), NOBOGYAN demonstrates how multi-agent AI systems can transform higher education through intelligent orchestration and continuous adaptation.
@@ -177,15 +177,15 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Performance Metrics */}
+      {/* Performance Targets */}
       <section className="mb-16">
-        <h2 className="text-2xl font-serif font-semibold text-deep-charcoal mb-6">Performance Metrics</h2>
+        <h2 className="text-2xl font-serif font-semibold text-deep-charcoal mb-6">Performance Targets</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {metrics.map((m, i) => (
             <div key={i} className="bg-white rounded-xl p-4 border border-sand-200 shadow-sm">
               <p className="text-xs text-deep-charcoal/50 mb-1">{m.metric}</p>
               <p className="text-xl font-bold text-deep-charcoal">{m.target}</p>
-              <span className="text-xs text-green-600">✓ Achieved</span>
+              <span className="text-xs text-sage-600">Design target</span>
             </div>
           ))}
         </div>
@@ -197,7 +197,7 @@ export default function AboutPage() {
         <div className="bg-gradient-to-br from-sage-50 to-white rounded-2xl p-6 border border-sage-200/50">
           <h3 className="text-xl font-bold text-deep-charcoal mb-2">VELOX Studio</h3>
           <p className="text-deep-charcoal/70 mb-4">
-            A team dedicated to building intelligent educational technology that adapts to each learner's unique needs.
+            A team building multi-agent educational technology for the 15th China Software Cup (iFlytek Track).
           </p>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>

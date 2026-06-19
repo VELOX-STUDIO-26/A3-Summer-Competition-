@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import MagneticButton from "../components/landing/MagneticButton";
-import LiveStats from "../components/landing/LiveStats";
+
 import SwarmCanvas from "../components/landing/SwarmCanvas";
 import ProductShowcase from "../components/landing/ProductShowcase";
 import { addToWaitlist } from "@/lib/firebase";
@@ -100,9 +100,9 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 1.2 }}
             >
-              NOBOGYAN analyzes your exact knowledge gaps, builds a custom curriculum 
-              instantly, and guides you with an interactive, multimodal AI tutor 
-              that adapts to your pace and style.
+              NOBOGYAN finds your knowledge gaps, builds a curriculum around them,
+              and teaches you with 15+ specialized AI agents
+              working in parallel.
             </motion.p>
 
             {/* Waitlist CTA */}
@@ -206,61 +206,22 @@ export default function Hero() {
               )}
             </motion.form>
 
-            {/* Social proof & trust indicators */}
+            {/* Trust badges */}
             <motion.div
-              className="flex flex-col gap-3 pt-2"
+              className="flex flex-wrap items-center gap-2 pt-2 text-[10px]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 1.6 }}
             >
-              {/* Realistic avatars stack with FOMO stats */}
-              <div className="flex items-center">
-                <div className="flex -space-x-2">
-                  {[
-                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
-                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
-                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face",
-                  ].map((src, i) => (
-                    <img
-                      key={i}
-                      src={src}
-                      alt={`Early adopter ${i + 1}`}
-                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white object-cover shadow-sm"
-                      style={{ zIndex: 5 - i }}
-                    />
-                  ))}
-                  <div 
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white bg-sage-400 flex items-center justify-center text-white text-[9px] font-bold shadow-sm"
-                    style={{ zIndex: 0 }}
-                  >
-                    +2K
-                  </div>
-                </div>
-                <div className="ml-3">
-                  <p className="text-xs font-semibold text-deep-charcoal">2,500+ Early Adopters</p>
-                  <p className="text-[10px] text-deep-charcoal/70">
-                    <span className="text-sage-600 font-semibold">500 beta slots</span> • 15,000+ paths generated
-                  </p>
-                </div>
-              </div>
-
-              {/* Trust badges with closed beta angle */}
-              <div className="flex flex-wrap items-center gap-2 text-[10px]">
-                <span className="flex items-center gap-1.5 bg-sage-400/10 text-sage-700 px-2.5 py-1 rounded-full font-medium border border-sage-400/20">
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  Closed Beta • Summer 2026
-                </span>
-                <span className="flex items-center gap-1 text-deep-charcoal/70 font-medium">
-                  <svg className="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  Early access priority
-                </span>
-              </div>
+              <span className="flex items-center gap-1.5 bg-sage-400/10 text-sage-700 px-2.5 py-1 rounded-full font-medium border border-sage-400/20">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Closed Beta • Summer 2026
+              </span>
+              <span className="flex items-center gap-1.5 bg-sage-400/10 text-sage-700 px-2.5 py-1 rounded-full font-medium border border-sage-400/20">
+                15+ specialized AI agents
+              </span>
             </motion.div>
           </div>
 
@@ -294,15 +255,7 @@ export default function Hero() {
           </motion.div>
         </div>
 
-        {/* Bottom stats strip */}
-        <motion.div
-          className="py-4 sm:py-6 mt-auto -mx-4 sm:mx-0"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1.8 }}
-        >
-          <LiveStats />
-        </motion.div>
+
       </div>
     </section>
     </>

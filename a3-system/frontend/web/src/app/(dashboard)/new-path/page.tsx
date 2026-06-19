@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
   Database,
@@ -11,7 +12,6 @@ import {
   Clock,
   Settings,
   ArrowLeft,
-  Sparkles,
   Loader2,
   BookOpen,
   Edit3,
@@ -21,6 +21,8 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronRight,
+  Play,
+  Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
@@ -311,7 +313,7 @@ function ProfileReview({
           onClick={onConfirm}
           className="flex-1 py-3 px-4 bg-gradient-to-r from-[#6B7F6B] to-[#5a6d5a] text-white rounded-xl font-medium hover:shadow-md transition-all flex items-center justify-center gap-2"
         >
-          <Sparkles className="w-4 h-4" />
+          <Zap className="w-4 h-4" />
           Generate Learning Path →
         </button>
       </div>
@@ -320,25 +322,176 @@ function ProfileReview({
 }
 
 // ============================================================================
-// Generating State Component - Enhanced UX
+// Generating State Component - Immersive Neural Network Visualization
 // ============================================================================
 
 const TIPS_DATA = [
   { emoji: "🧠", category: "Learning Science", text: "Spaced repetition helps retention — we'll build that into your learning path." },
   { emoji: "🎯", category: "Quick Win", text: "Breaking complex topics into small milestones makes learning feel achievable." },
-  { emoji: "📊", category: "Did You Know", text: "Students who follow personalized paths learn 30% faster than those using generic curricula." },
+  { emoji: "📊", category: "Did You Know", text: "Breaking topics into prerequisite chains helps you build knowledge systematically instead of jumping around." },
   { emoji: "💡", category: "Pro Tip", text: "Mixing different content types (videos, quizzes, code) improves long-term memory retention." },
-  { emoji: "⚡", category: "Efficiency", text: "Your AI tutor adapts explanations based on your cognitive style — watch for personalized hints!" },
+  { emoji: "⚡", category: "Efficiency", text: "Your AI tutor adjusts explanations based on your cognitive style — watch for tailored hints!" },
   { emoji: "🔬", category: "Research", text: "Active recall through quizzes is 2x more effective than passive re-reading for knowledge retention." },
   { emoji: "🌱", category: "Growth Mindset", text: "Struggling with a topic? That's where real learning happens. We'll adjust your path accordingly." },
   { emoji: "🎨", category: "Personalization", text: "Visual learners get more diagrams. Verbal learners get more detailed explanations. Everyone wins." },
 ];
 
-const GENERATION_STEPS = [
-  { id: "analyze", label: "Mapping your learning journey", duration: 8000 },
-  { id: "structure", label: "Building your topic roadmap", duration: 15000 },
-  { id: "generate", label: "Crafting personalized resources", duration: 40000 },
+const STATUS_MESSAGES = [
+  "Analyzing your knowledge profile...",
+  "Identifying optimal learning sequences...",
+  "Mapping prerequisite dependencies...",
+  "Calibrating difficulty progression...",
+  "Personalizing content for your style...",
+  "Building your topic roadmap...",
+  "Optimizing milestone ordering...",
+  "Crafting your curriculum...",
 ];
+
+// Constellation node positions for the animated graph (12 nodes in a flowing layout)
+const CONSTELLATION_NODES = [
+  { x: 15, y: 25 }, { x: 35, y: 15 }, { x: 55, y: 22 }, { x: 75, y: 12 },
+  { x: 85, y: 35 }, { x: 68, y: 45 }, { x: 45, y: 50 }, { x: 25, y: 48 },
+  { x: 12, y: 65 }, { x: 35, y: 72 }, { x: 58, y: 68 }, { x: 80, y: 62 },
+];
+
+const CONSTELLATION_EDGES = [
+  [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 0],
+  [7, 8], [8, 9], [9, 10], [10, 11], [11, 4], [6, 10], [1, 6], [2, 5],
+];
+
+function ConstellationCanvas({
+  activeNodes,
+  totalNodes,
+}: {
+  activeNodes: number;
+  totalNodes: number;
+}) {
+  const visibleNodes = Math.min(activeNodes, CONSTELLATION_NODES.length);
+
+  return (
+    <div className="relative w-full h-full">
+      <svg viewBox="0 0 100 80" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#6B7F6B" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#6B7F6B" stopOpacity="0" />
+          </radialGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="1" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Edges — draw connections as they form */}
+        {CONSTELLATION_EDGES.map(([from, to], i) => {
+          const bothVisible = from < visibleNodes && to < visibleNodes;
+          const fromNode = CONSTELLATION_NODES[from];
+          const toNode = CONSTELLATION_NODES[to];
+          return (
+            <motion.line
+              key={`edge-${i}`}
+              x1={fromNode.x}
+              y1={fromNode.y}
+              x2={toNode.x}
+              y2={toNode.y}
+              stroke={bothVisible ? "#6B7F6B" : "#E7E2D7"}
+              strokeWidth={bothVisible ? 0.4 : 0.15}
+              strokeOpacity={bothVisible ? 0.6 : 0.3}
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: bothVisible ? 1 : 0.3 }}
+              transition={{ duration: 1.2, delay: i * 0.08, ease: "easeOut" }}
+            />
+          );
+        })}
+
+        {/* Ghost nodes (not yet generated) */}
+        {CONSTELLATION_NODES.map((node, i) => (
+          i >= visibleNodes && (
+            <circle
+              key={`ghost-${i}`}
+              cx={node.x}
+              cy={node.y}
+              r={1}
+              fill="#D6CFC2"
+              opacity={0.4}
+            />
+          )
+        ))}
+
+        {/* Active nodes with staggered entrance */}
+        {CONSTELLATION_NODES.slice(0, visibleNodes).map((node, i) => (
+          <motion.g key={`node-${i}`}>
+            {/* Outer glow ring */}
+            <motion.circle
+              cx={node.x}
+              cy={node.y}
+              r={3.5}
+              fill="url(#nodeGlow)"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0, 1.5, 1], opacity: [0, 0.4, 0.2] }}
+              transition={{ duration: 1.5, delay: i * 0.15 }}
+            />
+            {/* Main node */}
+            <motion.circle
+              cx={node.x}
+              cy={node.y}
+              r={1.8}
+              fill="#6B7F6B"
+              filter="url(#glow)"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 15,
+                delay: i * 0.15,
+              }}
+            />
+            {/* Inner bright dot */}
+            <motion.circle
+              cx={node.x}
+              cy={node.y}
+              r={0.7}
+              fill="#C8E6C9"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 0.6] }}
+              transition={{ duration: 2, delay: i * 0.15, repeat: Infinity, repeatType: "reverse" }}
+            />
+          </motion.g>
+        ))}
+
+        {/* Traveling particles along edges */}
+        {CONSTELLATION_EDGES.slice(0, Math.min(visibleNodes, CONSTELLATION_EDGES.length)).map(([from, to], i) => {
+          if (from >= visibleNodes || to >= visibleNodes) return null;
+          const fromNode = CONSTELLATION_NODES[from];
+          const toNode = CONSTELLATION_NODES[to];
+          return (
+            <motion.circle
+              key={`particle-${i}`}
+              r={0.4}
+              fill="#8FBC8F"
+              opacity={0.8}
+              initial={{ cx: fromNode.x, cy: fromNode.y }}
+              animate={{
+                cx: [fromNode.x, toNode.x, fromNode.x],
+                cy: [fromNode.y, toNode.y, fromNode.y],
+              }}
+              transition={{
+                duration: 3 + (i % 3),
+                delay: i * 0.3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
 
 function GeneratingState({
   subject,
@@ -349,176 +502,222 @@ function GeneratingState({
   milestoneCount: number;
   expectedMilestones: number;
 }) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [progress, setProgress] = useState(0);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
-  const [tipFading, setTipFading] = useState(false);
+  const [statusIndex, setStatusIndex] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [simulatedNodes, setSimulatedNodes] = useState(1);
+  const [lastNodeName, setLastNodeName] = useState("");
 
-  // Real milestone progress: cap at 95% until generation completes.
+  // Simulated milestone names that flash when a node appears
+  const SIMULATED_NAMES = [
+    "Core Foundations", "Key Concepts", "Building Blocks", "Fundamentals",
+    "Applied Methods", "Advanced Topics", "Practical Skills", "Integration",
+    "Deep Dive", "Synthesis", "Mastery Path", "Final Review",
+  ];
+
+  // Elapsed time counter — drives everything
   useEffect(() => {
-    const capped = expectedMilestones > 0
-      ? Math.min(95, (milestoneCount / expectedMilestones) * 100)
-      : 0;
-    setProgress(capped);
+    const timer = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-    if (milestoneCount === 0) setCurrentStep(0);
-    else if (milestoneCount < expectedMilestones) setCurrentStep(1);
-    else setCurrentStep(2);
-  }, [milestoneCount, expectedMilestones]);
+  // Simulate nodes appearing every ~4 seconds, up to 12
+  useEffect(() => {
+    if (elapsedSeconds > 0 && elapsedSeconds % 4 === 0) {
+      setSimulatedNodes((prev) => {
+        const next = Math.min(prev + 1, CONSTELLATION_NODES.length);
+        if (next > prev) {
+          setLastNodeName(SIMULATED_NAMES[(next - 1) % SIMULATED_NAMES.length]);
+        }
+        return next;
+      });
+    }
+  }, [elapsedSeconds]);
 
-  // Rotate tips every 6 seconds
+  // If real milestones arrive, jump simulated nodes up to match
+  useEffect(() => {
+    if (milestoneCount > simulatedNodes) {
+      setSimulatedNodes(milestoneCount);
+    }
+  }, [milestoneCount, simulatedNodes]);
+
+  // Progress: smooth easing curve based on elapsed time, targeting ~55s
+  // Uses an ease-out curve: fast at first, slows down, caps at 90%
+  const targetSeconds = 55;
+  const rawProgress = Math.min(elapsedSeconds / targetSeconds, 1);
+  const easedProgress = 1 - Math.pow(1 - rawProgress, 2.5); // ease-out
+  const progress = Math.min(easedProgress * 90, 90); // cap at 90%
+
+  // Rotate status messages every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStatusIndex((prev) => (prev + 1) % STATUS_MESSAGES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Rotate tips every 7 seconds
   useEffect(() => {
     const tipInterval = setInterval(() => {
-      setTipFading(true);
-      setTimeout(() => {
-        setCurrentTipIndex((prev) => (prev + 1) % TIPS_DATA.length);
-        setTipFading(false);
-      }, 300);
-    }, 6000);
-
+      setCurrentTipIndex((prev) => (prev + 1) % TIPS_DATA.length);
+    }, 7000);
     return () => clearInterval(tipInterval);
   }, []);
 
   const currentTip = TIPS_DATA[currentTipIndex];
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
   return (
-    <div className="bg-white rounded-2xl border border-[#D6CFC2]/60 shadow-sm overflow-hidden">
-      {/* Main Content */}
-      <div className="p-8 text-center">
-        {/* Animated Icon */}
-        <div className="relative w-20 h-20 mx-auto mb-6">
-          <div className="absolute inset-0 rounded-full border-4 border-[#E7E2D7]" />
-          <div 
-            className="absolute inset-0 rounded-full border-4 border-[#6B7F6B] border-t-transparent animate-spin"
-            style={{ animationDuration: '1.5s' }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-[#6B7F6B] animate-pulse" />
+    <div className="relative overflow-hidden rounded-2xl border border-[#D6CFC2]/40 bg-gradient-to-b from-[#1a2e1a] via-[#1e3320] to-[#162816] shadow-2xl">
+      {/* Ambient background glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-[#6B7F6B]/15 rounded-full blur-[80px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-[#8FBC8F]/10 rounded-full blur-[60px]" />
+      </div>
+
+      {/* Constellation Visualization */}
+      <div className="relative h-[300px] sm:h-[340px]">
+        <ConstellationCanvas
+          activeNodes={simulatedNodes}
+          totalNodes={CONSTELLATION_NODES.length}
+        />
+
+        {/* Center overlay text */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          {/* Progress ring */}
+          <div className="relative w-28 h-28 mb-3">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#2d4a2d" strokeWidth="4" />
+              <motion.circle
+                cx="50" cy="50" r="42"
+                fill="none"
+                stroke="#8FBC8F"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray={264}
+                animate={{ strokeDashoffset: 264 - (264 * progress) / 100 }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-white/90">
+                {Math.round(progress)}%
+              </span>
+              <span className="text-[10px] text-white/40 uppercase tracking-wider">
+                {simulatedNodes} / {CONSTELLATION_NODES.length} nodes
+              </span>
+            </div>
+          </div>
+
+          <h2 className="text-lg font-serif font-bold text-white/90 mb-1">
+            Building Your Path
+          </h2>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={statusIndex}
+              className="text-xs text-[#8FBC8F]/80 max-w-xs text-center"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4 }}
+            >
+              {STATUS_MESSAGES[statusIndex]}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Discovered milestone flash */}
+      <AnimatePresence>
+        {lastNodeName && (
+          <motion.div
+            key={lastNodeName + simulatedNodes}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-20"
+            initial={{ opacity: 0, y: -10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="px-4 py-2 rounded-full bg-[#8FBC8F]/20 border border-[#8FBC8F]/30 backdrop-blur-sm">
+              <span className="text-xs text-[#8FBC8F] font-medium">
+                Discovered: {lastNodeName}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom info panel */}
+      <div className="relative border-t border-white/5 bg-black/20 backdrop-blur-sm">
+        {/* Subject + meta row */}
+        <div className="px-6 pt-4 pb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <BookOpen className="w-4 h-4 text-[#8FBC8F] flex-shrink-0" />
+            <span className="text-sm text-white/70 truncate">
+              {subject}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-white/30 flex-shrink-0">
+            <span>{formatTime(elapsedSeconds)}</span>
+            <span className="w-1 h-1 rounded-full bg-white/20" />
+            <span className="text-white/40">~{Math.max(0, 55 - elapsedSeconds)}s left</span>
           </div>
         </div>
 
-        <h2 className="text-2xl font-serif font-bold text-[#2a2a2a]">
-          Crafting Your Learning Path
-        </h2>
-        <p className="text-sm text-[#888] mt-2 max-w-md mx-auto">
-          Creating a personalized curriculum for <span className="font-medium text-[#6B7F6B]">"{subject}"</span>
-        </p>
-
-        {/* Social Proof */}
-        <p className="text-xs text-[#999] mt-3">
-          <span className="font-medium text-[#6B7F6B]">2,500+</span> learners have generated paths this week
-        </p>
-
-        {/* Progress Bar */}
-        <div className="mt-8 max-w-md mx-auto">
-          <div className="flex justify-between text-xs text-[#888] mb-2">
-            {milestoneCount > 0 ? (
-              <span>
-                Generating milestone{" "}
-                <span className="font-medium text-[#6B7F6B]">{milestoneCount}</span>{" "}
-                {expectedMilestones > 0 && (
-                  <>
-                    {" "}of{" "}
-                    <span className="font-medium text-[#6B7F6B]">{expectedMilestones}</span>
-                  </>
-                )}
-              </span>
-            ) : (
-              <span>Planning your learning path...</span>
-            )}
-            <span className="font-medium text-[#6B7F6B]">Usually takes ~45-60 seconds</span>
-          </div>
-          <div className="h-2 bg-[#E7E2D7] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#6B7F6B] to-[#8FBC8F] rounded-full transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
+        {/* Progress bar */}
+        <div className="px-6 pb-4">
+          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-[#6B7F6B] via-[#8FBC8F] to-[#6B7F6B] rounded-full"
+              style={{ backgroundSize: "200% 100%" }}
+              animate={{
+                width: `${Math.max(progress, 3)}%`,
+                backgroundPosition: ["0% 0%", "100% 0%"],
+              }}
+              transition={{
+                width: { duration: 1.5, ease: "easeOut" },
+                backgroundPosition: { duration: 2, repeat: Infinity, ease: "linear" },
+              }}
             />
           </div>
         </div>
 
-        {/* Steps with active indicators */}
-        <div className="mt-8 space-y-3 max-w-sm mx-auto">
-          {GENERATION_STEPS.map((step, index) => {
-            const isComplete = index < currentStep;
-            const isActive = index === currentStep;
-            
-            return (
-              <div 
-                key={step.id}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300",
-                  isActive && "bg-[#6B7F6B]/5 border border-[#6B7F6B]/20",
-                  isComplete && "opacity-70"
-                )}
-              >
-                {/* Status Icon */}
-                <div className="flex-shrink-0">
-                  {isComplete ? (
-                    <div className="w-6 h-6 rounded-full bg-[#6B7F6B] flex items-center justify-center">
-                      <Check className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  ) : isActive ? (
-                    <div className="w-6 h-6 rounded-full bg-[#6B7F6B]/10 flex items-center justify-center">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#6B7F6B] animate-pulse" />
-                    </div>
-                  ) : (
-                    <div className="w-6 h-6 rounded-full bg-[#E7E2D7] flex items-center justify-center">
-                      <div className="w-2 h-2 rounded-full bg-[#ccc]" />
-                    </div>
-                  )}
+        {/* Tip carousel */}
+        <div className="px-6 pb-5">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentTipIndex}
+              className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/5"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <span className="text-lg flex-shrink-0 mt-0.5">{currentTip.emoji}</span>
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold text-[#8FBC8F] uppercase tracking-wider mb-0.5">
+                  {currentTip.category}
                 </div>
-                
-                {/* Label */}
-                <span className={cn(
-                  "text-sm transition-colors",
-                  isActive ? "text-[#2a2a2a] font-medium" : "text-[#888]"
-                )}>
-                  {step.label}
-                  {isActive && <span className="text-[#6B7F6B]">...</span>}
-                </span>
+                <p className="text-xs text-white/50 leading-relaxed">
+                  {currentTip.text}
+                </p>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Tips Section */}
-      <div className="border-t border-[#E7E2D7] bg-gradient-to-r from-[#F7F5F0] to-[#FAF8F5] p-6">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white border border-[#E7E2D7] flex items-center justify-center text-xl shadow-sm">
-              {currentTip.emoji}
-            </div>
-            <div className={cn(
-              "flex-1 transition-opacity duration-300",
-              tipFading ? "opacity-0" : "opacity-100"
-            )}>
-              <div className="text-xs font-semibold text-[#6B7F6B] uppercase tracking-wider mb-1">
-                {currentTip.category}
-              </div>
-              <p className="text-sm text-[#555] leading-relaxed">
-                {currentTip.text}
-              </p>
-            </div>
-          </div>
-          
-          {/* Tip Navigation Dots - moved inside the card */}
-          <div className="flex justify-center gap-1.5 mt-4">
+            </motion.div>
+          </AnimatePresence>
+          {/* Dots */}
+          <div className="flex justify-center gap-1 mt-3">
             {TIPS_DATA.map((_, index) => (
               <div
                 key={index}
                 className={cn(
-                  "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                  index === currentTipIndex ? "bg-[#6B7F6B] w-4" : "bg-[#D6CFC2]"
+                  "h-1 rounded-full transition-all duration-300",
+                  index === currentTipIndex ? "bg-[#8FBC8F] w-4" : "bg-white/10 w-1"
                 )}
               />
             ))}
           </div>
         </div>
       </div>
-
-      {/* Optional: Quick Action - removed per UX review */}
-      {/* Social proof and time estimate added above instead */}
     </div>
   );
 }
@@ -580,115 +779,116 @@ function PathPreview({
     return topic.subtopics;
   };
 
+  // Computed stats
+  const actualLessons = graph.main_topics.reduce((sum, t) => sum + t.subtopics.length, 0);
+  const planned = graph.total_subtopic_count;
+  const allLessonsLoaded = actualLessons >= planned && planned > 0;
+  const totalMins = graph.main_topics.reduce((sum, t) => sum + t.subtopics.reduce((s, sub) => s + (sub.estimated_minutes || 0), 0), 0);
+  const totalHours = Math.round(totalMins / 60);
+  const rawDifficulty = graph.difficulty_level?.toLowerCase() || "intermediate";
+  const difficulty = rawDifficulty.includes("|") ? rawDifficulty.split("|")[0].trim() : rawDifficulty;
+  const difficultyColor = difficulty === "beginner" ? "#66BB6A" : difficulty === "advanced" ? "#EF5350" : "#FFA726";
+  const difficultyLabel = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+  const difficultyHint = difficulty === "beginner" ? "Great for getting started" : difficulty === "advanced" ? "For experienced learners" : "Some prior knowledge helpful";
+
   return (
-    <div className="bg-white rounded-2xl border border-[#D6CFC2]/60 shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="p-6 border-b border-[#E7E2D7] bg-gradient-to-r from-[#F7F5F0] to-white">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-serif font-bold text-[#2a2a2a] flex items-center gap-2">
-              <BookOpen className="w-6 h-6 text-[#6B7F6B]" />
+    <motion.div
+      className="overflow-hidden rounded-2xl border border-[#D6CFC2]/40 shadow-lg bg-white"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Hero header with dark gradient */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#1a2e1a] via-[#1e3320] to-[#243826] px-6 pt-6 pb-5">
+        {/* Ambient glow */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-[#6B7F6B]/15 rounded-full blur-[60px]" />
+        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-[#8FBC8F]/10 rounded-full blur-[40px]" />
+
+        <div className="relative">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <div className="flex items-center gap-2 text-[#8FBC8F] text-xs font-medium uppercase tracking-wider mb-2">
+              <Target className="w-3.5 h-3.5" />
+              Generated From Your Profile
+            </div>
+            <h2 className="text-2xl font-serif font-bold text-white/95 mb-1">
               {graph.subject}
             </h2>
-            <p className="text-sm text-[#888] mt-1">
+            <p className="text-sm text-white/40">
               {graph.main_topic_count} milestones
-              {graph.main_topics.some(t => t.subtopics.length > 0)
-                ? ` • ${graph.main_topics.reduce((sum, t) => sum + t.subtopics.length, 0)} lessons`
-                : " • Lessons loading..."}
-              {" • "}Personalized for your profile
+              {allLessonsLoaded
+                ? ` · ${actualLessons} lessons`
+                : actualLessons > 0
+                ? ` · ${actualLessons}/${planned} lessons loaded`
+                : planned > 0
+                ? ` · ${planned} lessons`
+                : ""}
+              {" · "}Based on your profile
             </p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-[#6B7F6B]">{graph.main_topic_count}</div>
-            <div className="text-xs text-[#888]">Main Topics</div>
+          </motion.div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-4 gap-2 mt-4">
+            {[
+              {
+                value: allLessonsLoaded ? String(actualLessons) : actualLessons > 0 ? `${actualLessons}/${planned}` : planned > 0 ? String(planned) : "...",
+                label: allLessonsLoaded ? "Lessons" : "Loading...",
+                loading: !allLessonsLoaded,
+              },
+              {
+                value: totalHours > 0 ? `~${totalHours}h` : "...",
+                label: "Total Time",
+                sub: totalHours > 0 && graph.estimated_duration_weeks > 0 ? `${Math.round(totalHours / graph.estimated_duration_weeks)}h/week` : undefined,
+                loading: totalHours === 0,
+              },
+              {
+                value: difficultyLabel,
+                label: "Difficulty",
+                dot: difficultyColor,
+                sub: difficultyHint,
+              },
+              {
+                value: graph.estimated_duration_weeks > 0 ? `${graph.estimated_duration_weeks}w` : "...",
+                label: "Duration",
+                sub: graph.estimated_duration_weeks > 0 ? `~${Math.round(graph.total_subtopic_count / graph.estimated_duration_weeks)} lessons/week` : undefined,
+              },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                className="text-center p-2.5 rounded-xl bg-white/5 border border-white/5"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 + i * 0.08 }}
+              >
+                <div className="flex items-center justify-center gap-1.5">
+                  {stat.dot && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.dot }} />}
+                  <span className={cn(
+                    "font-bold text-white/90",
+                    stat.loading ? "text-base animate-pulse" : "text-lg"
+                  )}>
+                    {stat.value}
+                  </span>
+                </div>
+                <div className="text-[10px] text-white/40 font-medium mt-0.5">{stat.label}</div>
+                {stat.sub && <div className="text-[9px] text-white/25 mt-0.5">{stat.sub}</div>}
+              </motion.div>
+            ))}
           </div>
         </div>
 
-        {/* Stats - with better contrast and difficulty color coding */}
-        <div className="grid grid-cols-4 gap-4 mt-4">
-          <div className="text-center p-3 rounded-xl bg-white border border-[#E7E2D7] shadow-sm">
-            {(() => {
-              const actualLessons = graph.main_topics.reduce((sum, t) => sum + t.subtopics.length, 0);
-              const planned = graph.total_subtopic_count;
-              const allLoaded = actualLessons >= planned && planned > 0;
-              return (
-                <>
-                  <div className="text-xl font-bold text-[#2a2a2a]">
-                    {allLoaded ? actualLessons : actualLessons > 0 ? `${actualLessons}/${planned}` : planned > 0 ? planned : "..."}
-                  </div>
-                  <div className="text-xs font-medium text-[#555]">
-                    {allLoaded ? "Lessons" : "Lessons loading"}
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-          <div className="text-center p-3 rounded-xl bg-white border border-[#E7E2D7] shadow-sm">
-            {(() => {
-              const totalMins = graph.main_topics.reduce((sum, t) => sum + t.subtopics.reduce((s, sub) => s + (sub.estimated_minutes || 0), 0), 0);
-              const hours = Math.round(totalMins / 60);
-              return (
-                <>
-                  <div className="text-xl font-bold text-[#2a2a2a]">{hours > 0 ? `~${hours}h` : "..."}</div>
-                  <div className="text-xs font-medium text-[#555]">Total Time</div>
-                  {hours > 0 && graph.estimated_duration_weeks > 0 && (
-                    <div className="text-[10px] text-[#888] mt-0.5">{graph.estimated_duration_weeks} weeks at ~{Math.round(hours / graph.estimated_duration_weeks)}h/week</div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-          <div className="text-center p-3 rounded-xl bg-white border border-[#E7E2D7] shadow-sm">
-            <div className="flex items-center justify-center gap-1.5">
-              {/* Difficulty indicator dot matching the graph colors */}
-              {(() => {
-                // Handle malformed difficulty strings like "beginner|intermediate|advanced"
-                const rawDifficulty = graph.difficulty_level?.toLowerCase() || 'intermediate';
-                const difficulty = rawDifficulty.includes('|')
-                  ? rawDifficulty.split('|')[0].trim()
-                  : rawDifficulty;
-                const color = difficulty === 'beginner' ? '#66BB6A'
-                  : difficulty === 'advanced' ? '#EF5350'
-                  : '#FFA726';
-                const label = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
-                return (
-                  <>
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-                    <span className="text-xl font-bold text-[#2a2a2a]">{label}</span>
-                  </>
-                );
-              })()}
-            </div>
-            <div className="text-xs font-medium text-[#555]">Difficulty</div>
-            <div className="text-[10px] text-[#888] mt-0.5">
-              {(() => {
-                const rawDifficulty = graph.difficulty_level?.toLowerCase() || 'intermediate';
-                const difficulty = rawDifficulty.includes('|')
-                  ? rawDifficulty.split('|')[0].trim()
-                  : rawDifficulty;
-                if (difficulty === 'beginner') return 'Assumes basic familiarity';
-                if (difficulty === 'advanced') return 'Requires solid foundation';
-                return 'Some prior knowledge helpful';
-              })()}
-            </div>
-          </div>
-          <div className="text-center p-3 rounded-xl bg-white border border-[#E7E2D7] shadow-sm">
-            <div className="text-xl font-bold text-[#2a2a2a]">{graph.estimated_duration_weeks}w</div>
-            <div className="text-xs font-medium text-[#555]">Duration</div>
-            <div className="text-[10px] text-[#888] mt-0.5">~{Math.round(graph.total_subtopic_count / graph.estimated_duration_weeks)} lessons/week</div>
-          </div>
-        </div>
-
-        {/* Ratings Display */}
+        {/* Ratings */}
         {graph.id && (
-          <div className="mt-4 pt-4 border-t border-[#E7E2D7]">
+          <div className="relative mt-4 pt-3 border-t border-white/5">
             <PathRatingsDisplay graphId={graph.id} />
           </div>
         )}
       </div>
 
       {/* View Toggle */}
-      <div className="px-4 pt-4 flex items-center justify-between">
+      <div className="px-5 pt-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-[#2a2a2a]">Learning Path Structure</h3>
         <div className="flex bg-[#F7F5F0] rounded-lg p-1 border border-[#E7E2D7]">
           <button
@@ -701,12 +901,7 @@ function PathPreview({
             )}
           >
             <span className="flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="5" cy="12" r="3" />
-                <circle cx="19" cy="5" r="3" />
-                <circle cx="19" cy="19" r="3" />
-                <path d="M8 12h5m3-5l-3 5m0 0l3 5" />
-              </svg>
+              <Workflow className="w-3.5 h-3.5" />
               Graph
             </span>
           </button>
@@ -731,6 +926,14 @@ function PathPreview({
               List
             </span>
           </button>
+        </div>
+      </div>
+
+      {/* Hint */}
+      <div className="px-5 mt-2">
+        <div className="flex items-center gap-2 text-xs text-[#999] bg-[#F7F5F0] rounded-lg px-3 py-2">
+          <BookOpen className="w-3 h-3 text-[#6B7F6B]" />
+          Tap any milestone to explore its lessons
         </div>
       </div>
 
@@ -786,19 +989,30 @@ function PathPreview({
               const error = topicErrors[topic.id];
 
               return (
-                <div key={topic.id} className="border border-[#E7E2D7] rounded-xl overflow-hidden">
+                <motion.div
+                  key={topic.id}
+                  className="border border-[#E7E2D7] rounded-xl overflow-hidden"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                >
                   <button
                     onClick={() => handleToggleTopic(topic)}
                     className="w-full flex items-center gap-3 p-3 hover:bg-[#F7F5F0] transition-colors text-left"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-[#6B7F6B]/10 flex items-center justify-center text-sm font-bold text-[#6B7F6B]">
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold",
+                      expandedTopic === topic.id
+                        ? "bg-[#6B7F6B] text-white"
+                        : "bg-[#6B7F6B]/10 text-[#6B7F6B]"
+                    )}>
                       {i + 1}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-[#2a2a2a] truncate">{topic.title}</div>
                       <div className="text-xs text-[#888]">
                         {topic.subtopics.length > 0
-                          ? `${topic.subtopics.length} lessons • ~${topic.subtopics.reduce((s, sub) => s + (sub.estimated_minutes || 0), 0)}min`
+                          ? `${topic.subtopics.length} lessons · ~${topic.subtopics.reduce((s, sub) => s + (sub.estimated_minutes || 0), 0)}min`
                           : `${topic.subtopic_count} lessons planned`}
                       </div>
                     </div>
@@ -814,46 +1028,62 @@ function PathPreview({
                     )}
                   </button>
 
-                  {expandedTopic === topic.id && (
-                    <div className="border-t border-[#E7E2D7] bg-[#F7F5F0] p-3">
-                      <p className="text-sm text-[#666] mb-3">{topic.description}</p>
-                      {isLoading ? (
-                        <div className="flex items-center gap-2 py-2 text-sm text-[#888]">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Generating lessons for this milestone...
-                        </div>
-                      ) : error ? (
-                        <div className="space-y-2">
-                          <p className="text-xs text-red-600">{error}</p>
-                          <button
-                            onClick={() => handleToggleTopic(topic)}
-                            className="text-xs font-medium text-[#6B7F6B] hover:text-[#5a6d5a] flex items-center gap-1"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            Retry
-                          </button>
-                        </div>
-                      ) : subtopics.length > 0 ? (
-                        <div className="space-y-1.5">
-                          {subtopics.map((sub, j) => (
-                            <div key={sub.id} className="flex items-center gap-2 text-sm">
-                              <div className="w-5 h-5 rounded bg-white border border-[#D6CFC2] flex items-center justify-center text-xs text-[#888]">
-                                {j + 1}
-                              </div>
-                              <span className="text-[#2a2a2a]">{sub.title}</span>
-                              <span className="text-xs text-[#888] ml-auto">{sub.estimated_minutes}min</span>
+                  <AnimatePresence>
+                    {expandedTopic === topic.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-[#E7E2D7] bg-[#F7F5F0] p-3">
+                          <p className="text-sm text-[#666] mb-3">{topic.description}</p>
+                          {isLoading ? (
+                            <div className="flex items-center gap-2 py-2 text-sm text-[#888]">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Generating lessons for this milestone...
                             </div>
-                          ))}
+                          ) : error ? (
+                            <div className="space-y-2">
+                              <p className="text-xs text-red-600">{error}</p>
+                              <button
+                                onClick={() => handleToggleTopic(topic)}
+                                className="text-xs font-medium text-[#6B7F6B] hover:text-[#5a6d5a] flex items-center gap-1"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                                Retry
+                              </button>
+                            </div>
+                          ) : subtopics.length > 0 ? (
+                            <div className="space-y-1.5">
+                              {subtopics.map((sub, j) => (
+                                <motion.div
+                                  key={sub.id}
+                                  className="flex items-center gap-2 text-sm"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: j * 0.03 }}
+                                >
+                                  <div className="w-5 h-5 rounded bg-white border border-[#D6CFC2] flex items-center justify-center text-xs text-[#888]">
+                                    {j + 1}
+                                  </div>
+                                  <span className="text-[#2a2a2a]">{sub.title}</span>
+                                  <span className="text-xs text-[#888] ml-auto">{sub.estimated_minutes}min</span>
+                                </motion.div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 py-2 text-sm text-[#888]">
+                              <Loader2 className="w-4 h-4 animate-spin text-[#6B7F6B]" />
+                              <span className="italic">{topic.subtopic_count} lessons generating in background...</span>
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2 py-2 text-sm text-[#888]">
-                          <Loader2 className="w-4 h-4 animate-spin text-[#6B7F6B]" />
-                          <span className="italic">{topic.subtopic_count} lessons generating in background...</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               );
             })}
           </div>
@@ -861,40 +1091,43 @@ function PathPreview({
       )}
 
       {/* Actions */}
-      <div className="p-4 border-t border-[#E7E2D7] bg-gradient-to-r from-[#F7F5F0] to-white">
+      <div className="p-5 border-t border-[#E7E2D7] bg-gradient-to-r from-[#F7F5F0] to-white">
         <div className="flex flex-col gap-3">
-          {/* Top row: Back + Regenerate */}
-          <div className="flex gap-3">
-            <button
-              onClick={onBack}
-              className="py-3 px-5 border border-[#D6CFC2] text-[#555] font-medium rounded-xl hover:bg-white hover:border-[#6B7F6B] transition-all"
-            >
-              ← Back
-            </button>
-            <button
-              onClick={onRegenerate}
-              disabled={isRegenerating}
-              className="flex items-center gap-2 py-3 px-5 text-[#888] font-medium rounded-xl hover:text-[#6B7F6B] hover:bg-[#F7F5F0] transition-all disabled:opacity-50 text-sm"
-            >
-              <RefreshCw className={cn("w-4 h-4", isRegenerating && "animate-spin")} />
-              Regenerate
-            </button>
-          </div>
-          {/* Bottom: Main CTA with preview hint */}
-          <button
+          <motion.button
             onClick={onAccept}
-            className="w-full py-3.5 px-6 bg-[#8FBC8F] text-[#1a2e1a] font-bold rounded-xl shadow-lg transform transition-all duration-200 flex items-center justify-center gap-2 hover:bg-[#7CAD7C] hover:shadow-xl hover:scale-[1.02]"
+            className="w-full py-4 px-6 bg-gradient-to-r from-[#6B7F6B] to-[#5a6d5a] text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 hover:shadow-xl transition-shadow"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
           >
-            <Sparkles className="w-5 h-5" />
+            <Play className="w-5 h-5" />
             Accept & Start Learning
             <ChevronRight className="w-5 h-5" />
-          </button>
-          <p className="text-center text-xs text-[#888]">
-            You'll go to your notebook with the first milestone unlocked
-          </p>
+          </motion.button>
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2">
+              <button
+                onClick={onBack}
+                className="py-2.5 px-4 text-sm text-[#888] font-medium rounded-lg hover:bg-[#F7F5F0] hover:text-[#555] transition-all flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Back to Profile
+              </button>
+              <button
+                onClick={onRegenerate}
+                disabled={isRegenerating}
+                className="py-2.5 px-4 text-sm text-[#888] font-medium rounded-lg hover:bg-[#F7F5F0] hover:text-[#6B7F6B] transition-all disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", isRegenerating && "animate-spin")} />
+                Regenerate
+              </button>
+            </div>
+            <p className="text-xs text-[#aaa]">
+              First milestone unlocked on start
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -904,7 +1137,11 @@ function PathPreview({
 
 export default function NewPathPage() {
   const router = useRouter();
-  const { userName, studentId, profile, setProfile } = useAppStore();
+  const { userName, studentId, profile, setProfile, activeGraphId } = useAppStore();
+
+  const notebookHref = activeGraphId
+    ? `/notebook?graph=${activeGraphId}`
+    : "/notebook";
 
   // State
   const [step, setStep] = useState<Step>("chat");
@@ -1163,14 +1400,14 @@ export default function NewPathPage() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={() => router.push("/analytics")}
+            onClick={() => router.push(activeGraphId ? notebookHref : "/profile-summary")}
             className="p-2 rounded-lg hover:bg-[#E7E2D7] transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-[#666]" />
           </button>
           <div>
             <h1 className="text-2xl font-serif font-bold text-[#2a2a2a] flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-[#6B7F6B]" />
+              <Workflow className="w-6 h-6 text-[#6B7F6B]" />
               Create New Learning Path
             </h1>
           </div>

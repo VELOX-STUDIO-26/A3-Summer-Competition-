@@ -10,7 +10,6 @@ import Confetti from "../components/landing/Confetti";
 
 export default function FinalCTA() {
   const [email, setEmail] = useState("");
-  const [waitlistCount, setWaitlistCount] = useState(2547);
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
@@ -18,11 +17,6 @@ export default function FinalCTA() {
 
   useEffect(() => {
     setMounted(true);
-    // Simulate live counter
-    const interval = setInterval(() => {
-      setWaitlistCount((prev) => prev + Math.floor(Math.random() * 2));
-    }, 12000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -88,16 +82,16 @@ export default function FinalCTA() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white leading-tight"
             style={{ fontFamily: "var(--font-serif)" }}
           >
-            Be First to Experience
+            Stop Guessing What to Learn Next.
             <br />
-            <span className="text-sage-400">The Future of Learning</span>
+            <span className="text-sage-400">Let the Swarm Figure It Out.</span>
           </h2>
         </ScrollReveal>
 
         <ScrollReveal delay={0.2}>
           <p className="mt-4 sm:mt-6 text-base sm:text-lg text-white/60 max-w-xl mx-auto px-4">
-            Skip what you already know. Master what you don't. Experience a continuous 
-            learning loop that adapts to your pace, style, and goals in real time.
+            Skip what you already know. Master what you don&apos;t. Fifteen agents
+            profile you, plan your path, generate resources, and test your understanding — continuously.
           </p>
         </ScrollReveal>
 
@@ -200,35 +194,7 @@ export default function FinalCTA() {
           </div>
         </ScrollReveal>
 
-        {/* Waitlist counter */}
-        <ScrollReveal delay={0.8}>
-          <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-white/10">
-            <div className="flex flex-col items-center gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-2">
-                  {["#9B59B6", "#3498DB", "#E67E22", "#1ABC9C", "#E74C3C"].map((color, i) => (
-                    <div
-                      key={i}
-                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-deep-charcoal flex items-center justify-center text-white text-[10px] font-bold"
-                      style={{ backgroundColor: color, zIndex: 5 - i }}
-                    >
-                      {["S", "M", "A", "P", "D"][i]}
-                    </div>
-                  ))}
-                </div>
-                <div className="text-left">
-                  <p className="text-xl sm:text-2xl font-bold text-white">
-                    {mounted ? waitlistCount.toLocaleString() : "2,547"}+
-                  </p>
-                  <p className="text-xs text-white/50">already on the waitlist</p>
-                </div>
-              </div>
-              <p className="text-sm text-white/40 max-w-sm">
-                Join forward-thinking learners ready to transform how they learn
-              </p>
-            </div>
-          </div>
-        </ScrollReveal>
+
       </div>
     </section>
     </>

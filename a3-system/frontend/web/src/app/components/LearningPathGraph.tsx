@@ -9,7 +9,6 @@ import {
   Clock,
   BookOpen,
   ChevronRight,
-  Sparkles,
   Target,
   X,
   Loader2,
@@ -608,7 +607,7 @@ export default function LearningPathGraph({
       {/* Legend */}
       <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl p-3 border border-[#E7E2D7] shadow-sm z-10">
         <div className="text-xs font-semibold text-[#2a2a2a] mb-2 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#6B7F6B]" />
+          <Target className="w-3.5 h-3.5 text-[#6B7F6B]" />
           Difficulty Level
         </div>
         <div className="space-y-1.5">
@@ -720,19 +719,7 @@ export default function LearningPathGraph({
         )}
       </AnimatePresence>
 
-      {/* Instructions */}
-      {!selectedNode && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-[#E7E2D7] shadow-sm"
-        >
-          <p className="text-sm font-medium text-[#6B7F6B] flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            Tap any topic to explore details
-          </p>
-        </motion.div>
-      )}
+
     </div>
   );
 }

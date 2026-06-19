@@ -3,8 +3,115 @@ import { Rocket, Bug, Wrench, Plus, Calendar } from "lucide-react";
 
 const releases = [
   {
+    version: "1.3.0",
+    date: "June 19, 2026",
+    type: "minor",
+    title: "Site-Wide Audit & UX Overhaul",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Redesigned new-path loading screen: dark constellation animation with progress ring and particle effects",
+          "Redesigned new-path preview page: dark gradient hero header with staggered entrance animations",
+          "Simulated incremental node appearance during path generation with countdown timer",
+        ],
+      },
+      {
+        title: "Fixed",
+        items: [
+          "Greenlet async error in hierarchical graph service (db.expire → db.refresh)",
+          "Tutor session crash: widened current_node_id column from VARCHAR(50) to VARCHAR(500)",
+          "Analytics back button now navigates to notebook with correct graph context",
+          "New-path back button goes to profile-summary when no active graph exists",
+          "Logo link changed from href=\"#\" to href=\"/\"",
+          "Removed duplicate \"tap any topic\" hint from graph component",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Removed fabricated social proof: fake testimonials, trust bar, metrics, and 2,547+ waitlist counter",
+          "Removed fake 4.9-star / 2,000-review aggregateRating from structured data",
+          "Replaced all Sparkles icons with contextual alternatives (Target, Zap, BookOpen, etc.)",
+          "Rewrote landing page copy: Hero, FinalCTA, AI Tutor, FeatureSpotlight, TheSwarm, Footer",
+          "Updated social links in footer and structured data to real accounts (X, YouTube, veloxstudio.tech)",
+          "Fixed blog CTAs from external veloxstudio.tech to internal /register",
+          "Reframed Partners page: \"Partners & Tech Stack\" with honest iFlytek description",
+          "Removed \"Phase 02:\" / \"Phase 03:\" labels from onboarding pages",
+          "Deleted 6 dead files (~3,400 lines): page-old.tsx, Metrics.tsx, Testimonials.tsx, TrustBar.tsx, LiveStats.tsx, metrics.tsx",
+        ],
+      },
+    ],
+  },
+  {
+    version: "1.2.0",
+    date: "June 18, 2026",
+    type: "minor",
+    title: "Authentication, Onboarding & Streaming",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "JWT authentication on all API endpoints",
+          "Onboarding tour for first-time notebook users with panel interaction",
+          "Streamed quiz generation for 3-4x faster perceived response",
+          "Streamed learning path generation — milestones appear in ~60s, subtopics fill progressively",
+        ],
+      },
+      {
+        title: "Fixed",
+        items: [
+          "Learning path now starts from the first milestone correctly",
+          "Onboarding tour text updated to match actual project features",
+          "Stale data display and streaming UX issues in path preview",
+          "Docker build, Netlify routing, shadowed import, compose deprecation",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Prioritized first milestone subtopic generation for faster initial load",
+        ],
+      },
+    ],
+  },
+  {
+    version: "1.1.0",
+    date: "June 16-17, 2026",
+    type: "minor",
+    title: "Kimi k2.6 Migration & Stability Fixes",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Two-pass lazy learning-path generation for better performance",
+          "Parallel subtopic materialization",
+        ],
+      },
+      {
+        title: "Fixed",
+        items: [
+          "Quiz results 500 error: select latest attempt instead of scalar_one_or_none",
+          "Quiz results 422 error: pass student_id as query param",
+          "Mermaid syntax-error crashes in AI tutor: guard partial/streaming diagrams",
+          "Code agent truncation and parallelized grading",
+          "Faithfulness fail-closed + notes partial-credit gate logic",
+          "Milestone progression, navigation, gate tracking, and async remediation (E2E fixes)",
+          "Silent template fallbacks in LLM provider",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Migrated to Kimi k2.6 as production LLM provider with reasoning toggle",
+          "Streamed resources to frontend in real time",
+        ],
+      },
+    ],
+  },
+  {
     version: "1.0.0",
-    date: "May 20, 2026",
+    date: "May 21, 2026",
     type: "major",
     title: "Initial Release",
     sections: [
@@ -16,6 +123,8 @@ const releases = [
           "FastAPI Backend: High-performance async REST API with SSE streaming support",
           "Next.js 16 Frontend: Modern React app with App Router and Server Components",
           "Docker Compose Setup: Complete containerized development environment",
+          "Firebase waitlist integration with performance optimizations",
+          "SEO: favicon, meta tags, Open Graph, Twitter cards, JSON-LD structured data, robots.txt, sitemap",
         ],
       },
       {
@@ -31,13 +140,12 @@ const releases = [
       {
         title: "Feature 2: Multi-Agent Resource Generation",
         items: [
-          "Content Agent: Lecture notes and reading materials (Markdown/PDF)",
-          "Mind Map Agent: Interactive visual knowledge graphs (JSON → SVG)",
-          "Quiz Agent: Adaptive assessments with difficulty scoring",
-          "Media Agent: Video scripts with TTS narration",
-          "Code Agent: Programming exercises with Judge0 sandbox integration",
-          "Parallel async generation (30-60s total)",
-          "Faithfulness verification on every output",
+          "Scholar Agent: Lecture notes and reading materials (Markdown)",
+          "Mapper Agent: Interactive visual mind maps (JSON → SVG)",
+          "Sage Agent: Adaptive assessments with difficulty scoring",
+          "Director Agent: Video scripts with TTS narration",
+          "Architect Agent: Programming exercises with Judge0 sandbox integration",
+          "Parallel async generation with faithfulness verification",
         ],
       },
       {
@@ -53,191 +161,20 @@ const releases = [
       {
         title: "Feature 4: Real-Time AI Tutoring",
         items: [
-          "Streaming SSE responses",
+          "Streaming SSE responses with rolling context window (8,000 tokens)",
           "Multimodal input/output (text, voice, image, diagrams)",
           "RAG grounding with Weaviate vector database",
-          "Rolling context window (8,000 tokens) with LLM summarization",
-          "Profile-aware responses",
+          "Profile-aware responses with auto-generated Mermaid diagrams",
         ],
       },
       {
         title: "Feature 5: Learning Assessment and Analytics",
         items: [
-          "Adaptive quiz difficulty based on mastery",
+          "Adaptive quiz difficulty based on mastery level",
           "LLM-based short answer grading",
           "Code execution via Judge0 sandbox",
           "Gate-based milestone unlocking",
-          "Comprehensive analytics dashboard",
-        ],
-      },
-    ],
-  },
-  {
-    version: "0.9.0",
-    date: "May 15, 2026",
-    type: "minor",
-    title: "Visualization & Performance",
-    sections: [
-      {
-        title: "Added",
-        items: [
-          "Complete agent swarm visualization",
-          "Interactive demo widget",
-          "Landing page with swarm animations",
-          "Performance optimizations for concurrent users",
-        ],
-      },
-      {
-        title: "Fixed",
-        items: [
-          "Database connection pooling issues",
-          "WebSocket reconnection handling",
-          "Memory leaks in conversation manager",
-        ],
-      },
-    ],
-  },
-  {
-    version: "0.8.0",
-    date: "May 10, 2026",
-    type: "minor",
-    title: "Multimodal Capabilities",
-    sections: [
-      {
-        title: "Added",
-        items: [
-          "Vision LLM integration for image analysis",
-          "Mermaid diagram auto-generation",
-          "Voice chat capabilities",
-          "Enhanced TTS caching",
-        ],
-      },
-      {
-        title: "Changed",
-        items: [
-          "Improved path planning algorithm with PageRank heuristics",
-          "Optimized RAG chunking strategy",
-        ],
-      },
-    ],
-  },
-  {
-    version: "0.7.0",
-    date: "May 5, 2026",
-    type: "minor",
-    title: "Analytics & Evaluation",
-    sections: [
-      {
-        title: "Added",
-        items: [
-          "Analytics dashboard",
-          "Behavioral tracking",
-          "Gate agent for milestone validation",
-          "Evaluator agent for performance analysis",
-        ],
-      },
-      {
-        title: "Fixed",
-        items: [
-          "Quiz generation JSON truncation issues",
-          "Profile update race conditions",
-        ],
-      },
-    ],
-  },
-  {
-    version: "0.6.0",
-    date: "April 28, 2026",
-    type: "minor",
-    title: "Code Execution",
-    sections: [
-      {
-        title: "Added",
-        items: [
-          "Code execution sandbox (Judge0)",
-          "Coding exercise generation",
-          "Coding grader agent",
-        ],
-      },
-    ],
-  },
-  {
-    version: "0.5.0",
-    date: "April 20, 2026",
-    type: "minor",
-    title: "Video Generation",
-    sections: [
-      {
-        title: "Added",
-        items: [
-          "Video generation pipeline",
-          "Media agent with TTS integration",
-          "Faithfulness checker layer",
-        ],
-      },
-    ],
-  },
-  {
-    version: "0.4.0",
-    date: "April 15, 2026",
-    type: "minor",
-    title: "Mind Maps & Quizzes",
-    sections: [
-      {
-        title: "Added",
-        items: [
-          "Mind map generation (SVG)",
-          "Interactive knowledge graph visualization",
-          "Quiz agent with difficulty scoring",
-        ],
-      },
-    ],
-  },
-  {
-    version: "0.3.0",
-    date: "April 10, 2026",
-    type: "minor",
-    title: "Path Planning",
-    sections: [
-      {
-        title: "Added",
-        items: [
-          "Path planning algorithm (A* search)",
-          "Milestone management",
-          "Recommendation engine",
-        ],
-      },
-    ],
-  },
-  {
-    version: "0.2.0",
-    date: "April 5, 2026",
-    type: "minor",
-    title: "Content Generation",
-    sections: [
-      {
-        title: "Added",
-        items: [
-          "Content agent for lecture notes",
-          "Profile extraction pipeline",
-          "Gap detection via embeddings",
-        ],
-      },
-    ],
-  },
-  {
-    version: "0.1.0",
-    date: "April 1, 2026",
-    type: "minor",
-    title: "Project Foundation",
-    sections: [
-      {
-        title: "Added",
-        items: [
-          "Project scaffolding",
-          "Docker compose setup",
-          "Basic FastAPI structure",
-          "Next.js frontend foundation",
+          "Comprehensive analytics dashboard with LLM-powered insights",
         ],
       },
     ],
@@ -246,22 +183,23 @@ const releases = [
 
 const roadmap = [
   {
-    version: "v1.1.0",
+    version: "v1.4.0 — Planned",
     items: [
-      "Mobile app (React Native)",
-      "Offline mode support",
-      "Advanced analytics with ML predictions",
-      "Teacher dashboard",
-      "Content authoring tools",
+      "Teacher dashboard with class-level analytics",
+      "Video generation from Director agent scripts",
+      "Console log cleanup across frontend",
+      "Self-hosted fonts (replace external Fontshare CDN)",
+      "CORS lockdown for production deployment",
     ],
   },
   {
-    version: "v1.2.0",
+    version: "v2.0.0 — Future",
     items: [
-      "Multi-language support",
-      "Integration with LMS platforms",
-      "Advanced collaboration features",
-      "White-label options",
+      "Multi-language support (Chinese, English, more)",
+      "Mobile app (React Native)",
+      "Offline mode for learning without internet",
+      "LMS integration (Moodle, Canvas)",
+      "Extended knowledge graphs beyond cloud computing",
     ],
   },
 ];

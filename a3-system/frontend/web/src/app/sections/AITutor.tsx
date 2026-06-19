@@ -467,11 +467,11 @@ export default function AITutor() {
             className="mt-4 text-3xl md:text-4xl lg:text-5xl font-serif font-semibold text-deep-charcoal"
             style={{ fontFamily: "var(--font-serif)", lineHeight: 1.1 }}
           >
-            Your 24/7 Personal Professor
+            An AI Tutor With Full Context
           </h2>
           <p className="mt-4 text-base max-w-2xl mx-auto text-deep-charcoal/60">
-            Not a chatbot. A context-aware learning companion that explains concepts through 
-            text, diagrams, voice, and video—adapting to how <em>you</em> learn best.
+            Not a generic chatbot. The tutor knows your profile, your path, and every question
+            you&apos;ve asked — and explains concepts through text, diagrams, voice, and video.
           </p>
         </ScrollReveal>
 
@@ -549,9 +549,8 @@ export default function AITutor() {
                   Proactive, Not Passive
                 </h3>
                 <p className="mt-1 text-sm text-deep-charcoal/60 leading-relaxed">
-                  Stuck on an exercise? The platform detects when you're struggling and proactively 
-                  offers step-by-step guidance—before you even ask. It's like having a professor 
-                  watching over your shoulder.
+                  Stuck on an exercise? The tutor detects when you&apos;re struggling and 
+                  offers step-by-step guidance — before you ask.
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <Clock className="w-3.5 h-3.5 text-amber-500" />

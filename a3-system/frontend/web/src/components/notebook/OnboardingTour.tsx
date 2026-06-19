@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Map,
   BookOpen,
-  Sparkles,
+  Layers,
   MessageSquare,
   BarChart3,
   ChevronRight,
@@ -57,7 +57,7 @@ export default function OnboardingTour({
       title: "AI-Generated Resources",
       description:
         "These cards represent your personalized study materials. Resources are being generated right now in the background — you'll see them fill in with content tailored to your learning profile. Click any card to expand and view its content.",
-      icon: <Sparkles className="w-5 h-5" />,
+      icon: <Layers className="w-5 h-5" />,
       target: "tour-resources",
       cardPosition: "below-target",
     },
