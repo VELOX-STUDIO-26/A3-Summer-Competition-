@@ -503,26 +503,53 @@ function GeneratingState({
   milestoneCount: number;
   expectedMilestones: number;
 }) {
-  const [progress, setProgress] = useState(0);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [statusIndex, setStatusIndex] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [simulatedNodes, setSimulatedNodes] = useState(1);
+  const [lastNodeName, setLastNodeName] = useState("");
 
-  // Real milestone progress
-  useEffect(() => {
-    const capped = expectedMilestones > 0
-      ? Math.min(95, (milestoneCount / expectedMilestones) * 100)
-      : 0;
-    setProgress(capped);
-  }, [milestoneCount, expectedMilestones]);
+  // Simulated milestone names that flash when a node appears
+  const SIMULATED_NAMES = [
+    "Core Foundations", "Key Concepts", "Building Blocks", "Fundamentals",
+    "Applied Methods", "Advanced Topics", "Practical Skills", "Integration",
+    "Deep Dive", "Synthesis", "Mastery Path", "Final Review",
+  ];
 
-  // Elapsed time counter
+  // Elapsed time counter — drives everything
   useEffect(() => {
     const timer = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Rotate status messages
+  // Simulate nodes appearing every ~4 seconds, up to 12
+  useEffect(() => {
+    if (elapsedSeconds > 0 && elapsedSeconds % 4 === 0) {
+      setSimulatedNodes((prev) => {
+        const next = Math.min(prev + 1, CONSTELLATION_NODES.length);
+        if (next > prev) {
+          setLastNodeName(SIMULATED_NAMES[(next - 1) % SIMULATED_NAMES.length]);
+        }
+        return next;
+      });
+    }
+  }, [elapsedSeconds]);
+
+  // If real milestones arrive, jump simulated nodes up to match
+  useEffect(() => {
+    if (milestoneCount > simulatedNodes) {
+      setSimulatedNodes(milestoneCount);
+    }
+  }, [milestoneCount, simulatedNodes]);
+
+  // Progress: smooth easing curve based on elapsed time, targeting ~55s
+  // Uses an ease-out curve: fast at first, slows down, caps at 90%
+  const targetSeconds = 55;
+  const rawProgress = Math.min(elapsedSeconds / targetSeconds, 1);
+  const easedProgress = 1 - Math.pow(1 - rawProgress, 2.5); // ease-out
+  const progress = Math.min(easedProgress * 90, 90); // cap at 90%
+
+  // Rotate status messages every 4 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setStatusIndex((prev) => (prev + 1) % STATUS_MESSAGES.length);
@@ -552,8 +579,8 @@ function GeneratingState({
       {/* Constellation Visualization */}
       <div className="relative h-[300px] sm:h-[340px]">
         <ConstellationCanvas
-          activeNodes={Math.max(1, milestoneCount)}
-          totalNodes={expectedMilestones || 12}
+          activeNodes={simulatedNodes}
+          totalNodes={CONSTELLATION_NODES.length}
         />
 
         {/* Center overlay text */}
@@ -569,17 +596,16 @@ function GeneratingState({
                 strokeWidth="4"
                 strokeLinecap="round"
                 strokeDasharray={264}
-                initial={{ strokeDashoffset: 264 }}
                 animate={{ strokeDashoffset: 264 - (264 * progress) / 100 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-2xl font-bold text-white/90">
-                {milestoneCount > 0 ? milestoneCount : "--"}
+                {Math.round(progress)}%
               </span>
               <span className="text-[10px] text-white/40 uppercase tracking-wider">
-                {milestoneCount > 0 ? (expectedMilestones > 0 ? `of ${expectedMilestones}` : "topics") : "analyzing"}
+                {simulatedNodes} / {CONSTELLATION_NODES.length} nodes
               </span>
             </div>
           </div>
@@ -602,6 +628,26 @@ function GeneratingState({
         </div>
       </div>
 
+      {/* Discovered milestone flash */}
+      <AnimatePresence>
+        {lastNodeName && (
+          <motion.div
+            key={lastNodeName + simulatedNodes}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-20"
+            initial={{ opacity: 0, y: -10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="px-4 py-2 rounded-full bg-[#8FBC8F]/20 border border-[#8FBC8F]/30 backdrop-blur-sm">
+              <span className="text-xs text-[#8FBC8F] font-medium">
+                Discovered: {lastNodeName}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Bottom info panel */}
       <div className="relative border-t border-white/5 bg-black/20 backdrop-blur-sm">
         {/* Subject + meta row */}
@@ -615,23 +661,22 @@ function GeneratingState({
           <div className="flex items-center gap-3 text-xs text-white/30 flex-shrink-0">
             <span>{formatTime(elapsedSeconds)}</span>
             <span className="w-1 h-1 rounded-full bg-white/20" />
-            <span>~45-60s</span>
+            <span className="text-white/40">~{Math.max(0, 55 - elapsedSeconds)}s left</span>
           </div>
         </div>
 
         {/* Progress bar */}
         <div className="px-6 pb-4">
-          <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-[#6B7F6B] via-[#8FBC8F] to-[#6B7F6B] rounded-full"
               style={{ backgroundSize: "200% 100%" }}
-              initial={{ width: "0%" }}
               animate={{
-                width: `${Math.max(progress, 5)}%`,
+                width: `${Math.max(progress, 3)}%`,
                 backgroundPosition: ["0% 0%", "100% 0%"],
               }}
               transition={{
-                width: { duration: 0.8, ease: "easeOut" },
+                width: { duration: 1.5, ease: "easeOut" },
                 backgroundPosition: { duration: 2, repeat: Infinity, ease: "linear" },
               }}
             />
