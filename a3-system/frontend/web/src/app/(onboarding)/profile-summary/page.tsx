@@ -299,7 +299,7 @@ export default function ProfileSummaryPage() {
           <span className="text-sm text-[#6B7F6B] font-medium">Profile Complete</span>
         </div>
         <h1 className="text-2xl md:text-3xl font-serif font-semibold text-[#2a2a2a] mb-2">
-          Phase 03: <span className="text-[#666]">Review Your Profile</span>
+          <span className="text-[#666]">Review Your Profile</span>
         </h1>
         <p className="text-[#888] max-w-lg mx-auto">
           Here&apos;s what A³ learned about you. Review and edit anything that doesn&apos;t look right.
