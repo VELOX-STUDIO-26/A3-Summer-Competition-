@@ -720,19 +720,7 @@ export default function LearningPathGraph({
         )}
       </AnimatePresence>
 
-      {/* Instructions */}
-      {!selectedNode && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-[#E7E2D7] shadow-sm"
-        >
-          <p className="text-sm font-medium text-[#6B7F6B] flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            Tap any topic to explore details
-          </p>
-        </motion.div>
-      )}
+
     </div>
   );
 }
