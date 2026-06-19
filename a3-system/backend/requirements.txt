@@ -53,6 +53,7 @@ python-dotenv==1.0.0
 tenacity==8.2.3
 orjson==3.9.10
 structlog==24.1.0
+PyJWT==2.8.0
 
 # Text-to-Speech
 edge-tts==6.1.9

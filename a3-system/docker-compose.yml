@@ -74,8 +74,13 @@ services:
       - /app/__pycache__
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
-      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-a3_user}:${DB_PASSWORD:-a3_password}@postgres:5432/${DB_NAME:-a3_db}
-      - REDIS_URL=redis://redis:6379/0
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-a3_user}
+      - DB_PASSWORD=${DB_PASSWORD:-a3_password}
+      - DB_NAME=${DB_NAME:-a3_db}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - WEAVIATE_URL=http://weaviate:8080
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
     depends_on:
