@@ -12,8 +12,8 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NOBOGYAN — 15 AI Agents Building Your Perfect Learning Path",
-  description: "NOBOGYAN deploys a swarm of 15+ specialized AI agents that profile, plan, tutor, and assess — all working together to create personalized learning experiences. Join 2,500+ on the waitlist.",
+  title: "NOBOGYAN — 15+ AI Agents That Build Your Learning Path",
+  description: "NOBOGYAN deploys a swarm of 15+ specialized AI agents that profile, plan, tutor, and assess — working together to build a curriculum around you. Closed beta, Summer 2026.",
   keywords: ["AI learning", "personalized education", "AI tutoring", "adaptive learning", "AI agents", "online learning", "EdTech", "smart learning", "AI education platform"],
   authors: [{ name: "NOBOGYAN" }],
   creator: "NOBOGYAN",
@@ -42,8 +42,8 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://nobogyan.com",
     siteName: "NOBOGYAN",
-    title: "NOBOGYAN — 15 AI Agents Building Your Perfect Learning Path",
-    description: "Join 2,500+ learners on the waitlist. Experience the future of personalized education with our AI swarm technology.",
+    title: "NOBOGYAN — 15+ AI Agents That Build Your Learning Path",
+    description: "A multi-agent learning system: 15+ AI agents profile you, plan your path, generate resources, and test your understanding. Closed beta, Summer 2026.",
     images: [
       {
         url: "/nobogyan-logo.png",
@@ -55,10 +55,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "NOBOGYAN — 15 AI Agents Building Your Perfect Learning Path",
-    description: "Join 2,500+ learners on the waitlist. Experience the future of personalized education with our AI swarm technology.",
+    title: "NOBOGYAN — 15+ AI Agents That Build Your Learning Path",
+    description: "A multi-agent learning system: 15+ AI agents profile you, plan your path, generate resources, and test your understanding. Closed beta, Summer 2026.",
     images: ["/nobogyan-logo.png"],
-    creator: "@nobogyan",
+    creator: "@velox_studio_26",
   },
   verification: {
     // Add your verification codes when you have them

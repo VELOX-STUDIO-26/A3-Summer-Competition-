@@ -37,7 +37,7 @@ export default function Navigation() {
           }`}
         >
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2 pl-2 pr-3">
+          <a href="/" className="flex items-center gap-2 pl-2 pr-3">
             <Image 
               src="/nobogyan-logo.png" 
               alt="NOBOGYAN" 

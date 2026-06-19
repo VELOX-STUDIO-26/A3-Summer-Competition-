@@ -53,7 +53,7 @@ export default function AboutPage() {
           Mission
         </h2>
         <p className="text-deep-charcoal/70 leading-relaxed">
-          NOBOGYAN is an AI-native personalized education platform that replaces the traditional "one-size-fits-all" curriculum with a dynamic, data-driven approach. Every resource, learning path, and tutoring interaction is customized for each individual student.
+          NOBOGYAN is a multi-agent education platform that replaces the traditional &quot;one-size-fits-all&quot; curriculum with a data-driven approach. Every resource, learning path, and tutoring interaction is generated based on individual student profiles.
         </p>
         <p className="text-deep-charcoal/70 leading-relaxed mt-4">
           Built for the <strong>15th China Software Cup</strong> (iFlytek Track), NOBOGYAN demonstrates how multi-agent AI systems can transform higher education through intelligent orchestration and continuous adaptation.

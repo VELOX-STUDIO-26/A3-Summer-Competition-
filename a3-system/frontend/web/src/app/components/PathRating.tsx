@@ -374,7 +374,7 @@ export function PathRatingsDisplay({ graphId, compact = false }: PathRatingsDisp
     return compact ? null : (
       <div className="flex items-center gap-2 text-sm text-[#6B7F6B]">
         <Target className="w-4 h-4" />
-        <span>AI-generated just for you</span>
+        <span>Generated from your profile</span>
       </div>
     );
   }

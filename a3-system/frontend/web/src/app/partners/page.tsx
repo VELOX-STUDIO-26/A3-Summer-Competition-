@@ -288,7 +288,7 @@ export default function PartnersPage() {
       {/* Closing */}
       <section className="text-center py-8">
         <p className="text-lg text-deep-charcoal/70 italic">
-          Together, we're building the future of personalized education.
+          Interested in collaborating? Reach out at theveloxstudio@gmail.com.
         </p>
       </section>
     </PageLayout>

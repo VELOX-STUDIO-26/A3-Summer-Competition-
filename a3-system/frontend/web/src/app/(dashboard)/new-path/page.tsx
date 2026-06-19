@@ -328,9 +328,9 @@ function ProfileReview({
 const TIPS_DATA = [
   { emoji: "🧠", category: "Learning Science", text: "Spaced repetition helps retention — we'll build that into your learning path." },
   { emoji: "🎯", category: "Quick Win", text: "Breaking complex topics into small milestones makes learning feel achievable." },
-  { emoji: "📊", category: "Did You Know", text: "Students who follow personalized paths learn 30% faster than those using generic curricula." },
+  { emoji: "📊", category: "Did You Know", text: "Breaking topics into prerequisite chains helps you build knowledge systematically instead of jumping around." },
   { emoji: "💡", category: "Pro Tip", text: "Mixing different content types (videos, quizzes, code) improves long-term memory retention." },
-  { emoji: "⚡", category: "Efficiency", text: "Your AI tutor adapts explanations based on your cognitive style — watch for personalized hints!" },
+  { emoji: "⚡", category: "Efficiency", text: "Your AI tutor adjusts explanations based on your cognitive style — watch for tailored hints!" },
   { emoji: "🔬", category: "Research", text: "Active recall through quizzes is 2x more effective than passive re-reading for knowledge retention." },
   { emoji: "🌱", category: "Growth Mindset", text: "Struggling with a topic? That's where real learning happens. We'll adjust your path accordingly." },
   { emoji: "🎨", category: "Personalization", text: "Visual learners get more diagrams. Verbal learners get more detailed explanations. Everyone wins." },
@@ -812,7 +812,7 @@ function PathPreview({
           >
             <div className="flex items-center gap-2 text-[#8FBC8F] text-xs font-medium uppercase tracking-wider mb-2">
               <Target className="w-3.5 h-3.5" />
-              AI-Generated Just For You
+              Generated From Your Profile
             </div>
             <h2 className="text-2xl font-serif font-bold text-white/95 mb-1">
               {graph.subject}
@@ -826,7 +826,7 @@ function PathPreview({
                 : planned > 0
                 ? ` · ${planned} lessons`
                 : ""}
-              {" · "}Personalized for your profile
+              {" · "}Based on your profile
             </p>
           </motion.div>
 
