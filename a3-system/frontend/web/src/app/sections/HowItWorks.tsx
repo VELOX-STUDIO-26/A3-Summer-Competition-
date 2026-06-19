@@ -61,9 +61,9 @@ const steps = [
   {
     number: "05",
     title: "Analyze",
-    body: "See Your Growth in Real Time",
+    body: "See Where You Stand",
     detail:
-      "The Insight Engine continuously analyzes your learning patterns, identifies weak spots, and surfaces actionable recommendations—so you always know exactly where to focus next.",
+      "The Insight Engine tracks your learning patterns, identifies weak spots, and surfaces specific recommendations — so you always know what to focus on next.",
     agents: ["Insight Engine", "Progress Tracker"],
   },
 ];

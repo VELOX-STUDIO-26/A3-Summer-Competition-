@@ -88,16 +88,16 @@ export default function FinalCTA() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white leading-tight"
             style={{ fontFamily: "var(--font-serif)" }}
           >
-            Be First to Experience
+            Stop Guessing What to Learn Next.
             <br />
-            <span className="text-sage-400">The Future of Learning</span>
+            <span className="text-sage-400">Let the Swarm Figure It Out.</span>
           </h2>
         </ScrollReveal>
 
         <ScrollReveal delay={0.2}>
           <p className="mt-4 sm:mt-6 text-base sm:text-lg text-white/60 max-w-xl mx-auto px-4">
-            Skip what you already know. Master what you don't. Experience a continuous 
-            learning loop that adapts to your pace, style, and goals in real time.
+            Skip what you already know. Master what you don&apos;t. Fifteen agents
+            profile you, plan your path, generate resources, and test your understanding — continuously.
           </p>
         </ScrollReveal>
 

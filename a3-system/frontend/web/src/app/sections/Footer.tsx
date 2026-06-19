@@ -44,7 +44,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-sm text-white/50 leading-relaxed">
-              An intelligent swarm of 15+ AI agents, working just for you.
+              A multi-agent learning system. 15+ specialized AI agents.
             </p>
           </div>
 
