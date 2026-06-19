@@ -1400,7 +1400,7 @@ export default function NewPathPage() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={() => router.push(notebookHref)}
+            onClick={() => router.push(activeGraphId ? notebookHref : "/profile-summary")}
             className="p-2 rounded-lg hover:bg-[#E7E2D7] transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-[#666]" />
