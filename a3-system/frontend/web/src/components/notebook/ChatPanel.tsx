@@ -455,7 +455,7 @@ export default function ChatPanel({
                   : "Ask anything..."
               }
               disabled={isSending || isLoading}
-              className="chat-input-no-focus flex-1 bg-transparent border-0 focus-visible:ring-0 focus:ring-0 focus:outline-none ring-0 outline-none shadow-none focus:border-0 text-gray-900 placeholder:text-gray-400 text-xl disabled:opacity-60 h-12"
+              className="chat-input-no-focus flex-1 bg-transparent border-0 focus-visible:ring-0 focus:ring-0 focus:outline-none ring-0 outline-none shadow-none focus:border-0 text-gray-900 placeholder:text-gray-400 text-xl md:text-xl disabled:opacity-60 h-12"
             />
 
             {/* Send / Stop Button */}
