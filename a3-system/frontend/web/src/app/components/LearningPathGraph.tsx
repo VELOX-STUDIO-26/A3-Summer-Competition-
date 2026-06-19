@@ -9,7 +9,6 @@ import {
   Clock,
   BookOpen,
   ChevronRight,
-  Sparkles,
   Target,
   X,
   Loader2,
@@ -608,7 +607,7 @@ export default function LearningPathGraph({
       {/* Legend */}
       <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl p-3 border border-[#E7E2D7] shadow-sm z-10">
         <div className="text-xs font-semibold text-[#2a2a2a] mb-2 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#6B7F6B]" />
+          <Target className="w-3.5 h-3.5 text-[#6B7F6B]" />
           Difficulty Level
         </div>
         <div className="space-y-1.5">

@@ -15,7 +15,7 @@ import {
   Target,
   BookOpen,
   Briefcase,
-  Sparkles,
+  Activity,
   Focus,
   Gauge,
   Rocket,
@@ -130,7 +130,7 @@ function ProfilingVisual() {
   const quantitativeDims: { label: string; score: number; color: string; icon: LucideIcon }[] = [
     { label: "Knowledge Base", score: 85, color: "#7C9A6B", icon: BookOpen },
     { label: "Prior Experience", score: 45, color: "#E74C3C", icon: Briefcase },
-    { label: "Engagement Level", score: 88, color: "#1ABC9C", icon: Sparkles },
+    { label: "Engagement Level", score: 88, color: "#1ABC9C", icon: Activity },
   ];
   
   // Qualitative dimensions (show tags instead of percentages)

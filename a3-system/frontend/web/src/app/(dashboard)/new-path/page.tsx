@@ -12,7 +12,6 @@ import {
   Clock,
   Settings,
   ArrowLeft,
-  Sparkles,
   Loader2,
   BookOpen,
   Edit3,
@@ -314,7 +313,7 @@ function ProfileReview({
           onClick={onConfirm}
           className="flex-1 py-3 px-4 bg-gradient-to-r from-[#6B7F6B] to-[#5a6d5a] text-white rounded-xl font-medium hover:shadow-md transition-all flex items-center justify-center gap-2"
         >
-          <Sparkles className="w-4 h-4" />
+          <Zap className="w-4 h-4" />
           Generate Learning Path →
         </button>
       </div>
@@ -653,7 +652,7 @@ function GeneratingState({
         {/* Subject + meta row */}
         <div className="px-6 pt-4 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <Sparkles className="w-4 h-4 text-[#8FBC8F] flex-shrink-0" />
+            <BookOpen className="w-4 h-4 text-[#8FBC8F] flex-shrink-0" />
             <span className="text-sm text-white/70 truncate">
               {subject}
             </span>
@@ -812,7 +811,7 @@ function PathPreview({
             transition={{ delay: 0.1 }}
           >
             <div className="flex items-center gap-2 text-[#8FBC8F] text-xs font-medium uppercase tracking-wider mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
+              <Target className="w-3.5 h-3.5" />
               AI-Generated Just For You
             </div>
             <h2 className="text-2xl font-serif font-bold text-white/95 mb-1">
@@ -933,7 +932,7 @@ function PathPreview({
       {/* Hint */}
       <div className="px-5 mt-2">
         <div className="flex items-center gap-2 text-xs text-[#999] bg-[#F7F5F0] rounded-lg px-3 py-2">
-          <Sparkles className="w-3 h-3 text-[#6B7F6B]" />
+          <BookOpen className="w-3 h-3 text-[#6B7F6B]" />
           Tap any milestone to explore its lessons
         </div>
       </div>
@@ -1408,7 +1407,7 @@ export default function NewPathPage() {
           </button>
           <div>
             <h1 className="text-2xl font-serif font-bold text-[#2a2a2a] flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-[#6B7F6B]" />
+              <Workflow className="w-6 h-6 text-[#6B7F6B]" />
               Create New Learning Path
             </h1>
           </div>
