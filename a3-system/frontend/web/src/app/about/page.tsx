@@ -32,12 +32,12 @@ const features = [
 ];
 
 const metrics = [
-  { metric: "Time to First Token", target: "<800ms", achieved: true },
-  { metric: "Resource Generation (Text)", target: "<5s", achieved: true },
-  { metric: "Resource Generation (Video)", target: "<30s", achieved: true },
-  { metric: "Profile Update Latency", target: "<2s", achieved: true },
-  { metric: "Path Replanning", target: "<3s", achieved: true },
-  { metric: "Concurrent Users", target: "50+", achieved: true },
+  { metric: "Time to First Token", target: "<800ms" },
+  { metric: "Resource Generation (Text)", target: "<5s" },
+  { metric: "Resource Generation (Video)", target: "<30s" },
+  { metric: "Profile Update Latency", target: "<2s" },
+  { metric: "Path Replanning", target: "<3s" },
+  { metric: "Concurrent Users", target: "50+" },
 ];
 
 export default function AboutPage() {
@@ -177,15 +177,15 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Performance Metrics */}
+      {/* Performance Targets */}
       <section className="mb-16">
-        <h2 className="text-2xl font-serif font-semibold text-deep-charcoal mb-6">Performance Metrics</h2>
+        <h2 className="text-2xl font-serif font-semibold text-deep-charcoal mb-6">Performance Targets</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {metrics.map((m, i) => (
             <div key={i} className="bg-white rounded-xl p-4 border border-sand-200 shadow-sm">
               <p className="text-xs text-deep-charcoal/50 mb-1">{m.metric}</p>
               <p className="text-xl font-bold text-deep-charcoal">{m.target}</p>
-              <span className="text-xs text-green-600">✓ Achieved</span>
+              <span className="text-xs text-sage-600">Design target</span>
             </div>
           ))}
         </div>

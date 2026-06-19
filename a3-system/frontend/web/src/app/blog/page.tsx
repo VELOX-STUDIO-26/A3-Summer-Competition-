@@ -12,7 +12,7 @@ const roadmapItems = [
 const faqs = [
   { q: "What subjects does NOBOGYAN cover?", a: "Currently focused on cloud computing with 500+ topics. The knowledge graph can be extended to any subject." },
   { q: "How does NOBOGYAN compare to ChatGPT for learning?", a: "ChatGPT is a general-purpose assistant. NOBOGYAN is specifically designed for education with profiling, adaptive paths, multimodal content, and continuous assessment — all working together." },
-  { q: "Can I try NOBOGYAN?", a: "We're currently in private beta. Contact us to request early access." },
+  { q: "Can I try NOBOGYAN?", a: "We're currently in closed beta for the 15th China Software Cup. Join the waitlist at /register or email theveloxstudio@gmail.com for early access." },
 ];
 
 export default function BlogPage() {

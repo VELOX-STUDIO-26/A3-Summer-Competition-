@@ -20,13 +20,13 @@ const audiences = [
     title: "Educators",
     icon: Users,
     desc: "Interested in using NOBOGYAN for your institution?",
-    items: ["Partnership opportunities", "White-label solutions", "Custom curriculum integration", "Email with subject \"[Education Partnership]\""],
+    items: ["Pilot programs for your students", "Curriculum co-development", "Research collaboration", "Email with subject \"[Education Partnership]\""],
   },
   {
     title: "Developers",
     icon: Code,
-    desc: "Want to integrate with NOBOGYAN?",
-    items: ["API integration inquiries", "Technical partnership opportunities", "Email with subject \"[Developer Inquiry]\""],
+    desc: "Want to contribute or collaborate?",
+    items: ["Open-source contributions", "Technical collaboration", "Email with subject \"[Developer Inquiry]\""],
   },
   {
     title: "Researchers",
@@ -179,27 +179,22 @@ export default function ContactPage() {
         <h2 className="text-2xl font-serif font-semibold text-deep-charcoal mb-4">Community</h2>
         <div className="p-6 bg-gradient-to-br from-sage-50 to-white rounded-2xl border border-sage-200/50">
           <p className="text-deep-charcoal/70 mb-4">
-            While we're currently focused on the competition submission, we plan to build:
+            We're currently focused on the 15th China Software Cup competition. You can follow our progress and updates through:
           </p>
           <ul className="space-y-2 text-deep-charcoal/70">
             <li className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-sage-500" />
-              Community forum for learners
+              <a href="https://x.com/velox_studio_26" target="_blank" rel="noopener noreferrer" className="text-sage-600 hover:underline">X (@velox_studio_26)</a> — Updates and announcements
             </li>
             <li className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-sage-500" />
-              Developer Discord server
+              <a href="https://www.youtube.com/@veloxstudio1" target="_blank" rel="noopener noreferrer" className="text-sage-600 hover:underline">YouTube (@veloxstudio1)</a> — Demos and walkthroughs
             </li>
             <li className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-sage-500" />
-              Community discussions
-            </li>
-            <li className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-sage-500" />
-              Regular webinars and demos
+              <a href="mailto:theveloxstudio@gmail.com" className="text-sage-600 hover:underline">Email</a> — Direct questions and feedback
             </li>
           </ul>
-          <p className="text-sm text-deep-charcoal/50 mt-4">Stay tuned for updates!</p>
         </div>
       </section>
 
@@ -214,6 +209,22 @@ export default function ContactPage() {
             className="px-6 py-3 bg-white rounded-xl border border-sand-200 hover:border-sage-300 hover:shadow-md transition-all text-deep-charcoal font-medium"
           >
             Website
+          </a>
+          <a 
+            href="https://x.com/velox_studio_26" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="px-6 py-3 bg-white rounded-xl border border-sand-200 hover:border-sage-300 hover:shadow-md transition-all text-deep-charcoal font-medium"
+          >
+            X (Twitter)
+          </a>
+          <a 
+            href="https://www.youtube.com/@veloxstudio1" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="px-6 py-3 bg-white rounded-xl border border-sand-200 hover:border-sage-300 hover:shadow-md transition-all text-deep-charcoal font-medium"
+          >
+            YouTube
           </a>
         </div>
       </section>
