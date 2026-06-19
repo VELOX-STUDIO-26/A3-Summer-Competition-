@@ -135,15 +135,30 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} NOBOGYAN. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            {["Twitter", "Discord", "LinkedIn"].map((social) => (
-              <a
-                key={social}
-                href="#"
-                className="text-xs text-white/50 hover:text-sage-400 transition-colors"
-              >
-                {social}
-              </a>
-            ))}
+            <a
+              href="https://veloxstudio.tech"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-white/50 hover:text-sage-400 transition-colors"
+            >
+              Website
+            </a>
+            <a
+              href="https://x.com/velox_studio_26"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-white/50 hover:text-sage-400 transition-colors"
+            >
+              X (Twitter)
+            </a>
+            <a
+              href="https://www.youtube.com/@veloxstudio1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-white/50 hover:text-sage-400 transition-colors"
+            >
+              YouTube
+            </a>
           </div>
         </div>
       </div>

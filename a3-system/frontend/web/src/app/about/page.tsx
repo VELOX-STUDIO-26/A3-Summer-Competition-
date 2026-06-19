@@ -44,7 +44,7 @@ export default function AboutPage() {
   return (
     <PageLayout 
       title="About NOBOGYAN" 
-      subtitle="An AI-native personalized education platform"
+      subtitle="A multi-agent education platform built for the 15th China Software Cup"
     >
       {/* Mission */}
       <section className="mb-16">
@@ -197,7 +197,7 @@ export default function AboutPage() {
         <div className="bg-gradient-to-br from-sage-50 to-white rounded-2xl p-6 border border-sage-200/50">
           <h3 className="text-xl font-bold text-deep-charcoal mb-2">VELOX Studio</h3>
           <p className="text-deep-charcoal/70 mb-4">
-            A team dedicated to building intelligent educational technology that adapts to each learner's unique needs.
+            A team building multi-agent educational technology for the 15th China Software Cup (iFlytek Track).
           </p>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>

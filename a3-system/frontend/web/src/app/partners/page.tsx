@@ -32,13 +32,13 @@ const partnerBenefits = {
 export default function PartnersPage() {
   return (
     <PageLayout 
-      title="Partners" 
-      subtitle="Collaborating with leaders in technology and education"
+      title="Partners & Tech Stack" 
+      subtitle="The tools and collaborators behind NOBOGYAN"
     >
       {/* Intro */}
       <section className="mb-12">
         <p className="text-lg text-deep-charcoal/70 leading-relaxed">
-          NOBOGYAN is proud to collaborate with leading technology and education partners who share our vision for personalized, AI-powered learning.
+          NOBOGYAN is built on open-source infrastructure and integrated with iFlytek for the 15th China Software Cup competition.
         </p>
       </section>
 
@@ -151,9 +151,9 @@ export default function PartnersPage() {
       <section className="mb-12">
         <h2 className="text-2xl font-serif font-semibold text-deep-charcoal mb-6 flex items-center gap-3">
           <Code className="w-6 h-6 text-sage-500" />
-          Technology Stack Partners
+          Technology Stack
         </h2>
-        <p className="text-deep-charcoal/70 mb-6">NOBOGYAN is built on and integrated with:</p>
+        <p className="text-deep-charcoal/70 mb-6">Open-source tools and frameworks NOBOGYAN is built on:</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
