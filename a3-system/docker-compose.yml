@@ -69,9 +69,6 @@ services:
     container_name: a3_backend
     ports:
       - "${API_PORT:-8000}:8000"
-    volumes:
-      - ./backend:/app
-      - /app/__pycache__
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - DB_HOST=postgres
@@ -83,6 +80,9 @@ services:
       - REDIS_PORT=6379
       - WEAVIATE_URL=http://weaviate:8080
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_KIMI_API_KEY=${OPENROUTER_KIMI_API_KEY}
+      - OPENROUTER_KIMI_MODEL=${OPENROUTER_KIMI_MODEL}
+      - OPENROUTER_KIMI_BASE_URL=${OPENROUTER_KIMI_BASE_URL}
     depends_on:
       postgres:
         condition: service_healthy
@@ -101,12 +101,11 @@ services:
 
   # Frontend (Next.js)
   frontend:
-    build:
-      context: ./frontend/web
-      dockerfile: Dockerfile
+    image: node:20-alpine
     container_name: a3_frontend
+    working_dir: /app
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "3003:3000"
     volumes:
       - ./frontend/web:/app
       - /app/node_modules
@@ -118,7 +117,7 @@ services:
       - backend
     networks:
       - a3_network
-    command: npm run dev
+    command: sh -c "npm install && npm run dev"
 
   # (Optional) pgAdmin for PostgreSQL management
   pgadmin:
