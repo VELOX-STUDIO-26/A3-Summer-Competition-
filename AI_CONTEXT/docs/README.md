@@ -1,7 +1,7 @@
 # A3 — Personalized AI Learning System
 
 > **Competition:** 15th China Software Cup — Track A3 (iFlytek)
-> **Stack:** FastAPI · Next.js 16 · PostgreSQL · Redis · Weaviate · OpenRouter LLM · Edge-TTS · Judge0
+> **Stack:** FastAPI · Next.js 16 · React 19 · PostgreSQL · Redis · Weaviate · Kimi k2.6 (Moonshot) · Edge-TTS · Judge0
 
 A multi-agent AI tutoring platform: students chat with a profiling bot, a 5-agent orchestrator generates personalized lecture notes / mind maps / quizzes / video-style lecture slides / coding exercises, an A* planner sequences them into a milestone-based learning path, and a context-aware tutor answers questions with streaming text + voice.
 
@@ -41,7 +41,7 @@ All commands below assume your shell is in `a3-system/` unless stated otherwise.
 | **Docker Desktop** | latest | Easiest way to get the three services above |
 | **Git** | any | Version control |
 
-You'll also need a free **OpenRouter API key** from <https://openrouter.ai/keys>. The app will run without it, but every LLM call will fail.
+You'll need a **Kimi (Moonshot AI) API key** from <https://platform.moonshot.cn> (primary LLM). An optional **OpenRouter API key** from <https://openrouter.ai/keys> can be configured as fallback. The app will run without either, but every LLM call will fail.
 
 ---
 
@@ -64,7 +64,11 @@ copy .env.template .env
 Open `.env` and at minimum set:
 
 ```ini
-OPENROUTER_API_KEY=sk-or-v1-your-real-key-here
+# Required - at least one LLM key (Kimi recommended for production)
+OPENROUTER_KIMI_API_KEY=your-kimi-key-here        # Primary LLM (Moonshot)
+OPENROUTER_API_KEY=sk-or-v1-your-key-here          # Fallback (OpenRouter free tier)
+
+# Required - JWT signing
 SECRET_KEY=any-long-random-string-for-jwt
 ```
 
@@ -114,7 +118,7 @@ The first launch will:
 1. Run Alembic migrations (`core/database_init.py`).
 2. Seed the knowledge graph from `data/knowledge_graph.json`.
 3. Index RAG chunks into Weaviate.
-4. Test connectivity to OpenRouter.
+4. Test connectivity to Kimi (Moonshot).
 
 If something fails, check `backend/backend.log`.
 
@@ -221,8 +225,11 @@ A real `pytest` suite is on the roadmap (see `PROJECT_STATUS.md`).
 
 | Variable | Default | Notes |
 |---|---|---|
-| `OPENROUTER_API_KEY` | — | **Required.** Free tier at openrouter.ai |
-| `OPENROUTER_API_KEY_FALLBACK` | — | Optional second key; auto-rotates on 401/403 |
+| `OPENROUTER_KIMI_API_KEY` | Yes* | — | Kimi/Moonshot API key (primary LLM, get from https://platform.moonshot.cn) |
+| `OPENROUTER_API_KEY` | Yes* | — | OpenRouter API key (fallback LLM, get from https://openrouter.ai/keys) |
+| `KIMI_DISABLE_REASONING` | `true` | Disable hidden reasoning tokens for faster generation |
+| `KIMI_TIMEOUT_SECONDS` | `600` | HTTP timeout for Kimi calls |
+| `KIMI_MAX_RETRIES` | `2` | Retry count on transient network errors |
 | `OPENROUTER_MODEL` | `meta-llama/llama-3.1-70b-instruct` | Any OpenRouter model id |
 | `DATABASE_URL` | `postgresql+asyncpg://a3_user:a3_password@postgres:5432/a3_db` | Use `localhost` instead of `postgres` for non-Docker backend |
 | `REDIS_URL` | `redis://redis:6379/0` | Same — swap host for local |
@@ -244,7 +251,7 @@ Full list in `a3-system/.env.template`.
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | Backend exits immediately with `connection refused` | Postgres/Redis/Weaviate not up | `docker-compose ps`, ensure all three are `healthy` |
-| `401 Unauthorized` on every LLM call | Bad `OPENROUTER_API_KEY` | Regenerate at openrouter.ai/keys; restart backend |
+| `401 Unauthorized` on every LLM call | Bad `OPENROUTER_KIMI_API_KEY` | Check key at platform.moonshot.cn; restart backend |
 | Frontend shows network errors | Backend not running, or `NEXT_PUBLIC_API_URL` wrong | Visit `/health` directly; fix env and restart `npm run dev` |
 | `pgcrypto`/`uuid` extension errors | Old Postgres image | `docker-compose down -v` then `up -d postgres` to recreate |
 | Quiz / video says "1 slide" or "no questions" | LLM JSON truncation under load | Already mitigated; if persistent, raise `max_tokens` in the offending agent |
@@ -261,7 +268,7 @@ Logs to check: `backend/backend.log`, `backend/server.log`, `docker-compose logs
 
 **API routers:** `a3-system/backend/api/routers/` — `chat`, `profile`, `path`, `resources`, `tutor`, `quiz`, `milestone`, `analytics`, `tracking`, `auth`, `tts`.
 
-**LLM client:** `a3-system/backend/core/llm_client.py` (OpenRouter + Spark + fallback rotation).
+**LLM client:** `a3-system/backend/core/llm_client.py` (Kimi k2.6 primary + OpenRouter fallback).
 
 **Faithfulness checker:** `a3-system/backend/core/faithfulness_checker.py` — runs on every agent's output.
 

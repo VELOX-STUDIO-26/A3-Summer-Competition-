@@ -1,0 +1,16 @@
+{
+  "name": "submission",
+  "version": "1.0.0",
+  "description": "**Track:** A3 - Personalized Resource Generation Multi-Agent System   **Team:** VELOX STUDIO   **Date:** 2026-06-18",
+  "main": "generate_report.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "docx": "^9.7.1"
+  }
+}
