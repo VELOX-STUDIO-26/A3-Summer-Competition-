@@ -424,9 +424,11 @@ test_transcribe_rejects_invalid_format
 | Auto-titling | ✅ Complete | LLM-generated, max 5 words |
 | Stop generation | ✅ Complete | AbortController support |
 | Content moderation | ✅ Complete | Input filtering on all endpoints |
-| Rolling context | ✅ Complete | 6-turn window + LLM summarization |
+| Rolling context | 🟡 Partial | 6-turn window + truncation (LLM summarization planned) |
 | Profile adaptation | ✅ Complete | Visual/verbal/mixed instructions |
 | Mastery celebration | ✅ Complete | 50%/80% milestone detection |
+| **Suggested follow-ups** | 🟡 Partial | In streaming endpoint |
+| **Proactive interventions** | ❌ Missing | Reactive only currently |
 
 ## Performance
 

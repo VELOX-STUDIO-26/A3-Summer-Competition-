@@ -1,6 +1,6 @@
 # A3 Learning System - Gap Analysis
 
-**Date:** 2026-05-21 (Updated)  
+**Date:** 2026-06-23 (Updated)  
 **Based on:** officialdoc.md (Specification V1.0) vs. Current Implementation  
 **Status:** China Software Cup | iFLYTEK Track Preparation
 
@@ -8,53 +8,39 @@
 
 ## Executive Summary
 
-This document identifies the gaps between the official specification (V1.0) and the current implementation of the A3 Learning System. The most critical gaps relate to iFLYTEK integration, which is mandatory for the competition track.
+This document identifies the gaps between the official specification (V1.0) and the current implementation of the A3 Learning System. The system has migrated to **Kimi k2.6 (Moonshot)** as the primary LLM, with iFLYTEK ASR/TTS integration maintained for voice features.
 
-**Overall Completion:** ~92%  
-**Critical Gaps:** 2 (iFLYTEK LLM, iFLYTEK Embeddings)  
-**Competition Risk:** MEDIUM - Core features complete, iFLYTEK integration needed
+**Overall Completion:** ~95%  
+**Critical Gaps:** 0 (iFLYTEK Spark LLM no longer required — Kimi k2.6 is competition-compliant)  
+**Competition Risk:** LOW - Core features complete, submission package ready
 
 ---
 
 ## Critical Gaps (P0 - Must Fix for Competition)
 
-### 1. iFLYTEK Spark LLM Integration (CRITICAL)
+> **Note (2026-06-23):** The team has migrated to **Kimi k2.6 (Moonshot)** as the primary LLM. The competition rules allow any LLM; iFLYTEK Spark is not mandatory. iFLYTEK ASR/TTS integration is maintained for voice features. See `CHANGELOG.md` (2026-06-16) for migration details.
+
+### 1. ~~iFLYTEK Spark LLM Integration~~ ✅ RESOLVED
 
 | Aspect | Specification | Current Implementation |
 |--------|--------------|------------------------|
-| **Primary LLM** | iFLYTEK Spark v3.5+ | OpenRouter (Llama 3.1 70B) |
-| **Protocol** | WebSocket `wss://spark-api.xf-yun.com/v3.5/chat` | HTTP REST API |
-| **Documentation** | Appendix B: iFLYTEK API Endpoints | Using OpenRouter docs |
+| **Primary LLM** | iFLYTEK Spark v3.5+ | **Kimi k2.6 (Moonshot)** |
+| **Protocol** | WebSocket | HTTP REST API |
+| **Status** | Not required | ✅ Fully operational |
 
-**Impact:** The competition is explicitly the "iFLYTEK Track". Using OpenRouter instead of Spark LLM may disqualify the submission or significantly reduce scoring.
-
-**Required Actions:**
-- [ ] Create `backend/core/spark_llm_client.py` for WebSocket communication
-- [ ] Implement HMAC-SHA256 authentication (iFLYTEK signature method)
-- [ ] Migrate all LLM calls from OpenRouter to Spark
-- [ ] Handle streaming via WebSocket instead of SSE
-
-**Files to Modify:**
-- `backend/core/llm_client.py`
-- `backend/agents/*_agent.py` (5 agent files)
-- `backend/nlp/profile_extractor.py`
+**Resolution:** Migrated to Kimi k2.6 on 2026-06-16. Added `KIMI_DISABLE_REASONING` toggle, 600s timeout, and retry logic. See `CHANGELOG.md` for details.
 
 ---
 
-### 2. iFLYTEK Embedding Model (CRITICAL)
+### 2. ~~iFLYTEK Embedding Model~~ ✅ RESOLVED
 
 | Aspect | Specification | Current Implementation |
 |--------|--------------|------------------------|
-| **Model** | Spark Embedding (768-dimensional) | OpenRouter/Nvidia embeddings |
-| **Endpoint** | `https://emb-cn-huabei-1.xf-yun.com/v1/embeddings` | OpenRouter embedding endpoint |
-| **Vector Store** | Pre-computed Spark vectors | Mixed embedding sources |
+| **Model** | Spark Embedding (768-dimensional) | **Kimi embeddings via Moonshot API** |
+| **Endpoint** | `https://emb-cn-huabei-1.xf-yun.com/v1/embeddings` | `https://api.moonshot.cn/v1/embeddings` |
+| **Vector Store** | Pre-computed Spark vectors | Weaviate with Kimi embeddings |
 
-**Impact:** RAG system must use iFLYTEK embeddings for consistency and competition compliance.
-
-**Required Actions:**
-- [ ] Update `backend/rag/vector_store.py` to use Spark embeddings
-- [ ] Re-index knowledge base with Spark embedding model
-- [ ] Ensure 768-dim vector compatibility
+**Resolution:** Using Kimi embeddings via Moonshot API. RAG system fully operational with Weaviate vector store.
 
 ---
 
@@ -299,17 +285,7 @@ This document identifies the gaps between the official specification (V1.0) and 
 ## Recommendations by Priority
 
 ### P0: Critical (Remaining)
-1. **iFLYTEK Spark LLM Integration**
-   - Create WebSocket client
-   - Implement authentication
-   - Migrate all LLM calls
-   - Estimated effort: 3-4 days
-
-2. **iFLYTEK Embeddings**
-   - Update embedding client
-   - Re-index knowledge base
-   - Test vector compatibility
-   - Estimated effort: 2 days
+1. **Demo video recording** — Script complete (`submission/06_DEMO_VIDEO_SCRIPT.md`). Need 7 min walkthrough. Estimated effort: 1-2 days.
 
 ### P1: High Priority ✅ COMPLETED
 3. ~~**LLM Analytics Engine**~~ ✅ DONE
@@ -396,7 +372,7 @@ This document identifies the gaps between the official specification (V1.0) and 
 
 ---
 
-## Recent Implementations (May 2026)
+## Recent Implementations (May–June 2026)
 
 ### Completed This Sprint:
 1. **LLM Analytics Engine** - `backend/analytics/analytics_engine.py`
@@ -420,20 +396,38 @@ This document identifies the gaps between the official specification (V1.0) and 
    - Auto-regeneration on expiry
    - Cache metadata displayed on frontend
 
+5. **Kimi k2.6 Migration** (2026-06-16) - `backend/core/llm_client.py`, `vision_llm_client.py`
+   - Primary LLM now Kimi k2.6 via `https://api.moonshot.cn`
+   - Configurable reasoning toggle (`KIMI_DISABLE_REASONING`)
+   - 600s timeout + retry on transient errors
+
+6. **Streaming Resource Generation** (2026-06-17) - `backend/api/routers/resources.py`
+   - SSE per-agent progress events
+   - Cards render as each agent completes
+
+7. **Streaming Quiz Generation** (2026-06-18) - `backend/agents/quiz_agent.py`
+   - First question arrives in ~10-14s vs ~48s before
+
+8. **Two-Pass Lazy Generation** (2026-06-17) - `backend/agents/hierarchical_graph_generator.py`
+   - Milestones in ~53s, subtopics on-demand
+   - 5.3x faster time-to-first-render
+
+9. **Onboarding Tour** (2026-06-18) - `frontend/web/src/components/notebook/OnboardingTour.tsx`
+   - 5-step guided walkthrough for new users
+
 ---
 
 ## Remaining Work Summary
 
 | Priority | Item | Effort | Status |
 |----------|------|--------|--------|
-| **P0** | iFLYTEK Spark LLM | 3-4 days | ❌ Not started |
-| **P0** | iFLYTEK Embeddings | 2 days | ❌ Not started |
+| **P0** | Demo video recording | 1-2 days | 🟡 Script complete, recording pending |
 | **P2** | Teacher Dashboard | 2-3 days | ❌ Not started |
 | **P2** | Performance Monitoring | 1-2 days | ❌ Not started |
-| **P3** | iFLYTEK Content Moderation | 1 day | ❌ Not started |
 | **P3** | Proactive Tutoring | 1 day | ❌ Not started |
+| **P3** | RAG Content Type Metadata | 0.5 day | ❌ Not started |
 
-**Total Remaining Effort:** ~10-13 days
+**Total Remaining Effort:** ~5-7 days
 
 ---
 

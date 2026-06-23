@@ -329,10 +329,15 @@ class BehavioralData:
 
 The following are **not yet implemented**:
 
-1. **Comparative Analytics**
+1. ~~**Comparative Analytics**~~ ✅ **IMPLEMENTED**
    - Cohort percentile
    - Peer benchmarking
    - Historical comparisons
+   
+   **Implementation:** `backend/analytics/comparative_analytics.py` + `backend/api/routers/cohorts.py`
+   - Auto-enrollment on login/register
+   - Percentile rankings (quiz score, completion, study time)
+   - Anonymized leaderboards with privacy opt-out
 
 ## Implementation Details
 
@@ -507,9 +512,7 @@ test_duplicate_node_ids_fail
 1. **LLM Analytics Engine** ✅ IMPLEMENTED
    - File: `backend/analytics/analytics_engine.py`
    - Endpoint: `GET /api/analytics/{student_id}/insights`
-   - Aggregates behavioral events, calls Claude, returns structured insights
-
-### Important (P1) - Partially Done
+   - Aggregates behavioral events, calls LLM (Kimi k2.6), returns structured insights
 
 2. **Student Analytics Dashboard** ✅ IMPLEMENTED
    - File: `frontend/web/src/app/(dashboard)/analytics/page.tsx`
@@ -518,12 +521,7 @@ test_duplicate_node_ids_fail
    - Predictions, recommendations, alerts
    - Navigation link from notebook sidebar
 
-3. **Teacher Dashboard** ❌ NOT IMPLEMENTED
-   - Class roster view
-   - At-risk student flags
-   - Class progress summary
-
-4. **Comparative Analytics** ✅ IMPLEMENTED
+3. **Comparative Analytics** ✅ IMPLEMENTED
    - File: `backend/analytics/comparative_analytics.py`
    - File: `backend/api/routers/cohorts.py`
    - Cohort management with auto-enrollment on login/register
@@ -533,11 +531,18 @@ test_duplicate_node_ids_fail
    - Cached statistics (24-hour refresh)
    - Frontend: "Peer Comparison" card on Analytics page
 
-5. **AI Insights Caching** ✅ IMPLEMENTED
+4. **AI Insights Caching** ✅ IMPLEMENTED
    - File: `backend/models/database.py` (AnalyticsInsightsCache model)
    - Insights cached for 24 hours to reduce LLM calls
    - Auto-regenerates on expiry
    - Cache metadata displayed on frontend
+
+### Important (P1) - Remaining
+
+5. **Teacher Dashboard** ❌ NOT IMPLEMENTED
+   - Class roster view
+   - At-risk student flags
+   - Class progress summary
 
 ## Caching Strategy
 

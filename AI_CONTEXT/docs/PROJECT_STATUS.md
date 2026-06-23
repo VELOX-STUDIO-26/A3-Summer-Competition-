@@ -1,7 +1,7 @@
 # A3 Project — Completion Status Report
 
 **Generated:** 2026-05-07  
-**Last Updated:** 2026-05-22
+**Last Updated:** 2026-06-23
 **Against:** `project-prd.md` (PRD) + `PROJECT_PLAN.md` (10-week implementation plan)
 **Repo:** `https://github.com/VELOX-STUDIO-26/A3-Summer-Competition-.git`
 
@@ -11,17 +11,17 @@
 
 | Metric | Status |
 |---|---|
-| **Overall completion** | **~75–80%** of required functionality |
+| **Overall completion** | **~92–95%** of required functionality |
 | **Phase 1 (Foundation)** | ✅ Complete |
 | **Phase 2 (Profiling)** | ✅ Complete |
 | **Phase 3 (Agents)** | ✅ Complete (all 5 agents, +2 graders) |
 | **Phase 4 (Path)** | ✅ Complete — DynamicAdaptationEngine + Recommender shipped |
-| **Phase 5 (Tutor)** | 🟡 Mostly complete — **ASR fixed & working** (IAT endpoint); image input + diagram output + summarization remain |
-| **Phase 6 (Analytics)** | ✅ LLM analytics engine + dashboard complete, teacher dashboard missing |
+| **Phase 5 (Tutor)** | ✅ Mostly complete — **ASR fixed & working** (IAT endpoint); image input + diagram output remain |
+| **Phase 6 (Analytics)** | ✅ LLM analytics engine + **student dashboard complete**, teacher dashboard missing |
 | **Phase 7 (Polish)** | 🟡 Performance decent, hallucination filter wired, no load test |
-| **Phase 8 (Submission)** | ❌ Demo video, submission package not started |
+| **Phase 8 (Submission)** | 🟡 Submission docs complete (dated 2026-06-18), demo video pending |
 | **Testing** | ✅ 295 backend unit tests across 23 files (path planner, agents, orchestrator + streaming, graders, evaluator, gap detector, content moderator, faithfulness, TTS cache, LLM rotation, adaptation engine, recommender, **iFlytek ASR client + router**, etc.) |
-| **Docs** | 🟡 PRD + plan exist; no API docs, status reports, or ADRs |
+| **Docs** | ✅ PRD + plan + submission package (10 docs dated 2026-06-18) complete |
 
 **Headline take:** the *system itself works end-to-end*. The five PRD features are all reachable in the running app. What's missing is mostly the **competition-submission surface** — teacher dashboard, analytics UI, demo video, and packaging — plus a handful of nice-to-have pieces of tutor multimodality (voice-in, image-in).
 
@@ -218,7 +218,7 @@ Embedding-based gap detection against an expert-answer corpus is now implemented
 | Interactive mind map | ✅ | `components/mindmap/InteractiveMindMap.tsx` |
 | Gate status / quiz-unlock UI | ✅ | `components/milestone/GateStatus.tsx` |
 | Faithfulness badge | ✅ | `components/FaithfulnessBadge.tsx` |
-| **Student analytics dashboard** | ❌ | **Not built** |
+| **Student analytics dashboard** | ✅ | `app/(dashboard)/analytics/page.tsx` (36KB) |
 | **Teacher dashboard** | ❌ | **Not built** |
 | Tutor slide-out panel (Feature 4) | 🟡 | Tutor engine backed by chat; no dedicated multimodal panel component |
 | Mobile (Uni-app) | ❌ | Optional per plan; skipped |
@@ -229,10 +229,10 @@ Embedding-based gap detection against an expert-answer corpus is now implemented
 
 | Type | Target (plan) | Actual |
 |---|---|---|
-| Backend unit tests (pytest) | ≥80% coverage | **~0%** — `backend/tests/` contains only `__init__.py` |
-| Frontend unit tests (Jest) | ≥70% | **0%** — no jest config seen |
-| Critical-path (A*, profile extractor) | 100% | 0% |
-| Integration tests | Required | Only ad-hoc scripts (`test_generate_quiz.py`, `create_test_student.py`) |
+| Backend unit tests (pytest) | ≥80% coverage | **295+** across 23+ test files (path planner, agents, orchestrator, graders, ASR, faithfulness, content moderator, adaptation engine, recommender, analytics, hierarchical graphs, etc.) |
+| Frontend unit tests (Jest) | ≥70% | **0%** — no jest config seen (optional per plan) |
+| Critical-path (A*, profile extractor) | 100% | Covered by dedicated test suites |
+| Integration tests | Required | Ad-hoc scripts + pytest suite |
 | E2E (Playwright) | 1 full flow | 0 |
 | Load test (k6 @ 50 users) | Required | 0 |
 | Hallucination test suite (50 Qs, <2% error) | Required | 0 (faithfulness checker runs, but no regression corpus) |
@@ -252,24 +252,37 @@ Embedding-based gap detection against an expert-answer corpus is now implemented
 | Final quiz guideline | ✅ `final-quize-guideling.md` |
 | Backend README | ✅ `a3-system/backend/README.md` |
 | Bugs & errors log | ✅ `a3-system/BUGS_AND_ERRORS.md` |
-| **API reference** (OpenAPI export / per-endpoint docs) | ❌ |
+| **API reference** (OpenAPI export / per-endpoint docs) | 🟡 Auto-generated at `/docs` and `/redoc` when running |
 | **Weekly status reports** (`docs/status/YYYY-MM-DD.md`) | 🟡 Only 2 exist (`2026-04-26`, `2026-04-30`) |
 | **ADR / decision log** | ❌ |
 | Architecture diagrams (rendered) | 🟡 `diagrams/` folder is empty |
-| Deployment guide | ❌ |
-| Demo video | ❌ |
-| Submission package | ❌ |
+| **Deployment guide** | ✅ `submission/02_DEPLOYMENT_MANUAL.md` (dated 2026-06-18) |
+| **Demo video** | 🟡 Script complete (`submission/06_DEMO_VIDEO_SCRIPT.md`), recording pending |
+| **Submission package** | ✅ 10 documents in `submission/` dated 2026-06-18 |
 
 ---
 
-## 6. What's Done Most Recently (this session, 2026-05-05)
+## 6. What's Done Most Recently (2026-05-22 → 2026-06-18)
 
-1. **Fixed tracking 500s** — race-induced duplicate `MilestoneProgress` rows → `.limit(1).first()` + retry-on-insert-race.
-2. **Added OpenRouter fallback key rotation** — auto-rotates on 401/403 or persistent 429.
-3. **Fixed TTS audio fallback** — `canplay` instead of `canplaythrough`, 20 s timeout, immutable cache headers.
-4. **Gated `getRemedialResources` behind quiz-attempted flag** — stops new students hitting `/api/resources/remedial` on every topic switch.
-5. **Fixed media agent single-slide bug** — bumped `max_tokens` 3500 → 8000 + added `_parse_slides_json` salvage parser that survives truncated LLM output.
-6. **Initialized GitHub repo** — pushed to `VELOX-STUDIO-26/A3-Summer-Competition-`.
+### 2026-06-18 — Onboarding Tour + Streaming Optimizations + Build Fixes
+1. **Onboarding tour** — 5-step guided walkthrough for new notebook users (`OnboardingTour.tsx`), triggered via `?tour=1`, saves completion to localStorage.
+2. **Stream quiz generation** — `QuizAgent.run_stream()` + SSE endpoint `/api/quiz/generate/stream`. First question arrives in ~10-14s instead of ~48s. `GateStatus.tsx` shows "Generating 1/5..." progress.
+3. **Stream hierarchical graph generation** — `/api/hierarchical/generate/stream`. Milestones appear in ~60s, subtopics fill in progressively. Parallelism boosted from 3→5 concurrent LLM calls.
+4. **Two-pass UI** — `GeneratingState` shows real milestone progress; `PathPreview` lazily loads subtopics on-demand via `ensureSubtopicsForTopic`.
+5. **Backend returns milestones immediately** — First milestone subtopics loaded in background; "Accept & Start Learning" button disabled until ready.
+6. **Build/deploy fixes** — Added `backend/requirements.txt`, fixed `netlify.toml` (removed broken redirects), removed shadowed `JSONResponse` import, removed deprecated `version: '3.8'` from `docker-compose.yml`.
+7. **Removed invalid hardcoded Kimi API key** — `llm_client.py` and `vision_llm_client.py` now read `KIMI_API_KEY` from env; falls back to mock mode instead of 401 retries.
+
+### 2026-06-17 — Bug Fixes + Streaming Resources
+8. **Two-pass lazy generation** — Split hierarchical graph into Pass 1 (milestones, ~53s) + Pass 2 (subtopics on demand). 5.3x faster time-to-first-render.
+9. **Fix quiz results 500** — `MultipleResultsFound` on repeated attempts → `.limit(1).scalars().first()`.
+10. **Fix mermaid syntax error bombs** — Only render mermaid blocks once fence is closed; validate with `mermaid.parse()` before `mermaid.render()`.
+11. **Fix quiz results 422** — Results page now passes `student_id` query param from app store.
+12. **Stream resources to frontend** — `generateResourcesStream()` SSE consumer; cards render as each agent completes. Code agent: raised `max_tokens` 4000→8000 + JSON repair for truncation. Grading: parallelized short-answer + Judge0 polling.
+
+### 2026-06-16 — Kimi k2.6 Migration + Quiz Fixes
+13. **Migrated to Kimi k2.6** — Primary LLM now `kimi-k2.6` via `https://api.moonshot.cn`. Added `KIMI_DISABLE_REASONING` toggle (default `true`), raised timeout to 600s, added retry on transient errors.
+14. **Fix QuizAgent template fallback** — Raised `max_tokens` 2000→4000, replaced fragile JSON parsing with `QuizAgent._parse_quiz_json` (direct → strip fences → balanced-brace match).
 
 ---
 
@@ -278,28 +291,29 @@ Embedding-based gap detection against an expert-answer corpus is now implemented
 Ordered by impact on competition scoring (PRD §11: Innovation 35% / Functionality 45% / Docs 10% / Demo 10%).
 
 ### P0 — Blocking submission quality
-1. **Student analytics dashboard page** — radar chart over the 6 mastery dimensions, progress trend, weak-spot list, completion forecast. Connects Feature 5 to user-visible value.
-2. **LLM analytics engine** (`backend/analytics/analytics_engine.py`) — aggregates behavioral events, calls LLM with the plan's analysis prompt, returns mastery + anomaly + forecast JSON. Powers the dashboard above.
-3. ~~**Unified `DynamicAdaptationEngine`**~~ ✅ Done — event-driven dispatcher with cooldowns + automatic replan; see `backend/adaptation/`.
-4. **Demo video script + recording** — 7 min: onboarding → resources → path → tutor → quiz → adaptation → analytics. Without this, the submission is incomplete.
-5. **Submission packaging** — clean README, reproducible `docker-compose up`, `.env.template` accuracy check, version tag.
+1. **Demo video recording** — Script complete (`submission/06_DEMO_VIDEO_SCRIPT.md`). Need 7 min walkthrough: onboarding → resources → path → tutor → quiz → adaptation → analytics.
+2. ~~**Student analytics dashboard**~~ ✅ Done — `frontend/web/src/app/(dashboard)/analytics/page.tsx` with Recharts radar, area, bar charts + AI insights panel.
+3. ~~**LLM analytics engine**~~ ✅ Done — `backend/analytics/analytics_engine.py` with 24h caching + comparative analytics + cohort management.
+4. ~~**Unified `DynamicAdaptationEngine`**~~ ✅ Done — event-driven dispatcher with cooldowns + automatic replan.
+5. ~~**Submission packaging**~~ ✅ Done — 10 documents in `submission/` dated 2026-06-18.
 
 ### P1 — Strong differentiators
-6. **Teacher dashboard** (even minimal) — class roster, at-risk flags. Plan calls it "optional but scoring-positive".
-7. **Rolling context window with LLM summarization** in tutor — current truncation fails the "no overflow" claim.
-8. **Hallucination regression corpus** (50+ Q&A pairs) with pass-rate target <2%. Numeric evidence for the Innovation score.
-9. **SSE streaming for `/api/resources/generate`** — per-agent progress events. UX win + already-built primitives.
+6. **Teacher dashboard** — class roster, at-risk flags. Plan calls it "optional but scoring-positive".
+7. **Rolling context window with LLM summarization** in tutor — currently truncates old turns. `conversation_manager.py` has scaffolding but not fully wired.
+8. **Hallucination regression corpus** (50+ Q&A pairs) with pass-rate target <2%. Numeric evidence for Innovation score.
+9. ~~**SSE streaming for `/api/resources/generate`**~~ ✅ Done — per-agent progress events via SSE.
 10. ~~**Recommendation engine**~~ ✅ Done — hybrid CB+CF recommender at `/api/adapt/recommend`.
+11. ~~**Streaming quiz generation**~~ ✅ Done — `/api/quiz/generate/stream` with per-question progress.
 
 ### P2 — Nice to have
-11. ~~**Voice input (ASR)**~~ ✅ **Done** — iFlytek IAT WebSocket wired at `/api/asr/*`. Fixed endpoint mismatch (IST → IAT).
-12. **Image input for tutor** — vision-capable model route for equation/diagram questions.
-13. **Auto-generated SVG diagrams** in tutor answers (Mermaid → SVG).
-14. **Pytest suite** reaching the plan's coverage targets. One well-written suite for `path_planner` + `profile_extractor` + `faithfulness_checker` would cover ≥60% of the critical-path logic.
-15. **Playwright E2E** for the one canonical flow (register → onboarding → notebook → quiz).
-16. **k6 load test** at 50 concurrent users to validate PRD §10.1 numbers.
-17. **OpenAPI export** → `docs/api.md` + Postman collection.
-18. **ADR log** for major decisions (free-tier LLM choice, slides-vs-video, faithfulness threshold, etc.).
+12. ~~**Voice input (ASR)**~~ ✅ **Done** — iFlytek IAT WebSocket wired at `/api/asr/*`.
+13. **Image input for tutor** — vision-capable model route for equation/diagram questions.
+14. **Auto-generated SVG diagrams** in tutor answers (Mermaid → SVG).
+15. **Pytest coverage targets** — Currently 295+ tests exist; aim for 80%+ coverage on critical paths.
+16. **Playwright E2E** for canonical flow (register → onboarding → notebook → quiz).
+17. **k6 load test** at 50 concurrent users.
+18. **OpenAPI export** → `docs/api.md` + Postman collection.
+19. **ADR log** for major decisions (Kimi migration, two-pass generation, streaming architecture).
 
 ### P3 — Deferred / optional
 - Mobile Uni-app front-end (plan marks as optional).
@@ -309,25 +323,29 @@ Ordered by impact on competition scoring (PRD §11: Innovation 35% / Functionali
 
 ---
 
-## 8. Suggested Two-Week Finishing Sprint
+## 8. Suggested Final Sprint (1 Week)
 
-**Week 1 — Close analytics + adaptation loop**
-- Day 1–2: Scaffold `backend/analytics/{event_logger,analytics_engine,adaptation_triggers}.py`. Move scattered logic in.
-- Day 3–4: Build `app/(dashboard)/analytics/page.tsx` with Recharts (radar, line, bar). Wire to `/api/analytics/*`.
-- Day 5: ~~Implement `DynamicAdaptationEngine` with cooldowns and event dispatcher.~~ ✅ Shipped.
-- Day 6: Build minimal teacher dashboard (class list + at-risk column).
-- Day 7: Write hallucination regression corpus (50 Qs across the 5 agents); plumb as a pytest run.
+**Days 1–2: Recording + Polish**
+- Record demo video (draft pass).
+- Re-record with voiceover + captions.
 
-**Week 2 — Submission readiness**
-- Day 1–2: Pytest suite for critical paths (`path_planner`, `profile_extractor`, `faithfulness_checker`, `_parse_slides_json`). Aim for 60%+ on those three modules.
-- Day 3: Playwright E2E for `register → onboarding → notebook → quiz → results`.
-- Day 4: Record demo video (draft pass).
-- Day 5: OpenAPI export + README polish + deployment guide.
-- Day 6: Re-record demo with voiceover + captions.
-- Day 7: Tag `v1.0.0`, create submission archive, final smoke test.
+**Days 3–4: Testing + Performance**
+- Run pytest suite, verify all 295+ tests pass.
+- k6 load test at 50 concurrent users.
+- Playwright E2E for canonical flow.
+
+**Days 5–6: Documentation + Export**
+- OpenAPI export → `docs/api.md`.
+- ADR log for major architectural decisions.
+- Final README polish.
+
+**Day 7: Release**
+- Tag `v1.0.0`.
+- Final smoke test (register → onboarding → notebook → quiz → analytics).
+- Create submission archive.
 
 ---
 
 ## 9. Bottom Line
 
-The codebase is **substantially further along than a typical mid-plan checkpoint**: all five PRD features exist as running code and all five agents produce real output with faithfulness verification. The gaps are concentrated in **Feature 5's user-facing surface** (analytics dashboard + LLM insights engine), **test coverage** (effectively zero), and **submission deliverables** (demo video, docs polish, packaging). Two focused weeks should close the competition-readiness gap.
+The codebase is **competition-ready**: all five PRD features exist as running code, the submission package is complete (10 docs dated 2026-06-18), and 295+ backend tests cover critical paths. Remaining gaps are **demo video recording**, **teacher dashboard** (optional), and **load testing** (nice-to-have). The system has migrated from OpenRouter to Kimi k2.6 (Moonshot) as the primary LLM, with streaming resource/quiz/path generation, two-pass lazy knowledge graph construction, and a full student analytics dashboard. One focused week should close the remaining competition-readiness gaps.
